@@ -30,7 +30,10 @@ Read these before deployment, image or TV work:
   It installs as its own phone app: `remote-manifest.json`, `icons/remote-*`,
   and `remote-sw.js` (scoped to that page only, separate from `sw.js`; bump
   its `VERSION` to force phones to drop the remote's old caches).
-- Poppy's chat calls `http://localhost:3000`, so it doesn't work from the
-  deployed site yet.
+- Poppy talks to Gemini straight from the browser (connection "gemini" in
+  `JS/poppy/LifeHub-poppy.js`), with the AI Studio key saved per browser. The
+  local server (`LifeHub-poppy-server.js`) is only needed for Vertex.
+  `LifeHub-poppy-phone.html` is her phone chat: same engines, no wallpaper.
+  Both chats read action blocks with `JS/poppy/LifeHub-poppy-actions.js`.
 - The user isn't a Git expert. Explain in plain words and verify before
   claiming something works.

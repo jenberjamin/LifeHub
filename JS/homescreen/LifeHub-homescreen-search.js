@@ -27,6 +27,8 @@
 
     { name: 'LifeHub',   group: 'Remote',   path: './LifeHub-remote.html',   tags: 'Remote, Remote control, TV remote, Controller, Phone, Mobile, Clicker, D-pad, Keyboard, Type on TV' },
 
+    { name: 'Poppy',   group: 'Phone Chat',   path: './LifeHub-poppy-phone.html',   tags: 'Poppy, Chat, Talk, Assistant, AI Powered, Phone, Mobile, Voice, Mic' },
+
     { name: 'Prestige Bank',   group: 'App',   path: './LifeHub-prestige-bank.html',   tags: 'Prestige, Bank, Wallet, Balance, Money, Wage, Earnings, Rewards, Penalties, Rank, Tier, Points, Finance, to check' },
 
     { name: 'Prestige Bank',   group: 'Net Worth',   path: './LifeHub-prestige-bank-networth.html',   tags: 'Prestige, Bank, Net Worth, Balance, Money, Wealth, Savings, Charts, Graphs, Stats, Finance, to check' },

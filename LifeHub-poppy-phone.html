@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Poppy</title>
+<!-- Poppy on the phone. The same Poppy as the Home Screen: the same
+     prompts, the same engines, the same live data and the same actions
+     (log water, a meal, sleep, open a screen on the TV…). Only the chat
+     window is new, sized for a thumb.
+
+     No server: she talks to Gemini straight from the phone, with the AI
+     Studio key saved in this browser (Engine configuration → Gemini key
+     on the Home Screen does the same there). The key never leaves the
+     phone except to Google.
+
+     What she can't do from here: the wallpaper actions (paint, theme,
+     lock, slideshow) — those belong to the Home Screen's own page.
+     Scribble reads need the session Scribble leaves in the browser, so
+     they only work after Scribble has been opened on this phone.
+
+     Deliberately does NOT load lifehub-navigation-core.js, like the
+     remote: the phone isn't a screen, so "open Sleep" goes to the TV. -->
+<link rel="manifest" href="poppy-manifest.json">
+<meta name="theme-color" content="#16130f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Poppy">
+<link rel="icon" type="image/png" href="icons/lifehub-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+  /* The remote's family: warm taupe, frosted glass, Playfair titles. */
+  @font-face {
+    font-family: "Playfair Display";
+    src: url("CSS/fonts/PlayfairDisplay-VariableFont_wght.ttf") format("truetype-variations"),
+         url("CSS/fonts/PlayfairDisplay-Regular.ttf") format("truetype");
+    font-weight: 400 900;
+    font-display: swap;
+  }
+  :root {
+    --bg:#16130f;
+    --glass:rgba(255,248,236,.09);
+    --glass-hi:rgba(255,248,236,.16);
+    --edge:rgba(255,248,236,.14);
+    --text:#f6f1e9;
+    --dim:#c2baad;
+    --cream:#efe5d4;
+    --cream-down:#fffaf1;
+    --ink:#3e3831;
+    --gold:#d2b48c;
+    --bad:#f3a79b;
+    --display:"Playfair Display", Georgia, "Times New Roman", serif;
+    --ui:"Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html { background:var(--bg); height:100%; }
+  html, body { margin:0; color:var(--text); font:16px/1.45 var(--ui); }
+  body { height:100%; max-width:560px; margin:0 auto; display:flex; flex-direction:column; }
+  body::before { content:""; position:fixed; inset:0; z-index:-1;
+    background:
+      radial-gradient(70% 40% at 0% 0%, rgba(214,178,140,.20), transparent 70%),
+      radial-gradient(80% 45% at 100% 100%, rgba(150,120,95,.22), transparent 70%),
+      linear-gradient(180deg, #2a241e 0%, #1b1712 55%, #120f0c 100%); }
+
+  button, select, textarea, input { font:inherit; color:var(--text); }
+  button { background:var(--glass); border:1px solid var(--edge); border-radius:14px; cursor:pointer;
+    touch-action:manipulation; }
+  button:active { background:var(--glass-hi); }
+  button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible {
+    outline:2px solid var(--cream); outline-offset:2px; }
+
+  /* ── Top bar ── */
+  header { display:flex; align-items:center; gap:10px;
+    padding:calc(12px + env(safe-area-inset-top)) 16px 12px; border-bottom:1px solid var(--edge); }
+  header .icon { width:44px; height:44px; flex:none; display:grid; place-items:center; color:var(--dim);
+    text-decoration:none; border-radius:50%; border:1px solid var(--edge); background:var(--glass); }
+  header .icon.on { color:var(--ink); background:var(--cream); border-color:transparent; }
+  .who { flex:1; min-width:0; }
+  .who b { display:block; font:600 24px/1.1 var(--display); }
+  .who select { appearance:none; -webkit-appearance:none; background:none; border:0; padding:2px 16px 2px 0;
+    color:var(--gold); font-size:12px; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+    background-image:linear-gradient(45deg, transparent 50%, var(--gold) 50%), linear-gradient(135deg, var(--gold) 50%, transparent 50%);
+    background-position:right 5px top 55%, right 1px top 55%; background-size:4px 4px; background-repeat:no-repeat; }
+  option { background:#2a251f; color:var(--text); text-transform:none; letter-spacing:0; }
+
+  /* ── The conversation ── */
+  main { flex:1; overflow-y:auto; overscroll-behavior:contain; padding:18px 16px 8px;
+    display:flex; flex-direction:column; gap:10px; }
+  .msg { max-width:86%; padding:11px 15px; border-radius:20px; white-space:pre-wrap; word-wrap:break-word;
+    user-select:text; -webkit-user-select:text; }
+  .msg.user { align-self:flex-end; background:var(--cream); color:var(--ink); border-bottom-right-radius:6px; }
+  .msg.poppy { align-self:flex-start; background:var(--glass); border:1px solid var(--edge); border-bottom-left-radius:6px; }
+  .msg.poppy.listen { cursor:pointer; }
+  .msg .done { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .msg .done span { font-size:12px; color:var(--gold); border:1px solid rgba(210,180,140,.3); border-radius:999px; padding:2px 9px; }
+  .msg.err { align-self:center; max-width:100%; background:rgba(243,167,155,.1); border:1px solid rgba(243,167,155,.3);
+    color:var(--bad); font-size:14px; text-align:center; }
+  .typing { align-self:flex-start; display:flex; gap:5px; padding:14px 16px; border-radius:20px; background:var(--glass); }
+  .typing i { width:7px; height:7px; border-radius:50%; background:var(--dim); animation:blink 1.2s infinite; }
+  .typing i:nth-child(2) { animation-delay:.2s; } .typing i:nth-child(3) { animation-delay:.4s; }
+  @keyframes blink { 0%,80%,100% { opacity:.25 } 40% { opacity:1 } }
+  .hello { margin:auto 8px; text-align:center; color:var(--dim); }
+  .hello b { display:block; font:600 30px/1.2 var(--display); color:var(--text); margin-bottom:6px; }
+
+  /* ── First run: the key ── */
+  .setup { margin:auto 4px; padding:20px; border-radius:22px; background:var(--glass); border:1px solid var(--edge); }
+  .setup b { display:block; font:600 24px/1.2 var(--display); margin-bottom:8px; }
+  .setup p { margin:0 0 14px; color:var(--dim); font-size:15px; }
+  .setup a { color:var(--gold); }
+  .setup input { width:100%; padding:14px; border-radius:14px; border:1px solid var(--edge); background:rgba(0,0,0,.25); margin-bottom:10px; }
+  .setup button { width:100%; min-height:50px; background:var(--cream); color:var(--ink); border:0; font-weight:700; }
+
+  /* ── Composer ── */
+  footer { display:flex; align-items:flex-end; gap:8px; padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--edge); }
+  textarea { flex:1; min-width:0; resize:none; max-height:120px; min-height:48px; padding:12px 16px;
+    border-radius:24px; border:1px solid var(--edge); background:rgba(0,0,0,.25); line-height:1.4; }
+  textarea::placeholder { color:var(--dim); opacity:.8; }
+  footer button { width:48px; height:48px; flex:none; border-radius:50%; display:grid; place-items:center; font-size:18px; }
+  #send { background:var(--cream); color:var(--ink); border:0; }
+  #send:disabled { opacity:.4; }
+  #mic.live { background:#c9695a; color:#fff; border-color:transparent; animation:pulse 1.4s infinite; }
+  @keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(201,105,90,.6) } 100% { box-shadow:0 0 0 14px rgba(201,105,90,0) } }
+  /* ── Settings sheet ── */
+  .veil { position:fixed; inset:0; z-index:5; background:rgba(8,6,4,.55); opacity:0; visibility:hidden;
+    transition:opacity .25s, visibility .25s; }
+  .sheet { position:fixed; left:0; right:0; bottom:0; z-index:6; max-width:560px; margin:0 auto;
+    max-height:88vh; overflow-y:auto; overscroll-behavior:contain;
+    padding:10px 20px calc(24px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg, #2e2720, #1c1813); border:1px solid rgba(210,180,140,.2); border-bottom:0;
+    border-radius:26px 26px 0 0; box-shadow:0 -20px 50px rgba(0,0,0,.5);
+    transform:translateY(105%); visibility:hidden; transition:transform .3s cubic-bezier(.2,.8,.2,1), visibility .3s; }
+  .veil.open { opacity:1; visibility:visible; }
+  .sheet.open { transform:none; visibility:visible; }
+  .sheet .grip { width:40px; height:4px; margin:0 auto 14px; border-radius:2px; background:rgba(255,248,236,.25); }
+  .sheet-head { display:flex; align-items:center; justify-content:space-between; }
+  .sheet-head .icon { width:44px; height:44px; border-radius:50%; color:var(--dim); }
+  .sheet h2 { margin:0; font:600 28px/1.1 var(--display); }
+  .sheet h3 { margin:22px 0 10px; color:var(--gold); font-size:12px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; }
+  .sheet label { display:block; margin-bottom:12px; color:var(--dim); font-size:14px; }
+  .sheet label input:not([type=checkbox]):not([type=range]), .sheet label select, .sheet label textarea {
+    display:block; width:100%; margin-top:6px; padding:12px 14px; min-height:48px; border-radius:14px;
+    border:1px solid var(--edge); background:rgba(0,0,0,.25); color:var(--text); font-size:16px; }
+  .sheet label textarea { resize:vertical; line-height:1.4; }
+  .sheet label.check { display:flex; align-items:center; gap:10px; color:var(--text); font-size:16px; min-height:44px; }
+  .sheet label.check input { width:22px; height:22px; accent-color:var(--gold); }
+  .sheet input[type=range] { display:block; width:100%; margin-top:10px; accent-color:var(--gold); }
+  .sheet .pair { display:grid; grid-template-columns:2fr 1fr; gap:10px; margin-bottom:14px; }
+  .sheet .pair button, .sheet .wide { min-height:48px; }
+  .sheet .main { background:var(--cream); color:var(--ink); border:0; font-weight:700; }
+  .sheet .wide { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; }
+  .sheet .note { margin:-4px 0 12px; color:var(--dim); font-size:13px; min-height:1em; }
+  .sheet .note a { color:var(--gold); }
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="icon" href="LifeHub-remote.html" aria-label="Back to the remote"><i class="fa-solid fa-gamepad"></i></a>
+  <div class="who">
+    <b>Poppy</b>
+    <select id="mode" aria-label="How Poppy talks"></select>
+  </div>
+  <button class="icon" id="voice" aria-label="Speak Poppy's replies" aria-pressed="false"><i class="fa-solid fa-volume-xmark"></i></button>
+  <button class="icon" id="settings" aria-label="Settings"><i class="fa-solid fa-gear"></i></button>
+  <button class="icon" id="clear" aria-label="New chat"><i class="fa-solid fa-rotate-left"></i></button>
+</header>
+
+<!-- Settings: the phone's Engine configuration and Voice panels. -->
+<div class="veil" id="veil"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="grip"></div>
+  <div class="sheet-head">
+    <h2 id="sheet-title">Settings</h2>
+    <button class="icon" id="sheet-shut" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <h3>Engine</h3>
+  <label>Gemini key (AI Studio)
+    <input id="s-key" type="password" autocomplete="off" placeholder="AIza…">
+  </label>
+  <p class="note" id="s-key-note"></p>
+  <div class="pair">
+    <button id="s-key-save" class="main">Save key</button>
+    <button id="s-key-remove">Remove</button>
+  </div>
+  <label>Model
+    <select id="s-model"></select>
+  </label>
+  <label>Thinking
+    <select id="s-thinking">
+      <option value="quick">Quick — answers fastest</option>
+      <option value="balanced">Balanced — a little thought</option>
+      <option value="default">Model default — slowest</option>
+    </select>
+  </label>
+
+  <h3>Voice</h3>
+  <label class="check"><input id="s-speak" type="checkbox"> Speak every reply</label>
+  <label>Engine
+    <select id="s-vengine">
+      <option value="gemini">Gemini — natural (uses the key above)</option>
+      <option value="phone">This phone's own voice</option>
+    </select>
+  </label>
+  <div id="s-gemini-voice">
+    <label>Voice
+      <select id="s-voice"></select>
+    </label>
+    <label>How she should sound
+      <textarea id="s-style" rows="3"></textarea>
+    </label>
+    <label>Voice model
+      <select id="s-vmodel"></select>
+    </label>
+  </div>
+  <label>Speed <span id="s-rate-val"></span>
+    <input id="s-rate" type="range" min="0.8" max="1.4" step="0.05">
+  </label>
+  <button id="s-test" class="main wide"><i class="fa-solid fa-play"></i> Test her voice</button>
+  <p class="note" id="s-test-note"></p>
+</div>
+
+<main id="log" aria-live="polite"></main>
+
+<footer>
+  <button id="mic" aria-label="Talk to Poppy"><i class="fa-solid fa-microphone"></i></button>
+  <textarea id="box" rows="1" placeholder="Message Poppy…" enterkeyhint="send"></textarea>
+  <button id="send" aria-label="Send" disabled><i class="fa-solid fa-arrow-up"></i></button>
+</footer>
+
+<!-- The same scripts, in the same order, as LifeHub-HomeScreen.html
+     loads for Poppy — minus the wallpaper and its panels. The comments
+     there say why each one is where it is. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="JS/lifehub-prestige-ledger.js"></script>
+<script src="JS/lifehub-sleep-protocol.js"></script>
+<script src="JS/lifehub-hydration-rules.js"></script>
+<script src="JS/lifehub-hydration-protocol.js"></script>
+<script src="JS/lifehub-food-rules.js"></script>
+<script src="JS/lifehub-food-protocol.js"></script>
+<script src="JS/lifehub-destinations.js"></script>
+<script src="JS/poppy/LifeHub-poppy-scribble-passage.js"></script>
+<script src="JS/poppy/LifeHub-poppy-firebase-fetch.js"></script>
+<script src="JS/poppy/PoppyEngine-core.js"></script>
+<script src="JS/poppy/LifeHub-poppy-prompts.js"></script>
+<script src="JS/poppy/LifeHub-poppy.js"></script>
+<script src="JS/poppy/LifeHub-poppy-voice.js"></script>
+<script src="Trackers/FLO/js/flo-cycle-analysis.js"></script>
+<script src="JS/lifehub-pill-rules.js"></script>
+<script src="JS/lifehub-flo-vocab.js"></script>
+<script src="JS/poppy/LifeHub-poppy-actions.js"></script>
+
+<script>
+/* The bottom of the actions chain. On the Home Screen this is the
+   wallpaper's own LIFEHUB_ACTIONS (LifeHub-homescreen.js); every
+   PoppyEngine-*.js below wraps whatever is here and adds its own. The
+   phone has no wallpaper, so this only teaches her the block format. */
+window.LIFEHUB_ACTIONS = {
+  describe(){
+    return [
+      "## ACTIONS",
+      "You can act on LifeHub for her. When Jen asks you to, end your reply with a fenced block:",
+      "",
+      "```" + ACTION_TAG,
+      '{"action":"NAME", ...}',
+      "```",
+      "",
+      "Rules for the block:",
+      "- One JSON object (or an array of them for two writes). No commentary inside the block.",
+      "- Put it last, after your reply. Say what you did in your own words above it, briefly.",
+      "- Only include it when she actually asked for something.",
+      "",
+      "She is talking to you from her phone. The wallpaper controls (paint, theme, lock,",
+      "slideshow) are not available from here — if she asks, tell her they only work on the Home Screen."
+    ].join("\n");
+  },
+  run(){ return null; }
+};
+</script>
+<script src="JS/poppy/PoppyEngine-scribble.js"></script>
+<script src="JS/poppy/PoppyEngine-sleep.js"></script>
+<script src="JS/poppy/PoppyEngine-prestige.js"></script>
+<script src="JS/poppy/PoppyEngine-hydration.js"></script>
+<script src="JS/poppy/PoppyEngine-food.js"></script>
+<script src="JS/poppy/PoppyEngine-flo.js"></script>
+<script src="JS/poppy/PoppyEngine-fitness.js"></script>
+<script src="JS/poppy/PoppyEngine-navigate.js"></script>
+<script src="Hubs/PassHub/js/passhub-auth.js"></script>
+<script src="Hubs/PassHub/js/passhub-access-log.js"></script>
+<script src="JS/poppy/PoppyEngine-passhub.js"></script>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const log = $('log'), box = $('box');
+  const STORE = 'lifehub.poppyPhone';
+  const load = () => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } };
+  const saved = load();
+
+  /* Her voice settings on this phone. Blank = the voice file's default. */
+  const VDEF = { engine: 'gemini', name: '', style: '', model: '', rate: 1 };
+
+  const state = {
+    messages: Array.isArray(saved.messages) ? saved.messages : [],   // { role:'user'|'poppy', text, done?, failed? }
+    modeId: saved.modeId || 'casual',
+    voice: !!saved.voice,
+    v: Object.assign({}, VDEF, saved.v || {}),
+    busy: false
+  };
+  function save() {
+    try {
+      localStorage.setItem(STORE, JSON.stringify({
+        messages: state.messages.slice(-60), modeId: state.modeId, voice: state.voice, v: state.v
+      }));
+    } catch (e) {}
+  }
+
+  /* ── Modes: the same list the Home Screen offers ── */
+  const modes = (window.POPPY && POPPY.modes && POPPY.modes.length) ? POPPY.modes
+    : [{ id: 'casual', label: 'Casual', config: {} }];
+  if (!modes.some(m => m.id === state.modeId)) state.modeId = modes[0].id;
+  modes.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m.id; o.textContent = m.label || m.id;
+    if (m.id === state.modeId) o.selected = true;
+    $('mode').appendChild(o);
+  });
+  $('mode').addEventListener('change', e => { state.modeId = e.target.value; save(); });
+  const mode = () => modes.find(m => m.id === state.modeId) || modes[0];
+
+  /* ── The key ──────────────────────────────────────────────────────
+     Stored where the Home Screen stores it (POPPY's engine config, in
+     this browser's localStorage), so her voice finds it too. */
+  const hasKey = () => !!(POPPY.getConfig().keys || {}).gemini;
+
+  function showSetup() {
+    log.innerHTML =
+      '<div class="setup">' +
+        '<b>One-time setup</b>' +
+        '<p>Poppy talks to Gemini straight from this phone, so she needs your AI Studio key. ' +
+        'Get it at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> ' +
+        '(the one Poppy\'s voice uses — not a Firebase key), then paste it here. It stays on this phone.</p>' +
+        '<input id="key" type="password" autocomplete="off" placeholder="AIza…">' +
+        '<button id="key-save">Save</button>' +
+      '</div>';
+    $('key-save').addEventListener('click', () => {
+      const k = $('key').value.trim();
+      if (!k) return;
+      POPPY.setConfig({ connection: POPPY.getConfig().connection === 'openrouter' ? 'gemini' : POPPY.getConfig().connection, keys: { gemini: k } });
+      render();
+    });
+  }
+
+  /* ── Drawing ── */
+  function bubble(m) {
+    const el = document.createElement('div');
+    el.className = 'msg ' + (m.role === 'user' ? 'user' : 'poppy listen');
+    el.textContent = m.text;
+    if (m.done && m.done.length) {
+      const d = document.createElement('div');
+      d.className = 'done';
+      m.done.forEach(t => { const s = document.createElement('span'); s.textContent = '✓ ' + t; d.appendChild(s); });
+      el.appendChild(d);
+    }
+    if (m.role !== 'user') el.addEventListener('click', () => speak(m.text));
+    return el;
+  }
+  function error(text) {
+    const el = document.createElement('div');
+    el.className = 'msg err';
+    el.textContent = text;
+    log.appendChild(el);
+    scroll();
+  }
+  function scroll() { log.scrollTop = log.scrollHeight; }
+
+  function render() {
+    if (!hasKey()) return showSetup();
+    log.innerHTML = '';
+    if (!state.messages.length) {
+      log.innerHTML = '<div class="hello"><b>Hi Jen</b>Type, or tap the mic and talk.<br>' +
+        'Ask me to log something, or to open a screen on the TV.</div>';
+    }
+    state.messages.forEach(m => log.appendChild(bubble(m)));
+    scroll();
+  }
+
+  /* ── Talking ─────────────────────────────────────────────────────
+     The Home Screen's requestReply(), minus the wallpaper: send, pull
+     the action blocks out, run them, show what was done. Receipts ride
+     along in the history so she knows next turn what really happened. */
+  async function send(text, spoken) {
+    text = String(text || '').trim();
+    if (!text || state.busy) return;
+    if (!hasKey()) return showSetup();
+    stopSpeaking();
+    if (state.voice || spoken) try { POPPY_VOICE.warm(); } catch (e) {}
+
+    if (!state.messages.length) log.innerHTML = '';
+    const history = state.messages.map(m => {
+      let t = m.text;
+      if (m.done && m.done.length) t += '\n[done: ' + m.done.join('; ') + ']';
+      if (m.failed && m.failed.length) t += '\n[failed: ' + m.failed.join('; ') + ']';
+      return { role: m.role, text: t };
+    });
+    const mine = { role: 'user', text: text };
+    state.messages.push(mine);
+    log.appendChild(bubble(mine));
+    save();
+
+    state.busy = true; refresh();
+    const dots = document.createElement('div');
+    dots.className = 'typing'; dots.innerHTML = '<i></i><i></i><i></i>';
+    log.appendChild(dots); scroll();
+
+    try {
+      const reply = await POPPY.send({ text: text, mode: mode(), history: history });
+      const { clean, actions } = extractActions(String(reply == null ? '' : reply).trim());
+      const done = [], failed = [];
+      for (const cmd of actions) {
+        try {
+          const label = await LIFEHUB_ACTIONS.run(cmd);
+          if (label) done.push(label);
+          else failed.push((cmd && cmd.action) || 'an unreadable action');
+        } catch (err) { failed.push((err && err.message) || String(cmd && cmd.action)); }
+      }
+      dots.remove();
+      const answer = clean || (done.length ? 'Done.' : '');
+      if (answer) {
+        const hers = { role: 'poppy', text: answer };
+        if (done.length) hers.done = done;
+        if (failed.length) hers.failed = failed;
+        state.messages.push(hers);
+        log.appendChild(bubble(hers));
+        save();
+        if (state.voice || spoken) speak(answer);
+      } else if (!actions.length) {
+        error('Poppy returned an empty reply.');
+      }
+      if (failed.length) error("Couldn't do: " + failed.join(', '));
+    } catch (err) {
+      dots.remove();
+      const why = (err && err.message) || 'Something went wrong.';
+      error(/API key not valid|API_KEY_INVALID|blocked/i.test(why)
+        ? "Google refused the key. It needs to be an AI Studio key (aistudio.google.com/apikey), not a Firebase one."
+        : why);
+    } finally {
+      state.busy = false; refresh(); scroll();
+    }
+  }
+
+  function refresh() { $('send').disabled = state.busy || !box.value.trim(); }
+  box.addEventListener('input', () => {
+    box.style.height = 'auto';
+    box.style.height = Math.min(box.scrollHeight, 120) + 'px';
+    refresh();
+  });
+  $('send').addEventListener('click', () => { const t = box.value; box.value = ''; box.style.height = ''; refresh(); send(t); });
+  box.addEventListener('keydown', e => {
+    /* Enter sends on a keyboard; phones use the Send button (enterkeyhint). */
+    if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) { e.preventDefault(); $('send').click(); }
+  });
+
+  $('clear').addEventListener('click', () => {
+    if (!state.messages.length || !confirm('Start a new chat? This one will be cleared.')) return;
+    stopSpeaking();
+    state.messages = []; save(); render();
+  });
+
+  /* ── Her voice ───────────────────────────────────────────────────
+     Gemini's natural voice with the same key; the phone's own voice if
+     that fails. The speaker button turns it on for every reply; talking
+     through the mic always gets a spoken answer back. */
+  function speakable(text) {
+    return String(text || '')
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/`([^`]*)`/g, '$1')
+      .replace(/\*\*([^*]*)\*\*/g, '$1')
+      .replace(/(^|\s)[*_]([^*_]+)[*_]/g, '$1$2')
+      .replace(/^#{1,6}\s*/gm, '')
+      .replace(/https?:\/\/\S+/g, ' link ')
+      .replace(/\s+/g, ' ').trim();
+  }
+  function speakBrowser(text) {
+    if (!window.speechSynthesis) return;
+    (text.match(/[^.!?…]+[.!?…]*/g) || [text]).forEach(part => {
+      const u = new SpeechSynthesisUtterance(part.trim());
+      u.rate = state.v.rate;
+      window.speechSynthesis.speak(u);
+    });
+  }
+  /* report(engine, why) is for the Test button: it says which voice
+     actually spoke, so a silent fallback can't pass for Gemini. */
+  function speak(text, report) {
+    const clean = speakable(text);
+    if (!clean) return;
+    const tell = (engine, why) => { if (report) report(engine, why || ''); };
+    stopSpeaking();
+    if (state.v.engine !== 'phone' && window.POPPY_VOICE && POPPY_VOICE.hasKey('')) {
+      POPPY_VOICE.say(clean, {
+        voice: state.v.name || POPPY_VOICE.defaults.voice,
+        model: state.v.model || undefined,
+        style: state.v.style || undefined,
+        rate: state.v.rate
+      }).then(() => tell('gemini')).catch(err => {
+        if (err && err.name === 'AbortError') return;
+        console.warn('[Poppy voice] using the phone voice —', err && err.message);
+        const rest = (err && typeof err.remaining === 'string') ? err.remaining : clean;
+        if (rest) speakBrowser(rest);
+        tell('phone', err && err.message);
+      });
+    } else {
+      speakBrowser(clean);
+      tell('phone', state.v.engine === 'phone' ? '' : 'there is no Gemini key yet');
+    }
+  }
+  function stopSpeaking() {
+    try { POPPY_VOICE.stop(); } catch (e) {}
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  function showVoice() {
+    $('voice').classList.toggle('on', state.voice);
+    $('voice').setAttribute('aria-pressed', String(state.voice));
+    $('voice').innerHTML = '<i class="fa-solid ' + (state.voice ? 'fa-volume-high' : 'fa-volume-xmark') + '"></i>';
+  }
+  $('voice').addEventListener('click', () => {
+    state.voice = !state.voice; save(); showVoice();
+    if (!state.voice) stopSpeaking();
+  });
+
+  /* ── The mic ─────────────────────────────────────────────────────
+     Tap, talk, and it sends by itself when you stop. Needs https (the
+     deployed site) — phones refuse the mic on plain http. */
+  const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null;
+  if (!Rec) $('mic').style.display = 'none';
+  $('mic').addEventListener('click', () => {
+    if (rec) { rec.stop(); return; }
+    stopSpeaking();
+    rec = new Rec();
+    rec.lang = navigator.language || 'en-US';
+    rec.interimResults = true;
+    rec.continuous = false;
+    let heard = '';
+    rec.onresult = e => {
+      heard = Array.from(e.results).map(r => r[0].transcript).join('');
+      box.value = heard; refresh();
+    };
+    rec.onerror = e => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') error('The mic is blocked. Allow it for this site in the browser settings.');
+      else if (e.error !== 'no-speech' && e.error !== 'aborted') error('The mic stopped: ' + e.error);
+    };
+    rec.onend = () => {
+      rec = null;
+      $('mic').classList.remove('live');
+      const t = heard.trim();
+      if (t) { box.value = ''; refresh(); send(t, true); }
+    };
+    $('mic').classList.add('live');
+    try { rec.start(); } catch (e) { rec = null; $('mic').classList.remove('live'); }
+  });
+
+  /* ── Settings ────────────────────────────────────────────────────
+     Engine settings go into POPPY's own config (this browser's
+     localStorage), exactly where the Home Screen's Engine configuration
+     puts them. Voice settings are this phone's. */
+
+  /* Same list as MODEL_CHIPS in LifeHub-homescreen.js — Flash first,
+     they're the ones with a free tier that lasts the day. */
+  const MODELS = ['gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
+
+  function fillSelect(sel, items, current) {
+    sel.innerHTML = '';
+    items.forEach(([value, label]) => {
+      const o = document.createElement('option');
+      o.value = value; o.textContent = label;
+      if (value === current) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+
+  function keyNote() {
+    const k = (POPPY.getConfig().keys || {}).gemini || '';
+    $('s-key-note').innerHTML = k
+      ? 'Saved on this phone: …' + k.slice(-4).replace(/[<>&]/g, '')
+      : 'None yet. Get one at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> — not a Firebase key.';
+  }
+
+  function openSettings() {
+    const cfg = POPPY.getConfig();
+    $('s-key').value = '';
+    keyNote();
+    const models = MODELS.indexOf(cfg.model) === -1 && cfg.model ? MODELS.concat([cfg.model]) : MODELS;
+    fillSelect($('s-model'), models.map(m => [m, m]), cfg.model);
+    $('s-thinking').value = cfg.thinking || 'quick';
+
+    $('s-speak').checked = state.voice;
+    $('s-vengine').value = state.v.engine;
+    const V = window.POPPY_VOICE;
+    if (V) {
+      fillSelect($('s-voice'), V.voices.map(v => [v.name, v.name + ' — ' + v.feel + (v.suggested ? '' : ' ·')]),
+        state.v.name || V.defaults.voice);
+      fillSelect($('s-vmodel'), V.models.map(m => [m.id, m.label]), state.v.model || V.defaults.model);
+      $('s-style').value = state.v.style || V.defaults.style;
+    }
+    $('s-rate').value = state.v.rate;
+    showRate();
+    showVoiceFields();
+    $('s-test-note').textContent = '';
+    $('veil').classList.add('open');
+    $('sheet').classList.add('open');
+  }
+  function closeSettings() {
+    $('veil').classList.remove('open');
+    $('sheet').classList.remove('open');
+  }
+  function showRate() { $('s-rate-val').textContent = Number($('s-rate').value).toFixed(2) + '×'; }
+  function showVoiceFields() { $('s-gemini-voice').style.display = $('s-vengine').value === 'gemini' ? '' : 'none'; }
+
+  $('settings').addEventListener('click', openSettings);
+  $('sheet-shut').addEventListener('click', closeSettings);
+  $('veil').addEventListener('click', closeSettings);
+
+  $('s-key-save').addEventListener('click', () => {
+    const k = $('s-key').value.trim();
+    if (!k) return;
+    const conn = POPPY.getConfig().connection;
+    POPPY.setConfig({ connection: conn === 'openrouter' ? 'gemini' : conn, keys: { gemini: k } });
+    $('s-key').value = '';
+    keyNote();
+    render();
+  });
+  $('s-key-remove').addEventListener('click', () => {
+    if (!confirm('Remove the key from this phone? Poppy will stop answering until you add one again.')) return;
+    POPPY.setConfig({ keys: { gemini: '' } });
+    keyNote();
+    render();
+  });
+  $('s-model').addEventListener('change', e => {
+    POPPY.setConfig({ model: e.target.value, models: { gemini: e.target.value, server: e.target.value } });
+  });
+  $('s-thinking').addEventListener('change', e => POPPY.setConfig({ thinking: e.target.value }));
+
+  $('s-speak').addEventListener('change', e => { state.voice = e.target.checked; save(); showVoice(); });
+  $('s-vengine').addEventListener('change', e => { state.v.engine = e.target.value; save(); showVoiceFields(); });
+  $('s-voice').addEventListener('change', e => { state.v.name = e.target.value; save(); });
+  $('s-vmodel').addEventListener('change', e => { state.v.model = e.target.value; save(); });
+  $('s-style').addEventListener('change', e => {
+    const def = window.POPPY_VOICE ? POPPY_VOICE.defaults.style : '';
+    state.v.style = e.target.value.trim() === def ? '' : e.target.value.trim(); save();
+  });
+  $('s-rate').addEventListener('input', () => { state.v.rate = Number($('s-rate').value); showRate(); save(); });
+
+  $('s-test').addEventListener('click', () => {
+    $('s-test-note').textContent = 'Speaking…';
+    speak("Hi Jen! This is how I sound on your phone.", (engine, why) => {
+      $('s-test-note').textContent = engine === 'gemini'
+        ? 'That was Gemini\'s natural voice.'
+        : 'That was the phone\'s own voice' + (why ? ' — ' + why : '') + '.';
+    });
+  });
+
+  showVoice();
+  render();
+})();
+</script>
+</body>
+</html>

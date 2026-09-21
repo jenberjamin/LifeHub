@@ -20,7 +20,7 @@
    To switch it off on one phone, open LifeHub-remote.html?sw=off
 ═══════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = 'lifehub-remote-' + VERSION;
 
 const PRECACHE = [
@@ -30,6 +30,7 @@ const PRECACHE = [
   'icons/remote-192.png',
   'icons/remote-512.png',
   'CSS/fonts/PlayfairDisplay-VariableFont_wght.ttf',
+  'CSS/logos/LifeHub-raw.svg',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js'
