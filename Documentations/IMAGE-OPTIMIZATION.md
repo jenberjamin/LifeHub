@@ -1,6 +1,7 @@
 # Images & videos in LifeHub — how this works
 
 *Written September 2026. Read this if it's been a while and you've forgotten.*
+*For committing, pushing and the live site, see [DEPLOYMENT.md](DEPLOYMENT.md).*
 
 ---
 
