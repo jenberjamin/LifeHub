@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>FoodHub | Statistics</title>
+
+    <link rel="icon" type="image/png" href="css/files/FoodHub.png">
+    <link rel="stylesheet" href="css/food-statistics.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <meta name="theme-color" content="#1A3C34">
+</head>
+<body>
+
+    <a href="FoodHub.html" class="back-arrow"><span class="material-symbols-rounded">arrow_back</span></a>
+
+    <div class="page-container">
+        
+        <div class="top-bar">
+            <div class="header-content">
+                <h1>STATISTICS</h1>
+                <div class="subtitle-divider"><span>H E A L T H I E R &nbsp; J E N</span><div class="line"></div></div>
+            </div>
+
+            <div class="month-nav">
+                <span class="material-symbols-rounded nav-btn" onclick="changeMonth(-1)">chevron_left</span>
+                <span id="monthDisplay" style="text-transform: uppercase; letter-spacing: 1px;">DECEMBER 2025</span>
+                <span class="material-symbols-rounded nav-btn" onclick="changeMonth(1)">chevron_right</span>
+            </div>
+        </div>
+
+        <div class="charts-wrapper">
+            
+            <div class="chart-card">
+                <h3>Calories</h3>
+                <div class="canvas-container">
+                    <canvas id="chartCal"></canvas>
+                    <div class="center-label">
+                        <div class="center-number" id="labelCal">0%</div>
+                        <div class="center-text">GOLD</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Protein</h3>
+                <div class="canvas-container">
+                    <canvas id="chartProt"></canvas>
+                    <div class="center-label">
+                        <div class="center-number" id="labelProt">0%</div>
+                        <div class="center-text">GOLD</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Carbs</h3>
+                <div class="canvas-container">
+                    <canvas id="chartCarb"></canvas>
+                    <div class="center-label">
+                        <div class="center-number" id="labelCarb">0%</div>
+                        <div class="center-text">GOLD</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Fats</h3>
+                <div class="canvas-container">
+                    <canvas id="chartFat"></canvas>
+                    <div class="center-label">
+                        <div class="center-number" id="labelFat">0%</div>
+                        <div class="center-text">GOLD</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Sugar 🍭</h3>
+                <div class="canvas-container">
+                    <canvas id="chartSugar"></canvas>
+                    <div class="center-label">
+                        <div class="center-number" id="labelSugar">0%</div>
+                        <div class="center-text">SAFE</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CHART.JS - LOAD FIRST -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FIREBASE SCRIPTS - FIXED -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- YOUR SCRIPT -->
+    <!-- The daily targets, the wage rubric and the one shared way of
+     reading a logged item's macros. Must load first. -->
+<script src="../../JS/lifehub-food-rules.js"></script>
+<script src="js/food-statistics.js"></script>
+
+    <!-- SERVICE WORKER -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered!', reg))
+                    .catch(err => console.log('Service Worker failed:', err));
+            });
+        }
+    </script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

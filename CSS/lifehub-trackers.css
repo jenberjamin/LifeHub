@@ -1,0 +1,133 @@
+/* --- CORE VARIABLES --- */
+        :root {
+            --font-main: 'Red Hat Display', sans-serif;
+            --color-text-muted: #c2baad;
+            --color-text-dark: #3e3831;
+            /* Updated Background for this specific page */
+            --bg-image: url('files/LifeHub_BG.webp');
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        /* --- SIDEBAR CONTAINER --- */
+        .sidebar-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 35%; 
+            height: 100%;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+            padding-left: 80px; 
+        }
+
+        /* --- LOGO (Aligned High) --- */
+        .logo {
+            position: absolute;
+            top: 30px;      
+            left: 80px;     
+            width: 160px;   
+            z-index: 2;
+        }
+
+        /* --- SIDE NAVIGATION (Identical to Main) --- */
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 45px; 
+            margin-top: 60px; 
+        }
+
+        .nav-item {
+            color: var(--color-text-muted);
+            text-decoration: none;
+            font-size: 13px; 
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            transition: color 0.3s ease, transform 0.3s ease;
+            cursor: pointer; 
+        }
+
+        .nav-item:hover {
+            color: #ffffff;
+            transform: translateX(5px);
+        }
+
+        .arrow { font-size: 14px; opacity: 0.7; }
+
+        /* --- ACTION BUTTON (+) --- */
+        .add-btn {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            color: var(--color-text-muted);
+            font-size: 24px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            z-index: 2;
+        }
+
+        .add-btn:hover {
+            transform: rotate(90deg) scale(1.2);
+            color: white;
+        }
+
+        /* --- TRACKER GRID SYSTEM --- */
+        .tracker-grid {
+            position: absolute;
+            top: 50%;
+            left: 60%; /* Positioned in the open space on the right */
+            transform: translate(-50%, -50%);
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two Columns */
+            gap: 25px; /* Spacing between buttons */
+            z-index: 2;
+        }
+
+        .tracker-btn {
+            background: rgba(255, 255, 255, 0.3); 
+            
+            width: 280px;  /* FIXED WIDTH: Ensures uniformity */
+            padding: 20px 0; 
+            
+            border-radius: 100px; 
+            border: 1px solid rgba(255,255,255,0.15); 
+            backdrop-filter: blur(12px); 
+            
+            /* Text Alignment */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            color: var(--color-text-dark);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: all 0.3s ease;
+        }
+
+        .tracker-btn:hover {
+            background: rgba(255, 255, 255, 0.55);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }

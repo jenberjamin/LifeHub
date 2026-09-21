@@ -1,0 +1,5 @@
+# The commit hook is run by Git's shell, which needs Unix line endings.
+Tools/image-optimizer/pre-commit text eol=lf
+
+# Windows batch files need Windows line endings.
+*.bat text eol=crlf

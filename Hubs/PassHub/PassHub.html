@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <link rel="icon" type="image/png" href="css/files/PassHub.png">
+    <link rel="stylesheet" href="css/passhub-verification.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>PassHub | Verification</title>
+
+    <!-- ── ALREADY-UNLOCKED CHECK ──
+         The gate used to render unconditionally, so any route back into
+         PassHub (from LifeHub, a bookmark, the browser's back button)
+         re-prompted even though the session was still valid.
+
+         This sits in <head> deliberately: it runs before the card paints,
+         so there's no flash of the login form on the way through.
+
+         Add ?lock=1 to force the gate and drop the session — useful if you
+         ever want to re-verify without going through Lock & Return. -->
+    <script>
+    (function () {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('lock') === '1') {
+            sessionStorage.removeItem('PH_ACCESS_TOKEN');
+            return;                       // fall through and show the gate
+        }
+        if (sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+            window.location.replace('PassHub-landing_page.html');
+        }
+    })();
+    </script>
+
+</head>
+<body>
+
+<a href="../../LifeHub-hubs.html" class="back-nav">← LifeHub</a>
+    <main class="main-stage">
+
+    <div class="glass-panel" id="login-card">
+        <h2>PassHub Access</h2>
+
+        <div id="step-1">
+            <div class="input-group">
+                <label>Authorized Personnel</label>
+                <input type="text" id="entry-name" placeholder="Name" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="input-group">
+                <label>Security Code</label>
+                <input type="password" id="entry-pass" placeholder="••••" autocomplete="new-password">
+            </div>
+            <button id="verify-btn">Verify Identity</button>
+        </div>
+
+        <!-- The question is no longer written here. It used to be one
+             fixed line of HTML, which meant anyone who watched you sign
+             in once knew it forever — and anyone who opened View Source
+             knew it without watching. It is now drawn at random from
+             twenty, filled in by js/PassHub-core.js. -->
+        <div id="step-2" class="hidden">
+            <p id="question-text">Loading…</p>
+            <div class="input-group">
+                <input type="text" id="entry-answer" placeholder="Answer..." autocomplete="off" spellcheck="false">
+            </div>
+            <button id="unlock-btn">Unlock Hub</button>
+
+            <div id="reroll-link" class="secondary-link">↻ Ask me a different question</div>
+            <div onclick="resetGate()" class="secondary-link">← Return</div>
+        </div>
+
+        <div id="error-msg"></div>
+    </div>
+
+    <script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-database-compat.js"></script>
+    <script src="js/passhub-firebase.js"></script>
+    <script src="js/passhub-store.js"></script>
+    <script src="js/passhub-auth.js"></script>
+    <script src="js/passhub-access-log.js"></script>
+
+    <script src="js/PassHub-core.js"></script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+    
+
+
+</body>
+</html>

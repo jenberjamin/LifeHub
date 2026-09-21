@@ -1,0 +1,7 @@
+# Videos the optimizer has already dealt with (re-encoded, or kept
+# because re-encoding wasn't worth it). Format: path|size-in-bytes
+# If you replace one of these videos, it is checked again.
+Hubs\InspoHub\videos\fitness\fitness_98903.mp4|492598
+Hubs\InspoHub\videos\friendship\friendship_45645.mp4|421935
+Hubs\InspoHub\videos\jen\second_star.mp4|34336833
+Hubs\InspoHub\videos\life\life_34563.mp4|1378514

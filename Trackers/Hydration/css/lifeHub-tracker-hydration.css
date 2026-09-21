@@ -1,0 +1,355 @@
+/* --- CORE VARIABLES (WATER THEME) --- */
+:root {
+    --font-main: 'Red Hat Display', sans-serif;
+    --color-text-dark: #2c3e50;
+    --color-text-muted: #7f8c8d;
+    --color-accent: #3498db; /* Blue! */
+    
+    --glass-bg: rgba(255, 255, 255, 0.25); 
+    --glass-border: rgba(255, 255, 255, 0.4);
+    
+    /* You can use a watery background or keep the clean aesthetic */
+    --bg-image: url('files/LifeHub_tracker_2_BG.webp'); 
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: var(--font-main);
+    height: 100vh;
+    width: 100vw;
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    color: var(--color-text-dark);
+    overflow: hidden; 
+}
+
+/* --- REUSING THE LAYOUT (Standard LifeHub Grid) --- */
+/* --- NAVIGATION --- */
+.nav-dock {
+    position: absolute;
+    top: 30px; left: 40px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    text-decoration: none;
+    color: #fff;
+    padding: 9px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0.75;
+    transition: opacity .25s ease, background .25s ease, gap .25s ease;
+}
+.nav-btn svg {
+    width: 17px; height: 17px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.nav-btn span {
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: var(--font-main);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    transition: max-width .3s ease;
+}
+
+.nav-btn:hover,
+.nav-btn:focus-visible {
+    opacity: 1;
+    background: rgba(255,255,255,0.26);
+    gap: 8px;
+}
+.nav-btn:hover span,
+.nav-btn:focus-visible span { max-width: 130px; }
+
+.main-stage {
+    position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+    padding: 40px; display: flex; justify-content: center; align-items: center; overflow-y: auto; z-index: 5;
+}
+
+.unified-glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 30px;
+    box-shadow: 0 20px 60px rgba(0,20,50,0.1); /* Blue-ish shadow */
+    width: 100%; max-width: 1100px; display: flex; overflow: hidden;
+}
+
+.dashboard-grid { display: flex; width: 100%; }
+.panel-section { padding: 40px; flex: 1; }
+.vertical-divider { width: 1px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.5), transparent); margin: 40px 0; }
+
+.section-header { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: baseline;}
+.section-header h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; }
+.date-display { font-size: 11px; opacity: 0.7; }
+.divider { height: 1px; background: rgba(0,0,0,0.06); width: 100%; margin: 25px 0; }
+
+/* --- THE WATER VISUAL (The Wave) --- */
+.water-progress-container {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px;
+}
+
+.circle-progress {
+    width: 150px; height: 150px; border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.5);
+    position: relative; overflow: hidden;
+    background: rgba(255,255,255,0.1);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 15px;
+}
+
+/* The Wave Animation */
+.wave {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; /* JS Changes This */
+    background: linear-gradient(to top, #3498db, #5dade2);
+    transition: height 0.5s ease-in-out;
+    opacity: 0.8;
+}
+.wave::after {
+    content: ""; position: absolute; top: -10px; left: 0; width: 200%; height: 20px;
+    background: inherit; border-radius: 50%; opacity: 0.5; animation: wave-anim 3s infinite linear;
+}
+
+@keyframes wave-anim { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+.percentage-text { position: relative; z-index: 2; font-size: 32px; font-weight: 700; color: #2c3e50; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
+.intake-text { font-size: 14px; color: var(--color-text-muted); font-weight: 500; }
+
+/* --- CONTROLS --- */
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; display: block; margin-bottom: 10px; }
+
+.quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 8px; margin-bottom: 20px; }
+
+.water-btn {
+    padding: 10px 5px; background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 15px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px;
+    color: var(--color-text-dark); font-family: var(--font-main); font-size: 10px; font-weight: 600; 
+}
+.water-btn:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.15); }
+.water-btn .icon {
+    font-size: 24px; /* Slightly larger for the symbols */
+    margin-bottom: 5px;
+    color: var(--color-accent); /* Make them blue! */
+}
+
+.custom-input-group { display: flex; gap: 10px; }
+.pill-input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.3); outline: none; font-family: var(--font-main); }
+.pill-input[type="number"]::-webkit-inner-spin-button,
+.pill-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.pill-input[type="number"] { -moz-appearance: textfield; }
+.add-btn { width: 45px; border-radius: 12px; border: none; background: var(--color-accent); color: #fff; font-size: 20px; cursor: pointer; transition: 0.2s; }
+.add-btn:hover { background: #2980b9; }
+.undo-container { margin-top: 15px; display: flex; justify-content: center; }
+.undo-btn { 
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    background: transparent; border: none;
+    padding: 6px 12px; border-radius: 15px; 
+    font-family: var(--font-main); font-size: 10px; font-weight: 500;
+    color: var(--color-text-muted); cursor: pointer; transition: all 0.2s ease;
+    opacity: 0.6;
+}
+.undo-btn:hover {
+    background: rgba(255,255,255,0.4); color: var(--color-text-dark);
+    opacity: 1; transform: translateY(-1px);
+}
+.undo-btn .material-symbols-outlined { font-size: 13px; }
+
+/* --- RIGHT SIDE STATS --- */
+.stat-card { background: rgba(255,255,255,0.3); padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; }
+.stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--color-accent); }
+
+.chart-wrapper { height: 180px; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 20px; }
+.chart-container { display: flex; align-items: flex-end; justify-content: space-between; height: 100%; gap: 5px; padding-top: 20px; }
+
+/* Water Bars */
+.bar-group { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 5px; }
+.water-bar { width: 10px; background: rgba(52, 152, 219, 0.4); border-radius: 10px; min-height: 4px; transition: height 0.5s; }
+.water-bar:hover { background: var(--color-accent); }
+.bar-label { font-size: 9px; opacity: 0.6; }
+
+.history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 13px; }
+.time-stamp { opacity: 0.6; font-size: 11px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .unified-glass-panel { flex-direction: column; max-height: 90vh; overflow-y: auto;}
+    .dashboard-grid { flex-direction: column; }
+    .vertical-divider { width: 100%; height: 1px; margin: 0; }
+    .nav-dock { top: 20px; left: 20px; }
+    /* No hover on touch, so the labels would never appear — show them. */
+    .nav-btn { opacity: .95; gap: 8px; }
+    .nav-btn span { max-width: 130px; }
+}
+/* --- MODE TOGGLE --- */
+.mode-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    background: rgba(255,255,255,0.2);
+    padding: 5px 12px;
+    border-radius: 20px;
+}
+
+.toggle-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    color: var(--color-text-dark);
+}
+
+.toggle-switch.small {
+    position: relative;
+    display: inline-block;
+    width: 30px;
+    height: 16px;
+}
+
+.toggle-switch.small input { opacity: 0; width: 0; height: 0; }
+
+/* Reusing your slider logic but making it fit the water theme */
+.toggle-switch.small .slider-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(255,255,255,0.4);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-switch.small .slider-round:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+/* When checked, turn it Blue */
+.toggle-switch.small input:checked + .slider-round {
+    background-color: var(--color-accent);
+}
+
+.toggle-switch.small input:checked + .slider-round:before {
+    transform: translateX(14px);
+}
+
+/* --- THE VAULT (MODAL STYLES) --- */
+.view-all-btn {
+    background: transparent; border: none; color: var(--color-text-muted);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    margin-top: 15px; width: 100%; cursor: pointer; transition: 0.3s;
+    border-top: 1px solid rgba(0,0,0,0.05); padding-top: 10px;
+}
+.view-all-btn:hover { color: var(--color-text-dark); letter-spacing: 2px; }
+
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(44, 62, 80, 0.4); /* Blue-tinted dim */
+    backdrop-filter: blur(5px); z-index: 200;
+    display: none; justify-content: center; align-items: center;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+.modal-overlay.active { display: flex; opacity: 1; }
+
+.modal-glass {
+    background: #fdfbf9; width: 90%; max-width: 500px; height: 70vh;
+    border-radius: 20px; padding: 30px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+    display: flex; flex-direction: column;
+    transform: translateY(20px); transition: transform 0.3s ease;
+}
+.modal-overlay.active .modal-glass { transform: translateY(0); }
+
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding-bottom: 15px;
+}
+.modal-header h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--color-text-dark); }
+
+.close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--color-text-muted); }
+.close-modal:hover { color: var(--color-text-dark); }
+
+.modal-content { overflow-y: auto; flex: 1; padding-right: 10px; }
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+
+/* History Row Style */
+.history-row-compact {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px 0; border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.h-date { font-size: 13px; color: var(--color-text-dark); font-weight: 500; }
+.h-total { font-size: 14px; font-weight: 700; color: var(--color-accent); }
+.h-meta { font-size: 10px; color: var(--color-text-muted); text-transform: uppercase; margin-top: 2px;}
+
+/* --- SCROLLABLE LOG LIST --- */
+#waterHistory {
+    max-height: 220px; /* Limits height to approx 5-6 items */
+    overflow-y: auto;  /* Enables internal scrolling */
+    padding-right: 8px; /* Space for the scrollbar */
+    margin-bottom: 10px;
+    
+    /* Scrollbar styling to match the Water Theme */
+    scrollbar-width: thin; 
+    scrollbar-color: rgba(52, 152, 219, 0.3) transparent;
+}
+
+/* Chrome/Safari Scrollbar styling */
+#waterHistory::-webkit-scrollbar {
+    width: 4px;
+}
+#waterHistory::-webkit-scrollbar-track {
+    background: transparent;
+}
+#waterHistory::-webkit-scrollbar-thumb {
+    background: rgba(52, 152, 219, 0.3); /* Soft Blue */
+    border-radius: 4px;
+}
+#waterHistory::-webkit-scrollbar-thumb:hover {
+    background: rgba(52, 152, 219, 0.6);
+}
+
+/* --- DATE PICKER STYLE --- */
+.date-picker-minimal {
+    background: transparent;
+    border: none;
+    font-family: var(--font-main);
+    color: var(--color-text-dark);
+    font-size: 11px;
+    opacity: 0.6;
+    text-transform: uppercase;
+    cursor: pointer;
+    outline: none;
+    text-align: right;
+    min-width: 120px;
+}
+.date-picker-minimal:hover { opacity: 1; }

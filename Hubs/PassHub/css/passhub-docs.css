@@ -1,0 +1,33 @@
+/* ═══════════════════════════════════════════════════
+   PASSHUB — DOCUMENTS
+   passhub-docs.css
+
+   Shared shell lives in passhub-base.css.
+═══════════════════════════════════════════════════ */
+@import url('passhub-base.css');
+
+/* Initial disc in place of a favicon. */
+.doc-initial {
+    width: 30px;
+    height: 30px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    margin-right: 12px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+/* ID and reference numbers are data — monospace so a
+   transposed digit is visible. */
+.detail-val { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 11px; }
+
+/* Sits under a detail row rather than inline with it. */
+.validity-tag { margin-top: 5px; }

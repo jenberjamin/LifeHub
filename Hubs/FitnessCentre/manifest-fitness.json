@@ -1,0 +1,24 @@
+{
+  "name": "LifeHub | Fitness Centre",
+  "short_name": "Fitness",
+  "start_url": "./FITNESS-CENTRE.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#00e5ff",
+  "description": "Tactical Fitness Ecosystem & RPG Tracker",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "css/files/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "css/files/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

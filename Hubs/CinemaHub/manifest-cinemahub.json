@@ -1,0 +1,18 @@
+{
+  "name": "LifeHub | CinemaHub",
+  "short_name": "CinemaHub",
+  "start_url": "./CinemaHub.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "description": "Movie & series watchlist, ratings and hall of fame",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "css/files/CinemaHub.png",
+      "sizes": "1000x1000",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

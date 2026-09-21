@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="JS/lifehub-tv-frame.js"></script>
+    <title>Prestige Bank | LifeHub</title>
+    
+    <link rel="icon" type="image/png" href="CSS/files/LifeHub-logo.png">
+    <link rel="stylesheet" href="CSS/lifehub-prestige-bank.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- ONE Firebase SDK, once.
+     This page used to load 10.7.1 here and 9.23.0 again below. The second
+     firebase-app-compat.js replaces the global `firebase` object outright,
+     so the namespace lifehub-navigation-core.js had just initialised its
+     app on was thrown away underneath it — voice navigation was left
+     holding a reference to an SDK that no longer existed. -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="JS/lifehub-navigation-core.js"></script>
+
+<!-- The tiers and the what-counts-toward-rank rule. Must come BEFORE
+     lifehub-core-prestige-system.js, which now reads them from here
+     instead of keeping its own copy. -->
+<script src="JS/lifehub-prestige-ledger.js"></script>
+<script src="JS/lifehub-core-prestige-system.js"></script>
+</head>
+<body>
+
+    <div class="sidebar-container">
+    <img src="CSS/files/LifeHub-logo.png" alt="LifeHub Logo" class="logo">
+
+        <nav class="nav-menu">
+
+            <a href="LifeHub.html" class="nav-item" > Home <span class="arrow">→</span>
+            </a>
+
+            <!-- is-unbuilt: these pages don't exist yet. The class dims them
+                 and takes away the pointer, so the sidebar tells the truth
+                 about what you can reach while keeping the map of what's
+                 planned. Remove the class when the page lands. -->
+            <a href="#" class="nav-item is-unbuilt" aria-disabled="true">
+                Dashboard <span class="arrow">→</span>
+            </a>
+            <a href="LifeHub-prestige-bank.html" class="nav-item" style="color: #fff;" >
+                Prestige Bank <span class="arrow">→</span>
+            </a>
+            <a href="#" class="nav-item is-unbuilt" aria-disabled="true">
+                Tools <span class="arrow">→</span>
+            </a>
+            <a href="LifeHub-trackers.html" class="nav-item">
+                Trackers <span class="arrow">→</span>
+            </a>
+            <a href="#" class="nav-item is-unbuilt" aria-disabled="true">
+                Logs <span class="arrow">→</span>
+            </a>
+        </nav>
+
+        <div class="add-btn">+</div>
+    </div>
+
+
+    <div class="bank-stage">
+
+        <div class="prestige-card">
+            
+            <div class="card-header">
+                <img src="CSS/Cutouts/Prestige.webp" class="card-title-img" alt="Prestige">
+                <span class="club-label"></span>
+            </div>
+
+            <div class="balance-area">
+                <div class="balance-amount"></div>
+                <div class="balance-label">Balance</div>
+            </div>
+
+            <div class="card-footer">
+                <div class="chip-container">
+                    <img src="CSS/Cutouts/EMV-chip.webp" class="emv-chip" alt="Chip">
+                    <span class="card-name">Jen 2.0</span>
+                </div>
+                <img src="CSS/Cutouts/LifeHub-logo-gold.webp" class="card-logo" alt="LifeHub">
+            </div>
+
+        </div>
+
+        <!-- Two of these six work. The other four are dimmed rather than
+             removed: they are the plan for this page, and losing them
+             would lose the plan. -->
+        <div class="command-deck">
+            <a href="#" class="gold-btn is-unbuilt" aria-disabled="true">
+                <span class="btn-text">My Account</span>
+                <span class="btn-arrow">→</span>
+            </a>
+            <a href="#" class="gold-btn is-unbuilt" aria-disabled="true">
+                <span class="btn-text">Savings Account</span>
+                <span class="btn-arrow">→</span>
+            </a>
+
+            <a href="#" class="gold-btn is-unbuilt" aria-disabled="true">
+                <span class="btn-text">Bank Teller</span>
+                <span class="btn-arrow">→</span>
+            </a>
+            <a href="LifeHub-prestige-bank-networth.html" class="gold-btn">
+                <span class="btn-text">Net Worth</span>
+                <span class="btn-arrow">→</span>
+            </a>
+
+            <a href="LifeHub-prestige-bank-transactions.html" class="gold-btn">
+                <span class="btn-text">Transactions</span>
+                <span class="btn-arrow">→</span>
+            </a>
+            <a href="#" class="gold-btn is-unbuilt" aria-disabled="true">
+                <span class="btn-text">Expenditures</span>
+                <span class="btn-arrow">→</span>
+            </a>
+        </div>
+
+    </div>
+
+</body></html>

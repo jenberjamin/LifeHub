@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — Fitness Centre entries</title>
+<style>
+    body {
+        background: #f2e8e2; font-family: 'Century Gothic', sans-serif;
+        margin: 0; padding: 32px; color: #333;
+    }
+    .box {
+        max-width: 720px; margin: 0 auto; background: #fdf8f4;
+        border: 1px solid #e3cfb8; border-radius: 12px; padding: 26px 30px;
+    }
+    h1 { font-size: 17px; color: #9c6b4f; letter-spacing: 2px; margin: 0 0 4px; }
+    .sub { font-size: 11px; color: #b08a6c; text-transform: uppercase; letter-spacing: 1px; }
+    p { font-size: 13px; line-height: 1.65; color: #6b5a4d; }
+    .warn {
+        background: #fdf1e4; border: 1px solid #e8d3b8; border-radius: 8px;
+        padding: 12px 15px; font-size: 12.5px; line-height: 1.6; color: #8a5a3f;
+    }
+    button {
+        padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
+        font-weight: bold; font-family: inherit; font-size: 13px;
+        background: #b8866f; color: #fff; margin-top: 16px;
+    }
+    button:hover { background: #a0705a; }
+    button:disabled { background: #d6c4b8; cursor: default; }
+    #log {
+        margin-top: 18px; font-family: Consolas, monospace; font-size: 12px;
+        line-height: 1.8; color: #6b5a4d; white-space: pre-wrap;
+    }
+    .ok  { color: #4c7a4c; }
+    .new { color: #9c6b4f; font-weight: bold; }
+    .err { color: #c0392b; }
+    ol { font-size: 13px; line-height: 1.8; color: #6b5a4d; }
+    code { background: #f3e6d8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>🏋️ SEED FITNESS CENTRE ENTRIES</h1>
+    <div class="sub">PoppyEngine · one-time setup</div>
+
+    <p>
+        Twelve entries that teach Poppy the Fitness Centre — what it tracks,
+        how its scoring works, which words mean "tell me" and which mean "do
+        it". Writes into the editor's Firebase, not into
+        <code>PoppyEngine-core.js</code>, which is generated.
+    </p>
+
+    <div class="warn">
+        These entries only pull and push. The reads come from
+        <code>JS/poppy/LifeHub-poppy-firebase-fetch.js</code> and the three
+        actions from <code>JS/poppy/PoppyEngine-fitness.js</code> — both must
+        be loaded, or the entries fire and nothing answers.
+        <br><br>
+        <strong>Poppy cannot log or score a workout.</strong> That is done by
+        tapping FINISH in the Active Session, because the points, PRs and
+        level-ups are calculated there. The entries below say so.
+    </div>
+
+    <p>
+        Matched <strong>by name</strong>, so a second run updates them rather
+        than creating duplicates. Your other entries are never read or changed.
+    </p>
+
+    <p><strong>After it finishes:</strong> open the editor, read them through, then
+        <strong>Export PoppyEngine.js</strong> over <code>JS/poppy/PoppyEngine-core.js</code>.</p>
+
+    <button id="go">Write the 12 fitness entries</button>
+    <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, update }
+    from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157"
+};
+
+const db = getDatabase(initializeApp(cfg));
+
+const CATEGORY = "Fitness Centre";
+
+/* Words that turn a mention into a REQUEST TO CHANGE SOMETHING. The
+   actions gate on these, because "grace" on its own is far more often a
+   question about the budget than an instruction to spend it. */
+const DOING = [
+    "turn on", "turn off", "switch on", "switch off", "use", "using",
+    "activate", "apply", "start", "stop", "end", "enable", "disable",
+    "log", "record", "set", "put", "take", "taking", "im", "i am"
+];
+
+/* Question shapes. Any action carrying these in requireNone stays quiet,
+   so asking about a thing can never spend it. */
+const ASKING = [
+    "how many", "how much", "how long", "do i have", "have i", "did i",
+    "left", "remaining", "when", "what", "whats", "status", "am i"
+];
+
+const RULE = "═══════════════════════════════════════════════════════════════";
+
+const HEAD = (title, action) =>
+    RULE + "\n🏋️ " + title + (action ? " ; " + action : "") + "\n" + RULE + "\n";
+
+const ENTRIES = [
+
+/* ── HOW THE PLACE WORKS ──────────────────────────────────────────
+   blockType context, no keywords: always on. Every other entry here
+   assumes Poppy knows what MGP is, and there is no point repeating
+   the economy in each of them. */
+{
+    name: "Fitness: How the Centre works",
+    intent: "FITNESS_MODEL",
+    blockType: "context",
+    priority: 2,
+    guidelines:
+`── THE FITNESS CENTRE, IN SHORT ──
+Jen's training hub. She plans workouts in the Training Deck, runs them in
+the Active Session, and the numbers below come out of it.
+
+  MGP   Muscle Group Points. Earned per SET SHE TICKS, scored against her
+        own previous best for that exercise — so beating herself pays,
+        and a set she planned but did not tick pays nothing.
+  FP    Fitness Points. A base (20 for a full session, 10 for a partial)
+        plus MGP/10, plus a bonus at streak milestones 4, 8, 12, 20, 50.
+  PRESTIGE  80% of the FP, paid into the LifeHub bank — the same balance
+        the other trackers feed.
+
+  STREAK   Consecutive DAYS trained, not workouts logged. Two sessions in
+        one day is still one day. One rest day is forgiven automatically;
+        a longer gap breaks it unless Grace covers the day.
+  GRACE    A protected rest day. Pauses the streak without breaking it.
+        Two a week. Past that the day is still logged, but honestly —
+        the streak is not protected.
+  LUTEAL   A phase switch. While on, every workout scores 25% more.
+
+  LEVELS   Her Fitness Level comes from total FP. Each muscle group also
+        levels on its own MGP, which is how "you've been skipping legs"
+        is a thing the data can actually show.
+
+── WHAT YOU CANNOT DO ──
+You cannot log, finish or score a workout. That happens when she taps
+FINISH in the Active Session, because the PRs, level-ups and bank payment
+are all calculated there. If she says she has trained, say the session
+needs finishing in the app. Never invent points.` + "\n" + RULE
+},
+
+/* ── COACHING ─────────────────────────────────────────────────────
+   blockType CONTEXT, not instruction, and that distinction is load
+   bearing: the engine treats a keywordless INSTRUCTION as a fallback,
+   fired only when nothing else matched. A keywordless context block is
+   always on. This is standing guidance on how to talk to her, so it
+   needs to be present on every message, not just the unmatched ones. */
+{
+    name: "Fitness: How to advise her",
+    intent: "FITNESS_COACHING",
+    blockType: "context",
+    priority: 2,
+    guidelines:
+HEAD("Talking to her about training") +
+`── USE HER REAL NUMBERS ──
+Everything above in LIVE DATA is hers. Cite it. "You're on 4 days, best is
+12" lands; "keep it up!" does not. If the data did not load, say you could
+not read it rather than guessing a number.
+
+── WHAT SHE RESPONDS TO ──
+She built a points economy to make training legible to herself. Consistency
+over intensity — one of her own quotes in the hub is "Train for 1 hour. Not
+3." Showing up on a low day counts. So does a rest day she chose on purpose.
+
+── PCOS ──
+She has PCOS. Flares are real, not excuses, and Grace exists precisely for
+them. If she is skipping because she is flaring, offer Grace before anything
+else, and do not ask her to push through.
+
+── THE WEIGHT GOAL ──
+There is a goal weight on file. Report progress toward it factually when she
+asks, and leave it there — do not cheerlead it, do not warn her off it, and
+do not comment on her body unprompted. You are not a nutritionist or a
+doctor; if she raises a health worry, say it is worth asking someone who is.
+
+── DON'T PRESCRIBE ──
+Programming, sets, reps and loads are hers. Suggest only what her own data
+supports — a muscle group with no MGP this month, a streak about to lapse, a
+measurement three weeks stale.` + "\n" + RULE
+},
+
+
+/* ══════════════════════════════════════════════════════════════════
+   ASKING — one entry per question, each pulling only what it needs.
+   Six separate reads on one message is six times the prompt, so these
+   are kept deliberately narrow.
+   ══════════════════════════════════════════════════════════════════ */
+
+{
+    name: "Fitness: Streak and standing",
+    intent: "FITNESS_STANDING",
+    blockType: "instruction",
+    priority: 4,
+    keywords: ["streak", "streaks", "level", "levels", "fitness points", "fp",
+               "prestige", "grace", "graces", "standing", "rank", "how am i doing"],
+    fetchTargets: ["fitness/standing"],
+    guidelines:
+HEAD("Where she stands") +
+`Answer from the Fitness standing block.
+
+Lead with what she asked for. If it was a vague "how am I doing", the streak
+and the level are the two she cares about — the rest is detail.
+
+── GRACE ──
+"Grace: 1 of 2 used this week" means one protected rest day left. If she is
+asking how many she has, that line is the answer. Asking is not spending —
+do not send a grace action for a question.
+
+── STREAK ──
+Days trained, not sessions. If the best is higher than the current, that is
+a record to beat, not a failure — say it that way.` + "\n" + RULE
+},
+
+{
+    name: "Fitness: What's next",
+    intent: "FITNESS_NEXT",
+    blockType: "instruction",
+    priority: 4,
+    keywords: ["next workout", "workout today", "training today", "whats next",
+               "today's workout", "todays workout", "scheduled", "schedule",
+               "plan", "planned", "deck", "session today", "due"],
+    fetchTargets: ["fitness/next"],
+    guidelines:
+HEAD("What she's meant to be training") +
+`Answer from the Next workout block.
+
+TODAY means it is sitting in the Active Session waiting for her. Name the
+workout and what it hits, not the full exercise list unless she asks.
+
+── DEFERRED ──
+"Deferred / missed" is work that has rolled past its date. Mention it once,
+without nagging. If there is a lot of it, that is worth saying plainly — it
+usually means the plan is too heavy, not that she is failing.
+
+── SHE STILL HAS TO OPEN IT ──
+You cannot start or finish a session for her.` + "\n" + RULE
+},
+
+{
+    name: "Fitness: Workout history",
+    intent: "FITNESS_HISTORY",
+    blockType: "instruction",
+    priority: 4,
+    /* Both tenses. Keyword matching is whole-word, so "trained" does not
+       match "when did I last train" — the commonest way she asks it. */
+    keywords: ["workout history", "last workout", "recent workouts", "sessions",
+               "last session", "train", "trained", "training", "worked out",
+               "archive", "log book", "when did i train", "last time i trained",
+               "last train", "last trained"],
+    requireNone: ["today", "next", "scheduled", "plan", "planned"],
+    fetchTargets: ["fitness/recent"],
+    guidelines:
+HEAD("What she has actually done") +
+`Answer from the Recent workouts block. Newest first, with the MGP, FP and
+prestige each one actually paid.
+
+── "5/6 done" ──
+Exercises completed out of planned. A partial session is still a session —
+the hub pays for it and so should you.
+
+── OLDER ENTRIES ──
+Sessions from before the hub started recording its own totals show only a
+date and a name. Say the numbers were not kept then; do not reconstruct
+them.` + "\n" + RULE
+},
+
+{
+    name: "Fitness: Measurements",
+    intent: "FITNESS_MEASUREMENTS",
+    blockType: "instruction",
+    priority: 4,
+    keywords: ["measurement", "measurements", "measure", "measured", "waist",
+               "hips", "bicep", "thigh", "calf", "chest size", "weigh",
+               "weight", "bmi", "tape", "stats"],
+    requireNone: ["log", "record", "put", "set"],
+    fetchTargets: ["fitness/measurements"],
+    guidelines:
+HEAD("Her body measurements") +
+`Answer from the Measurements block.
+
+── HOW OLD IS IT ──
+"Last logged 5 days ago" is usually the real question. If it is more than a
+fortnight, mention it once — she keeps a quote in the hub reminding herself
+to update them.
+
+── CARRIED VALUES ──
+"Carried from earlier entries" means those parts were NOT measured on the
+last date; they are the most recent reading there is. Never present a
+carried number as though she took it that day.
+
+── GOALS ──
+"(goal 65)" is a target she set. Report distance to it if she asks, plainly.` + "\n" + RULE
+},
+
+{
+    name: "Fitness: Progress photos",
+    intent: "FITNESS_GALLERY",
+    blockType: "instruction",
+    priority: 4,
+    keywords: ["progress photo", "progress photos", "gallery", "photos",
+               "pictures", "upload", "uploads", "uploaded", "posted",
+               "last photo", "selfie"],
+    fetchTargets: ["fitness/gallery"],
+    guidelines:
+HEAD("Her progress gallery") +
+`Answer from the Progress gallery block — how many posts, how recent, and
+what angles each one has.
+
+Photos are hers. Report dates, tags and notes; do not describe or judge how
+she looks, and do not comment on change between shots unless she asks
+directly what the log says.
+
+You cannot upload for her — the gallery takes image links, pasted in the
+app.` + "\n" + RULE
+},
+
+{
+    name: "Fitness: Muscle levels",
+    intent: "FITNESS_MUSCLES",
+    blockType: "instruction",
+    priority: 4,
+    /* "skipping" deliberately absent — it belongs to Grace far more often
+       than to this ("I'm skipping today" is a rest day, not a question
+       about leg volume), and having it in both pulled a muscle read onto
+       every skipped session. */
+    keywords: ["muscle", "muscles", "muscle level", "muscle levels", "muscle group",
+               "muscle groups", "legs", "glutes", "arms", "abs",
+               "neglecting", "neglected", "weakest", "strongest", "behind on"],
+    fetchTargets: ["fitness/muscles"],
+    guidelines:
+HEAD("Which muscle groups have the work in them") +
+`Answer from the Muscle levels block. Each group levels on its own MGP.
+
+── THIS IS THE USEFUL ONE ──
+"Untouched" groups are the honest answer to "what am I neglecting". Say it
+without scolding — it is a gap in the plan, not a character flaw.
+
+Suggest at most one or two groups to bring up. A list of everything she is
+behind on is not advice, it is a wall.` + "\n" + RULE
+},
+
+{
+    name: "Fitness: This week",
+    intent: "FITNESS_WEEKLY",
+    blockType: "instruction",
+    priority: 4,
+    keywords: ["this week", "weekly", "week so far", "weekly performance",
+               "how many workouts", "how much training", "productivity time",
+               "gym time", "how often"],
+    fetchTargets: ["fitness/weekly"],
+    guidelines:
+HEAD("The last seven days") +
+`Answer from the This week in the gym block — sessions, exercises, time, and
+what it paid.
+
+"Trained: Sat, Mon" is the shape of her week. Two good days and a gap is a
+different conversation from five thin ones; read it before you comment.
+
+A quiet week is a fact, not a verdict. If she asks why it is quiet, the
+answer is in the deferred list or the grace log, not in her character.` + "\n" + RULE
+},
+
+
+/* ══════════════════════════════════════════════════════════════════
+   DOING — window 1 on every one. An action must never read stale
+   words: "grace" three messages ago must not combine with "yes" now
+   and spend a rest day she never asked for.
+   ══════════════════════════════════════════════════════════════════ */
+
+{
+    name: "Fitness: Grace protocol",
+    intent: "FITNESS_GRACE",
+    blockType: "instruction",
+    priority: 5,
+    window: 1,
+    cooldown: 2,
+    keywords: ["grace", "rest day", "skip", "skipping", "too busy", "cant train",
+               "cannot train", "day off", "not training", "resting", "flare",
+               "flaring", "sick", "unwell", "exhausted"],
+    requireAny: ["grace", "rest day", "skip", "skipping", "too busy", "cant train",
+                 "cannot train", "day off", "not training", "resting", "flare",
+                 "flaring", "sick", "unwell", "exhausted"],
+    requireNone: ASKING,
+    fetchTargets: ["fitness/standing"],
+    writeFields: ["action"],
+    guidelines:
+HEAD("She's not training today", "fitness_grace") +
+`Send fitness_grace with the reason in HER words — "PCOS flare", "travel",
+"too busy", whatever she actually said. It pauses the streak without breaking
+it and writes the reason onto her calendar.
+
+── ASKING IS NOT SPENDING ──
+"How many grace days do I have left" is a QUESTION. Answer it from the
+standing block. Only send the action when she is telling you she is taking
+the day.
+
+── TWO A WEEK ──
+Check the standing block first. If both are gone, say so BEFORE sending it —
+the day still gets logged but the streak is not protected, and she should
+know that is the trade she is making rather than find out after.
+
+── DON'T TALK HER OUT OF IT ──
+She decided. Confirm what you did and how many she has left. A rest day she
+chose is part of the program; the hub treats it that way and so should you.` + "\n" + RULE
+},
+
+{
+    name: "Fitness: Luteal phase",
+    intent: "FITNESS_LUTEAL",
+    blockType: "instruction",
+    priority: 5,
+    window: 1,
+    keywords: ["luteal", "luteal phase", "luteal bonus"],
+    requireAny: ["luteal"],
+    requireNone: ASKING,
+    fetchTargets: ["fitness/standing"],
+    writeFields: ["action"],
+    guidelines:
+HEAD("Turning the luteal bonus on or off", "fitness_luteal") +
+`Send fitness_luteal with on exactly "on" or "off".
+
+While it is on every workout scores 25% more, and it STAYS on until she
+turns it off. So:
+
+  · turning it on, say it will stay on until she says otherwise
+  · if she says the phase has ended, turn it off
+
+Leaving it on past the phase quietly inflates everything she logs, which
+makes her own history lie to her later. If she has had it on a long time and
+mentions her cycle moving on, it is worth asking.
+
+"Am I in luteal" is a question, not an instruction — do not send the action
+for it.` + "\n" + RULE
+},
+
+{
+    name: "Fitness: Log a measurement",
+    intent: "FITNESS_MEASURE_LOG",
+    blockType: "instruction",
+    priority: 5,
+    window: 1,
+    keywords: ["log", "record", "put", "set", "measurement", "measurements",
+               "waist", "hips", "bicep", "thigh", "calf", "weigh", "weight"],
+    requireAll: ["log"],
+    requireNone: ["how many", "how much", "when", "whats", "what", "did i", "have i"],
+    writeFields: ["action"],
+    guidelines:
+HEAD("Writing down a measurement", "fitness_measure") +
+`Send fitness_measure with values holding ONLY the parts she actually said.
+
+  "log my weight, 52"              → {"Weight":52}
+  "waist 70 and hips 95"           → {"Waist":70,"Hips":95}
+
+── NEVER FILL IN THE GAPS ──
+Do not carry a part forward from a previous entry, estimate one, or convert
+between units. Once written, a number you inferred is indistinguishable from
+one she measured — the hub stores sparse records specifically so that a
+three-week-old waist never masquerades as today's.
+
+Weight is kilograms, everything else centimetres. If she gives a number
+without a part, or a part without a number, ask.
+
+Valid parts: Weight, Shoulders, Chest, Left Bicep, Right Bicep, Left Forearm,
+Right Forearm, Upper Abs, Waist, Lower Abs, Hips, Left Thigh, Right Thigh,
+Left Calf, Right Calf.` + "\n" + RULE
+}
+
+];
+
+const logEl = document.getElementById('log');
+const say = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+};
+
+document.getElementById('go').onclick = async () => {
+    const btn = document.getElementById('go');
+    btn.disabled = true;
+    logEl.textContent = '';
+
+    try {
+        const catSnap = await get(ref(db, 'poppyEngine/categories'));
+        const cats = catSnap.val() || {};
+        if (!Object.values(cats).includes(CATEGORY)) {
+            await push(ref(db, 'poppyEngine/categories'), CATEGORY);
+            say('+ category "' + CATEGORY + '"', 'new');
+        } else {
+            say('- category "' + CATEGORY + '" already there', 'ok');
+        }
+
+        const intentPatch = {};
+        ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
+        await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
+        say('- ' + Object.keys(intentPatch).length + ' intents registered', 'ok');
+
+        const entSnap = await get(ref(db, 'poppyEngine/entries'));
+        const existing = entSnap.val() || {};
+        const byName = {};
+        Object.entries(existing).forEach(([id, e]) => {
+            if (e && e.name) byName[e.name] = id;
+        });
+
+        let n = Object.keys(existing).length;
+
+        for (const src of ENTRIES) {
+            const id = byName[src.name];
+            const was = id ? existing[id] : null;
+
+            const entry = {
+                name:         src.name,
+                category:     CATEGORY,
+                intent:       src.intent,
+                keywords:     src.keywords || [],
+                priority:     src.priority || 4,
+                order:        was && was.order != null ? was.order : n++,
+                hidden:       false,
+                window:       src.window != null ? src.window : null,
+                cooldown:     src.cooldown || 0,
+                blockType:    src.blockType || "instruction",
+                guidelines:   src.guidelines,
+                Shifts:       [],
+                fetchTargets: src.fetchTargets || [],
+                writeFields:  src.writeFields || [],
+                requireAny:   src.requireAny  || [],
+                requireAll:   src.requireAll  || [],
+                requireNone:  src.requireNone || [],
+                notAll:       src.notAll      || [],
+                updatedAt:    Date.now()
+            };
+
+            if (id) {
+                entry.createdAt = was.createdAt || Date.now();
+                await set(ref(db, 'poppyEngine/entries/' + id), entry);
+                say('~ updated  ' + src.name, 'ok');
+            } else {
+                entry.createdAt = Date.now();
+                await push(ref(db, 'poppyEngine/entries'), entry);
+                say('+ created  ' + src.name, 'new');
+            }
+        }
+
+        say('');
+        say('Done. Open the editor, then Export PoppyEngine.js and paste it', 'new');
+        say('over JS/poppy/PoppyEngine-core.js.', 'new');
+
+    } catch (err) {
+        say('');
+        say('Failed: ' + err.message, 'err');
+        say('Entries are matched by name, so just run it again.', 'err');
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

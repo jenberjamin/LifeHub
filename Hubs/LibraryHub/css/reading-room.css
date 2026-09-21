@@ -1,0 +1,1127 @@
+ :root {
+        /* Default Theme: "Holy Water" (Paper/Light) */
+        --bg-app: #f4f1ea;       /* Creamy Paper Background */
+        --bg-sidebar: #eae7df;   /* Slightly darker sidebar */
+        --text-main: #2c2c2c;    /* Soft Black */
+        --text-muted: #666;
+        --border-color: #d1cfc7;
+        --accent-color: #d4af37; /* Gold remains */
+        
+        --font-body: 'Lora', serif;
+        --font-ui: 'Red Hat Display', sans-serif;
+        
+        --reader-width: 1100px;
+        --font-size: 20px;
+        --line-height: 1.8;
+    }
+
+    /* Night Vision Theme Override (Soft Midnight) */
+body.night-mode {
+    /* The Background: Deep Charcoal, not Pitch Black */
+    --bg-app: #18181b;       
+    
+    /* The Sidebar: A distinct, slightly lighter matte grey */
+    --bg-sidebar: #27272a;   
+    
+    /* The Text: Soft White (88% brightness), never pure #FFF */
+    --text-main: #e4e4e7;    
+    
+    /* Secondary Text: Cool Grey */
+    --text-muted: #a1a1aa;   
+    
+    /* Borders: Subtle, low-contrast edges */
+    --border-color: #3f3f46; 
+    
+    /* Accent: A slightly muted gold (so it glows less intensely) */
+    --accent-color: #d4af37; 
+}
+
+/* Update the Glass Sidebar for Night Mode to match the new Grey */
+body.night-mode .sidebar {
+    /* Increased opacity slightly for better legibility against the grey */
+    background: rgba(30, 30, 35, 0.85); 
+    border-right: 1px solid rgba(255, 255, 255, 0.08); 
+    box-shadow: 5px 0 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Soften the menu items in Night Mode */
+body.night-mode .menu-item:hover { 
+    background: rgba(255, 255, 255, 0.08); 
+}
+body.night-mode .menu-item.active { 
+    background: rgba(255, 255, 255, 0.12); 
+}
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        height: 100vh; overflow: hidden;
+        font-family: var(--font-ui);
+        background: var(--bg-app);
+        color: var(--text-main);
+        transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* --- LAYOUT GRID --- */
+    .app-layout {
+        display: flex; height: 100%; width: 100%;
+    }
+
+    /* --- SIDEBAR --- */
+    .sidebar {
+    width: 280px;
+    
+    /* 1. The Glass Effect */
+    background: rgba(255, 255, 255, 0.65); /* See-through tint */
+    backdrop-filter: blur(20px) saturate(160%); /* The Frost */
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    
+    /* 2. Premium Borders & Shadows */
+    border-right: 1px solid rgba(255, 255, 255, 0.4); /* Subtle light edge */
+    box-shadow: 5px 0 30px rgba(0, 0, 0, 0.03); /* Very soft shadow to lift it */
+    
+    /* 3. Layout Essentials */
+    display: flex; flex-direction: column;
+    padding: 20px;
+    flex-shrink: 0; 
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;     
+    white-space: nowrap;  
+    z-index: 100; /* Sits nicely relative to content */
+}
+
+/* THE HIDDEN STATE (No changes needed here, but kept for context) */
+.sidebar.collapsed {
+    width: 0;
+    padding: 0;
+    border: none;
+    opacity: 0;
+}
+
+/* 4. Night Mode Glass Adjustment */
+/* We need to darken the glass at night so it doesn't glow too bright */
+body.night-mode .sidebar {
+    background: rgba(20, 20, 20, 0.75); /* Dark smoked glass */
+    border-right: 1px solid rgba(255, 255, 255, 0.05); /* Faint grey edge */
+    box-shadow: 5px 0 30px rgba(0, 0, 0, 0.2);
+}
+
+    .sidebar-header { 
+        /* TIGHTENED SPACING */
+        margin-bottom: 0px;  /* Removed the gap completely */
+
+        
+        padding-left: 5px;   /* Aligns arrow pleasantly */
+        height: auto;        /* Let it be only as tall as the arrow */
+        display: flex;       /* Keeps structure clean */
+    }
+    
+    .sidebar-cover {
+        /* Size - Slightly larger to be the focal point */
+        width: 120px; 
+        height: 200px;
+        
+        /* Fallback if image fails */
+        background-color: #f4f1ea; 
+        background-size: cover; 
+        background-position: center;
+        
+        /* THE "QUIET LUXURY" MAGIC */
+        /* 1. Soft Curves: No sharp digital corners */
+        border-radius: 12px; 
+        
+        /* 2. Glass Edge: A subtle white rim to separate it from the background */
+        border: 1px solid rgba(255, 255, 255, 0.6); 
+        
+        /* 3. Deep Shadow: Makes it float off the glass sidebar */
+        box-shadow: 
+            0 5px 15px rgba(0,0,0,0.08),  /* Soft ambient shadow */
+            0 15px 35px rgba(0,0,0,0.12); /* Deep grounding shadow */
+        
+        /* Spacing */
+        margin: 0 auto 30px auto; /* Centers the book in the sidebar */
+        align-self: center;       /* Ensures flexbox respects the center */
+        
+        /* Interaction */
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        cursor: pointer;
+    }
+
+    /* Optional: When you hover over the cover, it lifts slightly */
+    .sidebar-cover:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+    }
+
+    .menu-stack { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+
+    .menu-item {
+    display: flex; align-items: center; gap: 15px;
+    padding: 12px 10px;
+    color: var(--text-muted);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; border-radius: 8px; /* Rounder corners */
+    transition: 0.2s;
+}
+
+/* Make the hover look like a "cutout" in the glass */
+.menu-item:hover { 
+    background: rgba(0,0,0,0.05); 
+    color: var(--text-main); 
+    transform: translateX(5px); /* Subtle slide to the right */
+}
+
+.menu-item.active { 
+    color: var(--accent-color); 
+    font-weight: 700; 
+    background: rgba(255,255,255,0.5); /* Highlight active item */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* Night Mode Hover Fix */
+body.night-mode .menu-item:hover { background: rgba(255,255,255,0.1); }
+body.night-mode .menu-item.active { background: rgba(255,255,255,0.15); }
+    
+    .sidebar-footer {
+        border-top: 1px solid var(--border-color);
+        padding-top: 20px; display: flex; flex-direction: column; gap: 5px;
+    }
+
+    /* --- MAIN READER --- */
+    .main-reader {
+        flex: 1; display: flex; flex-direction: column;
+        background: var(--bg-app);
+        position: relative;
+    }
+
+    .reader-header {
+    position: relative; /* <-- CRITICAL CHANGE */
+    height: 70px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 40px;
+    border-bottom: 1px solid transparent; 
+}
+
+    .header-center { text-align: center; }
+    .header-center h1 { font-family: 'Cinzel', serif; font-size: 18px; margin-bottom: 4px; }
+    .chapter-meta { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; }
+
+    .icon-btn {
+        background: transparent; border: none;
+        color: var(--text-muted); cursor: pointer;
+        padding: 8px; border-radius: 50%;
+        transition: 0.2s;
+    }
+    .icon-btn:hover, .icon-btn.active { color: var(--text-main); background: rgba(0,0,0,0.05); }
+
+    /* --- CONTENT AREA --- */
+    .content-wrapper {
+        flex: 1; overflow-y: auto;
+        padding: 40px; scroll-behavior: smooth;
+    }
+
+    /* BOOK TEXT ONLY.
+       'white-space: pre-wrap' is what keeps a novel's paragraph breaks, but it
+       also renders every newline and indent in the SOURCE as real whitespace.
+       That is fine for text injected by JS; it is ruinous for hand-written
+       markup. So this class must never be put on a UI panel -- use
+       .reader-panel below for those. */
+    .text-container {
+        max-width: var(--reader-width);
+        margin: 0 auto;
+        font-family: var(--font-body);
+        font-size: var(--font-size);
+        line-height: var(--line-height);
+        color: var(--text-main);
+        text-align: justify; /* Newspaper style alignment */
+        white-space: pre-wrap;
+    }
+
+    /* UI PANELS: Bookmarks, Annotations, Word Bank, About.
+       These used to share .text-container, which meant three separate problems:
+         1. pre-wrap turned every line break in their markup into blank space,
+            so formatting the HTML pushed content off the screen;
+         2. they inherited --font-size / --line-height, so the reading-font
+            sliders resized the interface along with the book;
+         3. they inherited --reader-width, so the page-width control squeezed
+            them too.
+       A panel is chrome, not prose. It gets its own stable type scale. */
+    .reader-panel {
+        max-width: 820px;
+        margin: 0 auto;
+        font-family: var(--font-ui, var(--font-body));
+        font-size: 14px;          /* fixed: NOT the reader's font size */
+        line-height: 1.6;         /* fixed: NOT the reader's line height */
+        color: var(--text-main);
+        text-align: left;         /* justify belongs to prose, not labels */
+        white-space: normal;      /* markup formatting stops being content */
+    }
+
+    /* ONE header structure for every panel.
+       Each panel used to style its own <h1> inline -- 10/10 here, 20/30 there,
+       15/15 in About -- and three of them never reset the browser's default
+       h1 margin-top (~21px), which About did. That alone made the sections
+       start at different heights no matter what else was adjusted.
+
+       .panel-head is the row (rule + spacing below it);
+       .panel-header is the title; anything else in the row floats right. */
+    .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin: 0 0 24px 0;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.1));
+    }
+
+    .panel-header {
+        font-family: 'Cinzel', serif;
+        font-size: 22px;
+        line-height: 1.3;
+        color: var(--text-main);
+        margin: 0;                /* the row owns the spacing, not the title */
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .panel-header .material-symbols-outlined {
+        font-size: 24px;
+        color: var(--accent-color);
+    }
+
+    /* Trailing item in a header row: the word count, the filter dots. */
+    .panel-head-aside {
+        flex: 0 0 auto;
+        font-family: var(--font-ui, inherit);
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    /* Panel body lists -- gaps were 20px, 15px and 15px across the three. */
+    .panel-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .panel-list.is-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+
+    .pdf-container { width: 100%; height: 100%; display: none; }
+
+    /* --- PREMIUM TOP BAR (Glassmorphism) --- */
+.settings-bar {
+    display: none;
+    flex-direction: column !important; 
+    width: 70px; 
+    
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 40px; 
+    padding: 20px 0;    
+    gap: 15px;           
+    
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        
+    position: absolute; 
+    /* CHANGE 1: START ON THE RIGHT */
+    top: 100px; 
+    right: 30px; /* <--- Now it lives here */
+    left: auto;  /* Ensure left is ignored */
+    
+    z-index: 500;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.1s;
+}
+
+.settings-bar.active { display: flex !important; }
+.settings-bar:active { cursor: grabbing; transform: scale(1.02); }
+
+/* Night Mode Adjustment */
+body.night-mode .settings-bar {
+    background: rgba(30, 30, 30, 0.75);
+    border-color: rgba(255,255,255,0.1);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+}
+
+/* --- BUTTONS INSIDE THE TOWER --- */
+.tool-btn {
+    background: transparent; border: none;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer; padding: 10px 5px;
+    color: var(--text-muted);
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    
+    /* Make buttons rounder */
+    border-radius: 12px;
+    width: 50px; margin: 0 auto; /* Center in the tower */
+}
+
+.tool-btn:hover { 
+    background: rgba(255, 255, 255, 0.5); /* Light highlight */
+    color: var(--accent-color); 
+    transform: scale(1.1); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.tool-btn span.material-symbols-outlined { font-size: 24px; }
+.tool-label { font-size: 8px; font-weight: 700; letter-spacing: 0.5px; opacity: 0.8; }
+
+/* --- SIDE-FLYOUT MENUS (Important for Vertical Bar) --- */
+.tool-popup {
+    position: absolute; 
+    
+    /* CHANGE 2: FLY OUT TO THE LEFT */
+    left: auto;      /* unset left */
+    right: 120%;     /* Push to the left of the tower */
+    
+    top: 50%; 
+    transform: translateY(-50%) translateX(10px); /* Start slightly right for anim */
+    
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,0,0,0.05);
+    padding: 12px; border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    
+    display: none; 
+    opacity: 0;
+    gap: 8px; white-space: nowrap;
+    z-index: 501;
+    pointer-events: auto;
+    transition: all 0.2s ease;
+}
+
+.tool-popup.active { 
+    display: flex; 
+    opacity: 1;
+    transform: translateY(-50%) translateX(0); 
+}
+
+/* SPECIAL CASE: FONT GRID (Only Grid when Active) */
+#tool-font.active {
+    display: grid !important; 
+}
+
+/* Night Mode Popup */
+body.night-mode .tool-popup { background: #222; border-color: #333; }
+
+/* UI Elements inside Popups */
+.mini-slider { width: 100px; accent-color: var(--accent-color); cursor: pointer; pointer-events: auto; }
+
+.color-dot, .theme-dot {
+    width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.1); transition: 0.2s; pointer-events: auto;
+}
+.theme-light  { background: #f4f1ea; } /* Cream */
+.theme-sepia  { background: #e8dcb8; } /* Sepia */
+.theme-dark   { background: #2c2c2c; } /* Dark Grey */
+.theme-matrix { background: #000000; border-color: #00ff41; } /* Black & Green */
+.color-dot:hover, .theme-dot:hover { transform: scale(1.2); }
+
+@keyframes floatDown { from { opacity: 0; transform: translate(50%, -10px); } to { opacity: 1; transform: translate(50%, 0); } }
+
+/* Font Grid Buttons */
+.font-btn {
+    border: 1px solid rgba(0,0,0,0.1);
+    background: transparent;
+    padding: 8px;
+    font-size: 11px;
+    cursor: pointer;
+    pointer-events: auto;
+    border-radius: 4px;
+    text-align: center;
+    color: var(--text-main);
+    transition: 0.2s;
+}
+.font-btn:hover {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+/* NEW: The Gold Thread */
+.reading-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px; /* Thin and elegant */
+    background: var(--accent-color); /* Matches your gold theme */
+    width: 0%; /* Starts at 0 */
+    transition: width 0.1s linear; /* Smooth movement */
+    z-index: 10;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5); /* Glowing effect */
+}
+
+.progress-text {
+    font-family: var(--font-ui); /* Matches the UI font */
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-color);  /* Gold */
+    margin-right: 20px;          /* Breathing room from the buttons */
+    opacity: 0.9;
+    letter-spacing: 1px;
+    min-width: 35px;             /* Keeps layout stable as numbers change */
+    text-align: right;
+}
+
+
+    /* Hover Effect: Subtle highlight to show it's active */
+    .smart-paragraph:hover {
+    background: rgba(212, 175, 55, 0.05); /* Very faint gold highlight on hover */
+    color: var(--text-main);
+    box-shadow: -4px 0 0 var(--accent-color); /* A gold bar on the left */
+    padding-left: 10px; /* Nudge text slightly to make room for bar */
+}
+
+    /* Active State: If we ever want to highlight what is currently being read */
+    .smart-paragraph {
+    transition: all 0.2s ease;
+    padding-left: 0; 
+}
+
+/* --- CONTEXT MENU (The Pop-up) --- */
+    .context-menu {
+    display: none; 
+    position: fixed; 
+    z-index: 2147483647; 
+    
+    /* THE GLASS EFFECT */
+    background: rgba(255, 255, 255, 0.85); /* 85% opacity white */
+    backdrop-filter: blur(12px) saturate(180%); /* Blurs content behind it */
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    
+    /* Borders & Shadows */
+    border: 1px solid rgba(212, 175, 55, 0.3); /* Subtle Gold Border */
+    box-shadow: 
+        0 10px 40px rgba(0,0,0,0.15), /* Soft ambient shadow */
+        0 4px 12px rgba(0,0,0,0.1);   /* Sharp depth shadow */
+    
+    padding: 8px; /* Tighter padding for a cleaner look */
+    border-radius: 12px; /* Smoother, modern corners */
+    min-width: 180px;
+    
+    /* Animation */
+    animation: menuFadeIn 0.2s ease-out forwards;
+    transform-origin: top left;
+}
+
+@keyframes menuFadeIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-5px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+
+/* Ensure the button inside is visible */
+.context-menu button {
+    background: transparent;
+    border: none;
+    color: var(--text-main); /* Adapts to theme */
+    cursor: pointer;
+    
+    /* Typography */
+    font-family: var(--font-ui);
+    font-size: 13px;       /* Refined size */
+    font-weight: 500;      /* Medium weight (Not Fat/Bold) */
+    letter-spacing: 0.5px;
+    
+    /* Layout */
+    display: flex; 
+    align-items: center; 
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;    /* Comfortable click area */
+    border-radius: 8px;    /* Rounded hover selection */
+    transition: all 0.2s ease;
+}
+
+.context-menu button:hover {
+    background: rgba(212, 175, 55, 0.1); /* Soft Gold Highlight */
+    color: #000;
+}
+
+/* Icons inside the menu */
+.context-menu button span.material-symbols-outlined {
+    font-size: 18px; /* Smaller, cleaner icons */
+    color: var(--text-muted);
+}
+.context-menu button:hover span.material-symbols-outlined {
+    color: var(--accent-color); /* Icon turns gold on hover */
+}
+
+/* --- NIGHT MODE SUPPORT --- */
+body.night-mode .context-menu {
+    background: rgba(30, 30, 30, 0.85); /* Dark Glass */
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e4e4e7;
+}
+
+body.night-mode .context-menu button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+    @keyframes popIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+.sidebar-footer .menu-item {
+    font-size: 11px; /* Reduced from 13px */
+    padding: 10px 10px; /* Slightly tighter padding */
+    gap: 12px;
+}
+
+/* --- BOOKMARKS VIEW SPECIFIC --- */
+#bookmarksView {
+    text-align: left !important;
+    white-space: normal !important;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.bookmark-item {
+    display: flex; 
+    flex-direction: column; /* Stack date on top of text for a cleaner look */
+    gap: 10px; 
+    padding: 25px; 
+    background: #fff; /* Card look */
+    border: 1px solid rgba(0,0,0,0.05);
+    border-left: 3px solid var(--accent-color); /* Gold spine */
+    border-radius: 8px;
+    cursor: pointer; 
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative; /* Needed for positioning the delete button */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+
+.bookmark-item:hover {
+    transform: translateY(-3px); /* Lifts up */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.bookmark-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding-bottom: 10px;
+    margin-bottom: 5px;
+}
+
+.bookmark-date {
+    font-family: var(--font-ui); 
+    font-size: 10px; 
+    color: var(--text-muted); 
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    display: flex; align-items: center; gap: 6px;
+}
+
+.bookmark-text {
+    font-family: var(--font-body); 
+    font-size: 15px; 
+    color: var(--text-main); 
+    line-height: 1.6;
+    font-style: italic;
+}
+
+/* The Trash Can - Hidden by default */
+.delete-bookmark-btn {
+    opacity: 0;
+    color: #ccc;
+    transition: 0.2s;
+    padding: 5px;
+}
+.delete-bookmark-btn:hover { color: #ff4444; transform: scale(1.1); }
+.bookmark-item:hover .delete-bookmark-btn { opacity: 1; }
+
+/* Night Mode adjustment */
+body.night-mode .bookmark-item {
+    background: #222;
+    border-color: #333;
+    border-left-color: var(--accent-color);
+}
+body.night-mode .delete-bookmark-btn:hover { color: #ff6666; }
+
+
+/* --- WORD BANK STYLES (Refined) --- */
+
+/* 1. Force the Container to the Top */
+#wordBankView {
+    /* REMOVED: display: block !important; */
+    /* We trust the JavaScript to handle display: none/block now */
+    
+    margin-top: 0 !important; 
+    padding-top: 20px !important; /* Small breathing room */
+    max-width: 900px; 
+    margin-left: auto;
+    margin-right: auto;
+    
+    /* RESET TEXT RULES */
+    white-space: normal !important; 
+    text-align: left !important;
+}
+
+/* 2. The Header - Row Layout */
+#wordBankView h1 {
+    display: flex !important;
+    flex-direction: row !important; /* Forces Icon next to Text */
+    justify-content: space-between !important;
+    align-items: center !important;
+    
+    margin-top: 0 !important;
+    margin-bottom: 25px !important;
+    padding-bottom: 15px !important;
+    border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+    
+    font-size: 30px;
+    line-height: 1.2;
+}
+
+/* 3. The Grid */
+#wordBankList {
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+    gap: 15px;
+    padding-bottom: 50px;
+}
+
+/* 4. The Card */
+.vocab-card {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-left: 3px solid var(--accent-color);
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.2s ease;
+    position: relative;
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 120px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.vocab-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.vocab-word {
+    font-family: var(--font-body);
+    font-size: 18px; 
+    font-weight: 700;
+    color: var(--text-main);
+    text-transform: capitalize;
+}
+
+.vocab-def {
+    font-family: var(--font-ui);
+    font-size: 13px; 
+    color: var(--text-muted);
+    line-height: 1.5;
+    flex: 1;
+}
+
+.vocab-meta {
+    font-size: 10px; 
+    color: #aaa; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    margin-top: 10px; 
+    border-top: 1px solid rgba(0,0,0,0.05);
+    padding-top: 8px;
+}
+
+.delete-vocab {
+    position: absolute; top: 10px; right: 10px;
+    cursor: pointer; opacity: 0; transition: 0.2s;
+    color: #ff9999; font-size: 16px;
+}
+.vocab-card:hover .delete-vocab { opacity: 1; }
+.delete-vocab:hover { color: #ff4444; }
+
+/* Night Mode Support */
+body.night-mode .vocab-card {
+    background: #222;
+    border: 1px solid #333;
+    border-left: 3px solid var(--accent-color);
+}
+body.night-mode .vocab-word { color: #e4e4e7; }
+body.night-mode .vocab-def { color: #a1a1aa; }
+
+/* --- ANNOTATIONS VIEW (Refined Layout) --- */
+
+/* 1. Main Container - Fixes the "Header Gap" */
+#annotationsView {
+    margin-top: 0 !important;
+    padding-top: 20px !important;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    
+    /* THE KEY FIX: Resets text rules so layout doesn't break */
+    white-space: normal !important; 
+    text-align: left !important;
+}
+
+#annotationsView h1 {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    
+    margin-top: 0 !important;
+    margin-bottom: 25px !important;
+    padding-bottom: 15px !important;
+    border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+    
+    font-size: 30px;
+}
+
+/* 2. The Grid - Makes boxes smaller & uniform */
+#annotationsList {
+    display: grid;
+    /* Creates columns that are approx 280px wide */
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+    gap: 15px;
+    padding-bottom: 50px;
+}
+
+/* 3. The Card - Tighter & Cleaner */
+.annotation-card {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-left-width: 4px; /* The colored strip */
+    border-left-style: solid; 
+    
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px;
+    
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    height: 100%; /* Ensures all cards in a row match height */
+}
+
+.annotation-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.annotation-date {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    color: #aaa;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex; justify-content: space-between;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+    padding-bottom: 5px;
+}
+
+/* 4. The Text Content - Clamped & Tidy */
+.annotation-quote {
+    font-family: var(--font-body);
+    font-size: 13px;  
+    line-height: 1.6; 
+    color: var(--text-main);
+    font-style: italic;
+    
+    word-wrap: break-word; 
+    white-space: pre-wrap; 
+}
+
+/* Night Mode */
+body.night-mode .annotation-card {
+    background: #222;
+    border: 1px solid #333;
+    /* border-left-color is handled by JS inline styles */
+}
+
+/* --- COLOR PICKER SWATCHES (Restored) --- */
+.color-swatch {
+    width: 24px; 
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.color-swatch:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* --- ANNOTATION CARD ACTIONS (Icons) --- */
+.annotation-card {
+    position: relative; /* Needed to position icons absolute */
+    /* ... keep your existing styles ... */
+}
+
+.card-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+}
+
+.action-icon {
+    font-size: 16px;
+    cursor: pointer;
+    color: #ccc; /* Default Grey */
+    transition: 0.2s;
+}
+
+.action-icon:hover {
+    color: var(--text-main);
+    transform: scale(1.1);
+}
+
+.delete-icon:hover { color: #ff4444; }
+
+/* --- THE NOTE MODAL STYLES --- */
+.note-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.3); /* Dim background */
+    z-index: 2147483650;
+    display: flex; justify-content: center; align-items: center;
+    backdrop-filter: blur(2px);
+}
+
+.note-box {
+    background: white;
+    width: 320px;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    display: flex; flex-direction: column; gap: 15px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.note-header {
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--text-muted);
+}
+
+#noteInput {
+    width: 100%; height: 150px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    background: #fafafa;
+}
+#noteInput:focus { background: #fff; border-color: var(--accent-color); }
+
+.save-note-btn {
+    background: var(--text-main); color: white;
+    border: none; padding: 10px;
+    border-radius: 6px; cursor: pointer;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+}
+.save-note-btn:hover { opacity: 0.9; }
+
+/* Night Mode for Modal */
+body.night-mode .note-box { background: #222; border: 1px solid #333; }
+body.night-mode #noteInput { background: #1a1a1a; border-color: #333; color: #ddd; }
+body.night-mode .save-note-btn { background: var(--accent-color); color: #000; }
+
+/* --- SIMPLE MODAL STYLES --- */
+.simple-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.4); /* Dimmed background */
+    backdrop-filter: blur(4px);      /* The "Frosted Glass" look */
+    z-index: 3000;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.simple-modal-box {
+    background: var(--bg-app);
+    width: 350px;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+    display: flex; flex-direction: column; gap: 15px;
+}
+
+.simple-modal-header {
+    font-family: var(--font-ui);
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    color: var(--accent-color);
+    text-align: center;
+}
+
+#simpleNoteInput {
+    width: 100%; height: 120px;
+    padding: 12px;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    background: rgba(0,0,0,0.02);
+    color: var(--text-main);
+}
+#simpleNoteInput:focus { border-color: var(--accent-color); background: transparent; }
+
+.simple-modal-actions {
+    display: flex; justify-content: space-between; gap: 10px;
+}
+
+.simple-btn {
+    flex: 1; padding: 12px;
+    border: none; border-radius: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    cursor: pointer; transition: 0.2s;
+}
+.simple-btn.cancel { background: transparent; color: var(--text-muted); border: 1px solid rgba(0,0,0,0.1); }
+.simple-btn.cancel:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
+
+.simple-btn.save { background: var(--text-main); color: var(--bg-app); }
+.simple-btn.save:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* Night Mode Support */
+body.night-mode .simple-modal-box { background: #222; border-color: #333; }
+body.night-mode #simpleNoteInput { background: #1a1a1a; border-color: #333; }
+body.night-mode .simple-btn.save { background: var(--accent-color); color: #000; }
+
+/* --- FILTER BAR STYLES --- */
+.filter-bar {
+    display: flex; 
+    gap: 8px;
+}
+
+.filter-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.1);
+    opacity: 0.5; /* Dimmed by default */
+    transform: scale(0.9);
+}
+
+.filter-dot:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* When a filter is selected, it lights up and gets a ring */
+.filter-dot.active {
+    opacity: 1;
+    transform: scale(1.1);
+    border: 2px solid var(--text-main); /* High contrast border */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* --- DRAG HANDLE STYLES --- */
+.drag-handle {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* Subtle separator */
+    color: var(--text-muted);
+    cursor: grab; /* The Hand appears HERE */
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+    color: var(--accent-color);
+}
+
+/* Reset the main bar cursor so it doesn't look draggable everywhere */
+.settings-bar {
+    cursor: default !important; /* Standard pointer */
+}
+
+/* --- ABOUT VIEW SPECIFIC --- */
+#aboutView {
+    max-width: 700px;
+    margin: 0 auto;
+    /* PULL IT UP: This counteracts the global 40px padding */
+    margin-top: -20px; 
+}
+
+.about-header {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    color: var(--text-main);
+    
+    display: flex; 
+    align-items: center;
+    gap: 12px;
+    
+    /* TIGHT SPACING */
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.about-grid {
+    display: grid;
+    /* First col is tight (120px), Second takes rest */
+    grid-template-columns: 120px 1fr; 
+    
+    /* Zero vertical gap issues */
+    gap: 12px 10px; 
+    align-content: start; /* Prevents rows from spreading out */
+    
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.4;
+    align-items: baseline; /* Aligns Label perfectly with Text */
+}
+
+.about-label {
+    font-family: var(--font-ui);
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-align: left;
+}
+
+.about-value {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.about-divider {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: rgba(0,0,0,0.05);
+    margin: 8px 0; /* Minimal breathing room */
+}
+
+/* Ensure the PDF container takes up vertical space */
+.pdf-container { 
+    width: 100%; 
+    height: 100%; 
+    min-height: 90vh; /* Force it to be tall */
+    display: none; 
+}

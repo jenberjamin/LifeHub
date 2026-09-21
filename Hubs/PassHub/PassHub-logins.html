@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>PassHub | Logins</title>
+   
+    <link rel="icon" type="image/png" href="css/files/PassHub.png">
+    <link rel="stylesheet" href="css/passhub-logins.css">
+ 
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+</head>
+<body>
+
+    <header>
+        <button id="back-btn" class="nav-btn">← PassHub</button>
+        <h1>Logins</h1>
+        <button id="new-login-btn" class="nav-btn primary">+ New</button>
+    </header>
+
+    <main>
+        <div id="category-dashboard" class="category-grid">
+            </div>
+
+        <div id="entry-list-view" class="list-container">
+            <div class="list-header">
+                <span id="active-cat-title" class="current-cat-title">Category</span>
+                <span id="active-cat-count" style="font-size:11px; color:#999;">0 Items</span>
+            </div>
+            <div id="entries-wrapper">
+                </div>
+        </div>
+    </main>
+
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="font-size:14px; text-transform:uppercase; color:var(--accent); margin-bottom:20px; text-align:center;">Secure Entry</h2>
+            <form id="entry-form">
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="inp-category" class="form-select" required>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Platform</label>
+                    <input type="text" id="inp-platform" class="form-input" placeholder="e.g. Netflix" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Website (for Logo)</label>
+                    <input type="text" id="inp-website" class="form-input" placeholder="netflix.com">
+                </div>
+                
+                <div style="background:#F9F9F7; padding:10px; border-radius:6px; margin-bottom:15px;">
+                    <div class="form-group">
+                        <label class="form-label">Username / Email</label>
+                        <input type="text" id="inp-user" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="text" id="inp-pass" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="toggle-options" onclick="toggleOptionals()">+ Show Additional Fields</div>
+                
+                <div id="optional-fields" class="hidden-fields">
+                    <div class="form-group"><label class="form-label">Auth Key</label><input type="text" id="inp-auth" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Email Provider</label><input type="text" id="inp-emailprov" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Recovery Email</label><input type="text" id="inp-recov" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Number</label><input type="text" id="inp-number" class="form-input"></div>
+                    <div class="form-group">
+    <label class="form-label">Notes</label>
+    <textarea id="inp-notes" class="form-input" rows="6" style="resize: vertical; min-height: 100px;"></textarea>
+</div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn-sec" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-main">Save Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="detail-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <div style="text-align:center; margin-bottom:20px;">
+                <img id="detail-icon" src="" style="width:40px; height:40px; border-radius:5px; margin-bottom:10px;">
+                <h2 id="detail-platform" style="font-size:16px; margin:0; color:var(--text-main);">Platform</h2>
+                <div id="detail-cat" style="font-size:10px; text-transform:uppercase; color:var(--text-sub); margin-top:5px;">Category</div>
+            </div>
+
+            <div id="detail-content"></div>
+
+            <div class="btn-group">
+                <button id="btn-delete" class="btn-sec btn-danger">Delete</button>
+                <button id="btn-edit" class="btn-sec">Edit</button>
+                <button onclick="closeDetail()" class="btn-main">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-database-compat.js"></script>
+    <script src="js/passhub-firebase.js"></script>
+    <script src="js/passhub-store.js"></script>
+    
+    <script>
+        // --- 1. CONFIG & DATA ---
+        
+        // Your Order, Including "Editing Tools"
+        const CATEGORIES = [
+            "LifeHub", 
+            "Mailbox", 
+            "Social Media", 
+            "AI Platforms", 
+            "Finance and Banking",
+            "Work & Career", 
+            "Utilities and Bills", 
+            "Shopping", 
+            "Entertainment",
+            "Forums", 
+            "Art Tools", 
+            "Teaching Tools", 
+            "Writing Tools", 
+            "Editing Tools",  // Added
+            "Others"
+        ];
+
+        // Mapping Categories to Google Material Symbol Names
+        const ICONS = {
+            "LifeHub": "house",
+            "Mailbox": "mail",                // My pick (Standard)
+            "Social Media": "group",          // My pick (Standard)
+            "AI Platforms": "robot_2",
+            "Finance and Banking": "account_balance", // My pick (Standard)
+            "Work & Career": "business_center",
+            "Utilities and Bills": "payments",
+            "Shopping": "shopping_bag",       // My pick (Standard)
+            "Entertainment": "movie",         // My pick (Standard)
+            "Forums": "forum",
+            "Art Tools": "palette",
+            "Teaching Tools": "cast_for_education",
+            "Writing Tools": "stylus_fountain_pen",
+            "Editing Tools": "edit_square",   // Added
+            "Others": "dynamic_feed"
+        };
+        const DEFAULT_ICON = "lock";
+
+        // Firebase lives in js/passhub-firebase.js — one config for all pages.
+        const db = window.PH_DB;
+        const vaultRef = PH_STORE.ref('vault_entries');
+
+        let allEntries = {};
+        let currentMode = 'dashboard';
+        let currentCategory = null;
+        let currentEditingId = null;
+
+        // --- 2. LOGIC ---
+
+        vaultRef.on('value', (snapshot) => {
+            allEntries = snapshot.val() || {};
+            renderDashboard();
+            if(currentMode === 'list' && currentCategory) {
+                renderList(currentCategory);
+            }
+        });
+
+        function renderDashboard() {
+            const grid = document.getElementById('category-dashboard');
+            grid.innerHTML = '';
+
+            CATEGORIES.forEach(cat => {
+                let count = 0;
+                Object.values(allEntries).forEach(item => {
+                    if (item.category === cat) count++;
+                });
+
+                // Get Icon Name
+                const iconName = ICONS[cat] || DEFAULT_ICON;
+
+                const card = document.createElement('div');
+                card.className = 'cat-card';
+                // Using Material Symbols Span
+                card.innerHTML = `
+                    <span class="material-symbols-outlined cat-icon-symbol">${iconName}</span>
+                    <div class="cat-title">${cat}</div>
+                    <div class="cat-count">${count} Credentials</div>
+                `;
+                card.onclick = () => openCategory(cat);
+                grid.appendChild(card);
+            });
+        }
+
+        function openCategory(cat) {
+            currentMode = 'list';
+            currentCategory = cat;
+            
+            document.getElementById('category-dashboard').classList.add('hidden');
+            document.getElementById('entry-list-view').style.display = 'block'; 
+            document.getElementById('back-btn').textContent = "← Back to Grid";
+            document.getElementById('active-cat-title').textContent = cat;
+            
+            renderList(cat);
+        }
+
+        function renderList(cat) {
+            const listWrapper = document.getElementById('entries-wrapper');
+            listWrapper.innerHTML = '';
+            
+            const filtered = Object.entries(allEntries).filter(([key, item]) => item.category === cat);
+            filtered.sort((a, b) => a[1].platform.localeCompare(b[1].platform));
+
+            document.getElementById('active-cat-count').textContent = `${filtered.length} Items`;
+
+            if (filtered.length === 0) {
+                listWrapper.innerHTML = '<div style="text-align:center; color:#ccc; margin-top:40px;">No entries yet.</div>';
+                return;
+            }
+
+            filtered.forEach(([key, item]) => {
+                const website = item.website || 'google.com';
+                const faviconUrl = `https://www.google.com/s2/favicons?domain=${website}&sz=64`;
+
+                const row = document.createElement('div');
+                row.className = 'entry-row';
+                row.innerHTML = `
+                    <img src="${faviconUrl}" class="favicon" onerror="this.src='https://via.placeholder.com/24?text=•'">
+                    <div class="entry-info">
+                        <div class="entry-plat">${item.platform}</div>
+                        <div class="entry-sub">${item.username}</div>
+                    </div>
+                    <span class="arrow-icon">➔</span>
+                `;
+                row.onclick = () => openDetail(key, item);
+                listWrapper.appendChild(row);
+            });
+        }
+
+        document.getElementById('back-btn').onclick = () => {
+            if(currentMode === 'list') {
+                currentMode = 'dashboard';
+                currentCategory = null;
+                document.getElementById('category-dashboard').classList.remove('hidden');
+                document.getElementById('entry-list-view').style.display = 'none';
+                document.getElementById('back-btn').textContent = "← PassHub";
+            } else {
+                window.location.href = "PassHub-landing_page.html";
+            }
+        };
+
+        // --- 3. MODAL LOGIC ---
+
+        const modalOverlay = document.getElementById('modal-overlay');
+        const detailOverlay = document.getElementById('detail-overlay');
+        const form = document.getElementById('entry-form');
+        const catSelect = document.getElementById('inp-category');
+
+        CATEGORIES.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            catSelect.appendChild(opt);
+        });
+
+        document.getElementById('new-login-btn').onclick = () => {
+            currentEditingId = null;
+            form.reset();
+            if(currentCategory) catSelect.value = currentCategory;
+            modalOverlay.style.display = 'flex';
+        };
+
+        window.closeModal = () => { modalOverlay.style.display = 'none'; };
+        window.closeDetail = () => { detailOverlay.style.display = 'none'; };
+        
+        window.toggleOptionals = () => {
+            const el = document.getElementById('optional-fields');
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        };
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const data = {
+                category: document.getElementById('inp-category').value,
+                platform: document.getElementById('inp-platform').value,
+                website: document.getElementById('inp-website').value,
+                username: document.getElementById('inp-user').value,
+                password: document.getElementById('inp-pass').value,
+                auth: document.getElementById('inp-auth').value,
+                emailProvider: document.getElementById('inp-emailprov').value,
+                recovery: document.getElementById('inp-recov').value,
+                number: document.getElementById('inp-number').value,
+                notes: document.getElementById('inp-notes').value,
+                timestamp: Date.now()
+            };
+
+            if (currentEditingId) {
+                vaultRef.child(currentEditingId).update(data);
+            } else {
+                vaultRef.push(data);
+            }
+            closeModal();
+        });
+
+        window.openDetail = (key, item) => {
+            const website = item.website || 'google.com';
+            document.getElementById('detail-icon').src = `https://www.google.com/s2/favicons?domain=${website}&sz=64`;
+            document.getElementById('detail-platform').textContent = item.platform;
+            document.getElementById('detail-cat').textContent = item.category;
+
+            const content = document.getElementById('detail-content');
+            content.innerHTML = `
+                ${makeRow('Website', item.website)}
+                ${makeRow('Username', item.username, true)}
+                ${makeRow('Password', item.password, true)}
+                ${makeRow('Auth Key', item.auth)}
+                ${makeRow('Email Prov', item.emailProvider)}
+                ${makeRow('Recovery', item.recovery)}
+                ${makeRow('Number', item.number)}
+                <div style="margin-top:15px; font-size:12px; color:#555; background:#f9f9f9; padding:10px; border-radius:4px; white-space: pre-wrap; line-height: 1.5;">
+    <strong>Notes:</strong><br>${item.notes || '-'}
+</div>
+            `;
+
+            document.getElementById('btn-delete').onclick = () => deleteEntry(key);
+            document.getElementById('btn-edit').onclick = () => editEntry(key, item);
+            detailOverlay.style.display = 'flex';
+        };
+
+        function makeRow(label, val, copyable=false) {
+            if(!val) return '';
+            return `
+                <div class="detail-row">
+                    <span class="detail-label">${label}</span>
+                    <span class="detail-val">
+                        ${val} 
+                        ${copyable ? `<span class="copy-icon" onclick="copyText('${val}')">📋</span>` : ''}
+                    </span>
+                </div>
+            `;
+        }
+
+        window.copyText = (text) => {
+            navigator.clipboard.writeText(text);
+            const card = document.querySelector('.modal-card'); 
+            // Optional: You could add a small visual "copied" tooltip here later
+        };
+
+        window.deleteEntry = (key) => {
+            if(confirm("Permanently delete this login?")) {
+                vaultRef.child(key).remove();
+                closeDetail();
+            }
+        };
+
+        window.editEntry = (key, item) => {
+            currentEditingId = key;
+            closeDetail();
+            
+            document.getElementById('inp-category').value = item.category;
+            document.getElementById('inp-platform').value = item.platform;
+            document.getElementById('inp-website').value = item.website;
+            document.getElementById('inp-user').value = item.username;
+            document.getElementById('inp-pass').value = item.password;
+            
+            document.getElementById('inp-auth').value = item.auth || '';
+            document.getElementById('inp-emailprov').value = item.emailProvider || '';
+            document.getElementById('inp-recov').value = item.recovery || '';
+            document.getElementById('inp-number').value = item.number || '';
+            document.getElementById('inp-notes').value = item.notes || '';
+            
+            if(item.notes || item.auth || item.number) {
+                document.getElementById('optional-fields').style.display = 'block';
+            }
+            modalOverlay.style.display = 'flex';
+        };
+    </script>
+
+<script>
+    // --- PASSHUB SECURITY SENSOR ---
+    // If no wristband is found, kick them back to the Gate
+    if (!sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+        window.location.href = "PassHub.html";
+    }
+</script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+/* --- CORE VARIABLES --- */
+        :root {
+            --font-main: 'Red Hat Display', sans-serif;
+            --font-serif: 'Cinzel', serif;
+            
+            --color-text-muted: #8b857e; 
+            --color-gold: #D4AF37;       
+            --color-gold-dim: #8a7846;   
+            
+            --bg-image: url('files/LifeHub_Prestige-Bank_BG.webp'); 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: multiply;
+            background-color: rgba(0,0,0,0.2); 
+            
+            display: flex; 
+        }
+
+        /* --- 1. SIDEBAR --- */
+        .sidebar-container {
+            width: 25%; 
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding-left: 80px; 
+            padding-top: 60px; 
+        }
+
+        .logo {
+            width: 160px;   
+            margin-bottom: 80px; 
+            opacity: 0.9;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 45px; 
+        }
+
+        .nav-item {
+            color: var(--color-text-muted);
+            text-decoration: none;
+            font-size: 13px; 
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        /* --- NOT BUILT YET --- */
+        /* Dimmed and inert links to pages that don't exist yet.
+           pointer-events:none also kills the hover state below.
+           See LifeHub-prestige-bank.html for the full note. */
+        .nav-item.is-unbuilt {
+            opacity: 0.28;
+            cursor: default;
+            pointer-events: none;
+            filter: grayscale(0.6);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #ffffff;
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active .arrow { color: var(--color-gold); } 
+        .arrow { font-size: 14px; opacity: 0.7; }
+
+        .add-btn {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            color: var(--color-text-muted);
+            font-size: 24px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .add-btn:hover { color: #fff; transform: rotate(90deg); }
+
+
+        /* --- 2. MAIN STAGE (Right Side) --- */
+        .main-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-right: 50px; 
+            padding-left: 20px;
+        }
+
+        /* The Big Dark Panel from Mockup */
+        .panel-container {
+            width: 90%;
+            height: 85%;
+            background: #1b1a1a; /* Dark Warm Grey */
+            border-radius: 30px;
+            
+            /* The Gold Bottom Border */
+            border-bottom: 8px solid #d4af37; 
+            
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            position: relative;
+        }
+
+        /* --- THE STATUS CARD (Top Box) --- */
+        .status-card {
+            width: 100%; /* Wider as requested */
+            height: 200px;
+            
+            /* The Olive-Gold Gradient */
+            background: linear-gradient(180deg, #584910 0%, #2e2812 100%);
+            
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            
+            margin-top: 0px;
+            margin-bottom: 50px; 
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05); /* Subtle inner rim */
+        }
+
+        .status-header {
+            font-family: var(--font-serif);
+            font-size: 38px; /* Larger */
+            color: #e0d5c1; /* Off-white gold */
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            /* Gradient text effect for extra flair */
+            background: linear-gradient(to bottom, #fff, #bfb18f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .networth-value {
+            font-family: var(--font-serif);
+            font-size: 32px;
+            color: #D4AF37; /* Pure Gold */
+            font-weight: 400;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        /* --- PROGRESS TO THE NEXT TIER --- */
+        /* The tier list says where she stands; this says how far the next
+           one is, which is the part that makes a list of six names worth
+           looking at. Sits between the number and the divider, and is
+           display:none at the top tier — see the JS. */
+        .tier-progress {
+            width: 55%;
+            margin-bottom: 16px;
+        }
+
+        .tier-progress-bar {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .tier-progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--color-gold-dim), var(--color-gold));
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.35);
+            /* Slow, because it only ever moves when she has earned it. */
+            transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .tier-progress-label {
+            margin-top: 8px;
+            font-size: 10px;
+            color: #8B7355;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-align: center;
+        }
+
+        .tier-progress-label b {
+            color: var(--color-gold);
+            font-weight: 500;
+        }
+
+        .divider {
+            width: 40%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #5e5029, transparent);
+            margin-bottom: 15px;
+        }
+
+        .owner-name {
+            font-size: 11px;
+            color: #8B7355;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* --- THE TIER LIST (Updated Logic) --- */
+        .tier-list {
+            width: 85%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* Tighter gap */
+            align-items: flex-start; /* Align left */
+        }
+
+        .tier-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        /* 1. INACTIVE STATE (Default) */
+        .tier-item .material-icons-round {
+            font-size: 18px; /* Small icon */
+            color: #4a4a4a; /* Dark Grey */
+        }
+        
+        .tier-item .tier-name {
+            font-family: var(--font-main);
+            font-size: 13px; /* Small font */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666; /* Grey text */
+            font-weight: 400;
+        }
+
+        /* 2. ACTIVE STATE (The "Earned" Look) */
+        .tier-item.active-tier {
+            transform: translateX(10px); /* Push it out slightly */
+            margin-bottom: 5px;
+            margin-top: 5px;
+        }
+
+        .tier-item.active-tier .material-icons-round {
+            font-size: 24px; /* Larger icon */
+            color: var(--color-gold);
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+        }
+
+        .tier-item.active-tier .tier-name {
+            font-size: 16px; /* Larger font */
+            color: var(--color-gold);
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }

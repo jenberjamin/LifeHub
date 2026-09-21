@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Protocol | Cloud Sync</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f4f2f0">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+
+    <style>
+
+        :root {
+            --bg-color: #f4f2f0;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --text-main: #4a4a4a;
+            --text-muted: #8c8c8c;
+            --gold: #c7a365; 
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+        }
+
+        /* Main Container */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .modules-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* The Glass Card */
+        .card {
+            width: 260px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        h1 {
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 0;
+            font-weight: 600;
+        }
+
+        /* The Counters */
+        .count-display {
+            font-size: 4rem;
+            font-weight: 200;
+            line-height: 1;
+            color: var(--text-main);
+        }
+
+        .limit-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* The Buttons */
+        .log-btn {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            margin-top: 10px;
+        }
+
+        .log-btn:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-color: #ccc;
+        }
+        
+        /* Specific Styles */
+        .btn-pro { color: var(--text-main); }
+        
+        /* History Section */
+        .history-card {
+            width: 540px; /* Spans both cards */
+            padding: 20px 30px;
+            min-height: 100px;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 120px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 8px 0;
+            color: var(--text-muted);
+            border-bottom: 1px dashed rgba(0,0,0,0.05);
+        }
+
+.history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+
+        /* Loading State */
+        .loading { opacity: 0.5; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard" id="main-ui">
+        
+        <div class="modules-container">
+    <div class="card">
+        <h1>Gemini Pro</h1>
+        <div>
+            <span id="pro-count" class="count-display" style="color: var(--text-main)">0</span>
+            <span class="limit-label">/ 40 MESSAGES</span>
+        </div>
+        <button class="log-btn" style="border-left: 4px solid var(--text-main);" onclick="increment('pro')">
+            + LOG PRO
+        </button>
+    </div>
+
+    <div class="card">
+        <h1>Gemini 3 Flash</h1>
+        <div>
+            <span id="flash-count" class="count-display" style="color: var(--gold)">0</span>
+            <span class="limit-label">/ 20 MESSAGES</span>
+        </div>
+        <button class="log-btn" style="border-left: 4px solid var(--gold);" onclick="increment('flash')">
+            + LOG FLASH
+        </button>
+    </div>
+</div>
+
+        <div class="card history-card">
+            <h1>Database Archives</h1>
+            <ul id="history-list" class="history-list">
+                <li class="history-item">Connecting to Firebase...</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, limit, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWbNjdj-pLIRV3i_2MEEWQio6IQ4Ri4tU",
+            authDomain: "hubs-database.firebaseapp.com",
+            projectId: "hubs-database",
+            storageBucket: "hubs-database.firebasestorage.app",
+            messagingSenderId: "677512604138",
+            appId: "1:677512604138:web:00c5a8b62c5ff96812aa93",
+            measurementId: "G-2R4SWBV1XR"
+        };
+
+        // --- INIT ---
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- DOM ELEMENTS ---
+        const ui = document.getElementById('main-ui');
+        const proDisplay = document.getElementById('pro-count');
+        const flashDisplay = document.getElementById('flash-count');
+        const historyList = document.getElementById('history-list');
+
+// --- DATE LOGIC (6:29 PM RESET) ---
+        const now = new Date();
+        // Subtract 18 hours and 29 minutes to shift the day-rollover to 6:29 PM
+        const offsetDate = new Date(now.getTime() - (18 * 60 + 29) * 60 * 1000);
+        
+        // This creates a clean YYYY-MM-DD format based on your local time
+        const year = offsetDate.getFullYear();
+        const month = String(offsetDate.getMonth() + 1).padStart(2, '0');
+        const day = String(offsetDate.getDate()).padStart(2, '0');
+        
+        const todayID = `${year}-${month}-${day}`;
+        const dailyRef = doc(db, "usage_logs", todayID);
+
+        
+       // --- GLOBAL STATE ---
+        let currentPro = 0;
+        let currentFlash = 0;
+        let lastAction = null;
+
+        // --- 1. LOAD DATA ---
+        async function initTracker() {
+            ui.classList.add('loading');
+            try {
+                const docSnap = await getDoc(dailyRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentPro = data.pro || 0;
+                    currentFlash = data.flash || 0;
+                } else {
+                    await setDoc(dailyRef, {
+                        date: todayID,
+                        pro: 0,
+                        flash: 0,
+                        timestamp: new Date()
+                    });
+                }
+                updateUI();
+                loadHistory();
+            } catch (error) {
+                console.error("Firebase Error:", error);
+            } finally {
+                ui.classList.remove('loading');
+            }
+        }
+
+        // --- 2. UPDATE ACTIONS ---
+        window.increment = async function(type) {
+            if (type === 'pro') {
+                if(currentPro >= 40) return alert("Pro Limit Reached.");
+                currentPro++;
+            } else if (type === 'flash') {
+                if(currentFlash >= 20) return alert("Flash Limit Reached.");
+                currentFlash++;
+            }
+            lastAction = type;
+            updateUI();
+
+            try {
+                await updateDoc(dailyRef, {
+                    pro: currentPro,
+                    flash: currentFlash
+                });
+            } catch (error) {
+                console.error("Save failed:", error);
+                if (type === 'pro') currentPro--; 
+                else if (type === 'flash') currentFlash--;
+                updateUI();
+            }
+        }
+
+window.undo = async function() {
+            if (!lastAction) return; // Nothing to undo
+
+            if (lastAction === 'pro' && currentPro > 0) {
+                currentPro--;
+            } else if (lastAction === 'flash' && currentFlash > 0) {
+                currentFlash--;
+            }
+
+            const actionToClear = lastAction;
+            lastAction = null; // Clear memory so we don't undo twice
+            updateUI();
+
+            try {
+                await updateDoc(dailyRef, {
+                    pro: currentPro,
+                    flash: currentFlash
+                });
+                console.log("Undo synced.");
+            } catch (error) {
+                console.error("Undo sync failed:", error);
+            }
+        }
+
+        // --- 3. UI RENDER ---
+        function updateUI() {
+            const proDisplay = document.getElementById('pro-count');
+            const flashDisplay = document.getElementById('flash-count');
+            
+            proDisplay.innerText = currentPro;
+            flashDisplay.innerText = currentFlash;
+
+            // Visual warnings when close to limit (within 5 messages)
+            proDisplay.style.color = currentPro >= 35 ? "#c7a365" : "#4a4a4a";
+            flashDisplay.style.color = currentFlash >= 15 ? "var(--gold)" : "var(--text-main)";
+        }
+
+        // --- 4. HISTORY LOADER ---
+        async function loadHistory() {
+            const historyRef = collection(db, "usage_logs");
+            // Get last 5 days, ordered by date descending
+            const q = query(historyRef, orderBy("date", "desc"), limit(6));
+            
+            const querySnapshot = await getDocs(q);
+            historyList.innerHTML = ""; // Clear list
+
+            querySnapshot.forEach((doc) => {
+                // Skip today in history view if you want, or keep it. 
+                // Let's skip today so history shows *past* stats only.
+                if (doc.id === todayID) return;
+
+                const data = doc.data();
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.innerHTML = `
+                    <span>${data.date}</span>
+                    <span>
+                        <strong style="color:var(--text-main)">Pro:</strong> ${data.pro} &nbsp;|&nbsp; 
+                        <strong style="color:var(--gold)">Flash:</strong> ${data.flash}
+                    </span>
+                `;
+
+                historyList.appendChild(li);
+            });
+
+            if (historyList.children.length === 0) {
+                historyList.innerHTML = '<li class="history-item" style="justify-content:center">No past archives found.</li>';
+            }
+        }
+
+
+        // Start the engine
+        initTracker();
+
+
+        setInterval(() => {
+            const nowCheck = new Date();
+            const offsetCheck = new Date(nowCheck.getTime() - (18 * 60 + 29) * 60 * 1000);
+            const checkID = offsetCheck.toISOString().split('T')[0];
+            
+            if (checkID !== todayID) {
+                console.log("New protocol day detected. Refreshing...");
+                window.location.reload(); // The simplest way to reset the whole state for the new day
+            }
+        }, 60000);
+
+
+// --- KEYBOARD SHORTCUTS ---
+        window.addEventListener('keydown', (e) => {
+            // Check if Shift is held AND 'Z' (or 'z') is pressed
+            if (e.shiftKey && (e.key === 'Z' || e.key === 'z')) {
+                e.preventDefault(); // Stop any browser defaults
+                window.undo();
+            }
+        });
+
+
+
+    </script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW failure', err));
+        });
+    }
+</script>
+
+</body>
+</html>

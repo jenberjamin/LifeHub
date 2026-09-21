@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../JS/lifehub-tv-frame.js"></script>
+  <title>Icons & Fonts - CSS Helper</title>
+  
+  <!-- Google Fonts: Expanded font collection -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Aclonica&family=Alegreya+Sans&family=Alumni+Sans&family=Alumni+Sans+Collegiate+One&family=Archivo+Narrow&family=Chivo&family=DM+Sans&family=Fira+Sans&family=Flamenco&family=IBM+Plex+Sans&family=Inter&family=Jost&family=Karla&family=Lato&family=Libre+Franklin&family=Manrope&family=Montserrat&family=Nixie+One&family=Ojuju&family=Open+Sans&family=PT+Sans&family=Poppins&family=Proza+Libre&family=Raleway&family=Red+Hat+Display&family=Roboto&family=Rubik&family=Shantell+Sans&family=Share+Tech&family=Smooch+Sans&family=Sora&family=Source+Sans+3&family=Space+Grotesk&family=Syne&family=Truculenta&family=Work+Sans&display=swap" rel="stylesheet">
+  <!-- Google Fonts: SERIF Batch -->
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya&family=Almendra&family=BioRhyme&family=Cardo&family=Cinzel&family=Corben&family=Cormorant&family=Cormorant+Garamond&family=Cormorant+Upright&family=Eczar&family=Fjord+One&family=Fraunces&family=Gentium+Book+Plus&family=Glegoo&family=Inknut+Antiqua&family=Josefin+Slab&family=Libre+Baskerville&family=Lora&family=Mate&family=Merriweather&family=Neuton&family=PT+Serif&family=Playfair+Display&family=Pompiere&family=Roboto+Serif&family=Roboto+Slab&family=Scope+One&family=Source+Serif+4&family=Spectral&family=Taviraj&family=Tienne&family=Trirong&family=Vast+Shadow&display=swap" rel="stylesheet">
+  <!-- Google Fonts: MONO Batch -->
+  <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro&family=Atkinson+Hyperlegible+Mono&family=Azeret+Mono&family=Chivo+Mono&family=Courier+Prime&family=Cousine&family=Cutive+Mono&family=DM+Mono&family=Fira+Code&family=Fragment+Mono&family=Geist+Mono&family=IBM+Plex+Mono&family=Inconsolata&family=JetBrains+Mono&family=Kode+Mono&family=Lilex&family=Overpass+Mono&family=Oxygen+Mono&family=PT+Mono&family=Red+Hat+Mono&family=Reddit+Mono&family=Roboto+Mono&family=Share+Tech+Mono&family=Silkscreen&family=Sometype+Mono&family=Sono&family=Source+Code+Pro&family=Space+Mono&family=Spline+Sans+Mono&family=Syne+Mono&family=Ubuntu+Mono&family=VT323&family=Victor+Mono&display=swap" rel="stylesheet">
+  <!-- Google Fonts: SCRIPTS Batch -->
+  <link href="https://fonts.googleapis.com/css2?family=Allura&family=Arizonia&family=Beau+Rivage&family=Bilbo&family=Bilbo+Swash+Caps&family=Bonheur+Royale&family=Caramel&family=Carattere&family=Clicker+Script&family=Cookie&family=Courgette&family=Engagement&family=Euphoria+Script&family=Felipa&family=Grand+Hotel&family=Great+Vibes&family=Herr+Von+Muellerhoff&family=Imperial+Script&family=Italianno&family=Kings&family=Marck+Script&family=Meddon&family=Meie+Script&family=Meow+Script&family=Monsieur+La+Doulaise&family=MonteCarlo&family=Montez&family=Ms+Madi&family=My+Soul&family=Niconne&family=Norican&family=Parisienne&family=Petemoss&family=Petit+Formal+Script&family=Pinyon+Script&family=Qwigley&family=Rochester&family=Rouge+Script&family=Sacramento&family=Send+Flowers&family=Sofia&family=Style+Script&family=Updock&family=WindSong&display=swap" rel="stylesheet">
+  <!-- Google Fonts: SMALL CAPS Batch -->
+  <link href="https://fonts.googleapis.com/css2?family=Aboreto&family=Alegreya+SC&family=Alegreya+Sans+SC&family=Alumni+Sans+SC&family=Amatic+SC&family=Baskervville+SC&family=Bebas+Neue&family=Carrois+Gothic+SC&family=Cinzel&family=Cinzel+Decorative&family=Cormorant+SC&family=Encode+Sans+SC&family=Holtwood+One+SC&family=Mate+SC&family=Overlock+SC&family=Playfair+Display+SC&family=Sedan+SC&family=Spectral+SC&family=Staatliches&family=Vollkorn+SC&family=Ysabeau+SC&display=swap" rel="stylesheet">
+  <!-- Google Fonts: HANDWRITING Batch -->
+  <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Amatic+SC&family=Architects+Daughter&family=Autour+One&family=Bad+Script&family=Birthstone&family=Calligraffitti&family=Caveat&family=Edu+NSW+ACT+Foundation&family=Edu+QLD+Beginner&family=Edu+SA+Beginner&family=Edu+TAS+Beginner&family=Farsan&family=Fleur+De+Leah&family=Fuzzy+Bubbles&family=Give+You+Glory&family=Gloria+Hallelujah&family=Gochi+Hand&family=Grape+Nuts&family=Handlee&family=Indie+Flower&family=Just+Another+Hand&family=Just+Me+Again+Down+Here&family=Lacquer&family=Lavishly+Yours&family=Loved+by+the+King&family=Mea+Culpa&family=Meddon&family=Merienda&family=Mr+Dafoe&family=Mr+De+Haviland&family=Mrs+Saint+Delafield&family=Ms+Madi&family=Mynerve&family=Niconne&family=Nothing+You+Could+Do&family=Oooh+Baby&family=Oregano&family=Pangolin&family=Patrick+Hand&family=Patrick+Hand+SC&family=Playwrite+Deutschland+Grundschrift&family=Reenie+Beanie&family=Rock+Salt&family=Sarina&family=Schoolbell&family=Seaweed+Script&family=Shadows+Into+Light&family=Shadows+Into+Light+Two&family=Sue+Ellen+Francisco&family=Swanky+and+Moo+Moo&family=Tangerine&family=Walter+Turncoat&display=swap" rel="stylesheet">
+  <!-- Google Fonts: BOLD Batch -->
+  <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Archivo+Black&family=Berkshire+Swash&family=Bevan&family=Bigshot+One&family=Chela+One&family=Climate+Crisis&family=Diplomata&family=Diplomata+SC&family=Erica+One&family=Fruktur&family=Gloock&family=Goblin+One&family=Gravitas+One&family=Lemon&family=Marko+One&family=Mogra&family=Molle&family=Oi&family=Ranchers&family=Righteous&family=Rubik+Mono+One&family=Sonsie+One&family=Stalinist+One&family=Tilt+Warp&family=Titan+One&family=Ultra&family=Yeseva+One&family=Zen+Dots&display=swap" rel="stylesheet">
+  <!-- Google Fonts: THIN Batch -->
+  <link href="https://fonts.googleapis.com/css2?family=Aboreto&family=Almendra+Display&family=Alumni+Sans+Pinstripe&family=Astloch&family=Bungee+Hairline&family=Codystar&family=Doto&family=Fuggles&family=Julius+Sans+One&family=Kumar+One+Outline&family=League+Script&family=Major+Mono+Display&family=Megrim&family=Petit+Formal+Script&family=Raleway+Dots&family=Syncopate&family=Text+Me+One&family=Tulpen+One&family=Xanh+Mono&family=Zen+Loop&display=swap" rel="stylesheet">
+  <!-- Google Fonts: ARTISTIC Batch -->
+  <link href="https://fonts.googleapis.com/css2?family=Almendra+Display&family=Alumni+Sans+Inline+One&family=Alumni+Sans+Pinstripe&family=Arbutus&family=Astloch&family=Berkshire+Swash&family=Big+Shoulders+Inline+Display&family=Bonbon&family=Chelsea+Market&family=Codystar&family=Diplomata&family=Elsie+Swash+Caps&family=Ewert&family=Flamenco&family=Kablammo&family=Kumar+One+Outline&family=Metamorphous&family=Monoton&family=Mountains+of+Christmas&family=Nixie+One&family=Rubik+Doodle+Shadow&family=Snowburst+One&family=Spicy+Rice&family=Stardos+Stencil&family=Tapestry&family=Trade+Winds&family=Train+One&family=Uncial+Antiqua&family=Vast+Shadow&family=Zilla+Slab+Highlight&display=swap" rel="stylesheet">
+  <!-- Google Fonts: TRIPPY Batch -->
+  <link href="https://fonts.googleapis.com/css2?family=Akronim&family=Bungee+Inline&family=Bungee+Shade&family=Caesar+Dressing&family=Danfo&family=DynaPuff&family=Frijole&family=Hanalei&family=Hanalei+Fill&family=Kablammo&family=Libre+Barcode+128+Text&family=Libre+Barcode+39+Extended+Text&family=Libre+Barcode+39+Text&family=Monofett&family=Nosifer&family=Rubik+Gemstones&family=Rubik+Moonrocks&family=Silkscreen&family=Sixtyfour&family=Tilt+Prism&family=Train+One&family=Warnes&family=Zen+Tokyo+Zoo&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 6 Free -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/icons&fonts.css">
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="sidebar" id="sideNav">
+    <div class="sidebar-header">
+      <i class="fa-solid fa-bars" id="closeSidebarBtn"></i>
+    </div>
+    <div class="sidebar-menu">
+      <div class="sidebar-item" id="navProjectsBtn">
+        <i class="fa-solid fa-house"></i> Projects
+      </div>
+      <div class="sidebar-item" id="navIconsBtn">
+        <i class="fa-solid fa-icons"></i> Icons
+      </div>
+      <div class="sidebar-item" id="navFontsBtn">
+        <i class="fa-solid fa-font"></i> Fonts
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <button class="fab"><i class="fa-solid fa-plus"></i></button>
+  <button class="fab fab-bulk" id="bulkAddFab" title="Add multiple icons"><i class="fa-solid fa-layer-group"></i></button>
+
+  <header>
+    <div class="menu-icon"><i class="fa-solid fa-bars"></i></div>
+    <div class="logo">
+      <h1>Icons & Fonts</h1>
+      <h2>CSS HELPER</h2>
+      <span>Personal</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Raised Search Section -->
+    <div class="search-container">
+      <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" placeholder="">
+      </div>
+    </div>
+
+    <!-- TABS (Moved outside so they stay visible for both Icons and Fonts) -->
+    <div class="tabs" id="mainTabs">
+      <span class="tab active" id="tabIconsBtn">ICONS</span>
+      <span class="tab-divider">|</span>
+      <span class="tab" id="tabFontsBtn">FONTS</span>
+    </div>
+
+    <!-- 1. ICONS VIEW (Now only contains filters and grid) -->
+    <div id="iconsView">
+      <!-- Filters & Categories -->
+      <div class="filters">
+        <div class="left-filters">
+          <input type="text" class="small-input">
+          <div class="filter-wrapper">
+            <i class="fa-solid fa-sliders filter-icon" id="filterTrigger"></i>
+            <span class="filter-dot" id="filterDot"></span>
+
+            <!-- Advanced filter panel -->
+            <div class="filter-panel" id="filterPanel">
+              <div class="filter-panel-header">
+                <span>FILTER BY</span>
+                <button class="filter-clear" id="filterClearBtn">CLEAR</button>
+              </div>
+
+              <div class="form-group">
+                <label>CREATOR</label>
+                <select class="modal-dropdown" id="filterCreator">
+                  <option value="">All creators</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>ICON FAMILY</label>
+                <select class="modal-dropdown" id="filterFamily">
+                  <option value="">All families</option>
+                  <option>ROUND</option>
+                  <option>SHARP</option>
+                  <option>COLORED</option>
+                  <option>SYMBOL</option>
+                  <option>EMOJIES</option>
+                  <option>EMOTICONS</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>STROKE WEIGHT</label>
+                <select class="modal-dropdown" id="filterWeight">
+                  <option value="">All weights</option>
+                  <option>THIN</option>
+                  <option>LIGHT</option>
+                  <option>REGULAR</option>
+                  <option>BOLD</option>
+                  <option>FILL</option>
+                  <option>DUOTONE</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>PROJECT</label>
+                <select class="modal-dropdown" id="filterProject">
+                  <option value="">All projects</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="category-wrapper">
+          <i class="fa-solid fa-shapes category-icon"></i>
+          <select class="category-dropdown" id="mainCategoryFilter">
+            <option>Categories</option>
+            <option>ACTIONS</option>
+            <option>ACTIVITIES</option>
+            <option>MOBILE</option>
+            <option>MEDIA</option>
+            <option>BUSINESS</option>
+            <option>MODALS</option>
+            <option>NAVIGATIONS</option>
+            <option>SECURITY</option>
+            <option>PRIVACY</option>
+            <option>SOCIAL</option>
+            <option>DESIGN</option>
+            <option>SYMBOLS</option>
+            <option>EMOJIES</option>
+            <option>EMOTICONS</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Icon Grid -->
+      <div class="icon-grid" id="iconGrid">
+        <!-- Icons injected via JS -->
+      </div>
+
+      <!-- Pagination (built by JS) -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- 2. PROJECTS VIEW -->
+    <div id="projectsView" style="display: none;">
+      <div class="projects-view-header">PROJECTS</div>
+      <div class="projects-list-large">
+        <!-- We use this inner div specifically to hold the dynamic Firebase projects -->
+        <div id="dynamicProjectsList" style="display: flex; flex-direction: column; align-items: center; gap: 2rem;">
+          <!-- Existing projects will vanish, and Firebase will take over here -->
+        </div>
+        
+        <!-- The New+ button stays safely at the bottom -->
+        <div class="project-item-new" id="openNewProjectBtn">New +</div>
+      </div>
+    </div>
+
+    <!-- 3. FONTS VIEW -->
+    <div id="fontsView" style="display: none;">
+      <!-- Interactive Fonts Category Selector -->
+      <div class="fonts-category-wrapper">
+        <div class="fonts-view-header" id="fontsCategoryTrigger">ALL</div>
+        
+        <div class="fonts-category-dropdown" id="fontsCategoryDropdown">
+          <div class="font-cat-item">ALL</div>
+          <div class="font-cat-item">SANS SERIF</div>
+          <div class="font-cat-item">SERIF</div>
+          <div class="font-cat-item">MONO</div>
+          <div class="font-cat-item">SCRIPTS</div>
+          <div class="font-cat-item">HANDWRITING</div>
+          <div class="font-cat-item">BOLD</div>
+          <div class="font-cat-item">THIN</div>
+          <div class="font-cat-item">SMALL CAPS</div>
+          <div class="font-cat-item">ARTISTIC</div>
+          <div class="font-cat-item">TRIPPY</div>
+        </div>
+      </div>
+
+      <!-- Preview Input Section -->
+      <div class="fonts-preview-container">
+        <div class="preview-label">PREVIEW</div>
+        <div class="preview-layout">
+          <textarea id="fontPreviewInput" placeholder="Type here..." rows="3"></textarea>
+          
+          <div class="preview-controls">
+            <button class="preview-action-btn" id="fontFormatToggleBtn">
+              <i class="fa-solid fa-angle-right"></i>
+            </button>
+            
+            <!-- Sliding Formatting Toolbar -->
+            <div class="format-toolbar" id="formatToolbar">
+              <button class="format-btn" id="formatCase">Aa</button>
+              <button class="format-btn" id="formatBold">B</button>
+              <button class="format-btn" id="formatItalic">I</button>
+              
+              <!-- NEW: Alignment Button -->
+              <button class="format-btn" id="formatAlign">
+                <i class="fa-solid fa-align-left"></i>
+              </button>
+
+              <!-- Existing color picker -->
+              <div class="color-picker-wrapper">
+                <input type="color" id="formatColor" value="#4A4036">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Static Font Samples -->
+      <div class="fonts-list-container">
+        <!-- Roboto -->
+        <div class="font-item">
+          <div class="font-sample" style="font-family: 'Roboto', sans-serif;">Mr. Whisker Harvy just found an extraordinary handgloves.</div>
+          <div class="font-name">Roboto</div>
+        </div>
+        <!-- Nunito -->
+        <div class="font-item">
+          <div class="font-sample" style="font-family: 'Nunito', sans-serif;">Mr. Whisker Harvy just found an extraordinary handgloves.</div>
+          <div class="font-name">Nunito</div>
+        </div>
+        <!-- Arial Nova (Using system fallbacks if Arial Nova isn't installed locally) -->
+        <div class="font-item">
+          <div class="font-sample" style="font-family: 'Arial Nova', Arial, sans-serif;">Mr. Whisker Harvy just found an extraordinary handgloves.</div>
+          <div class="font-name">Arial Nova</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="addIconModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Icon</h2>
+      <button class="close-modal" id="closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Left Column -->
+      <div class="modal-col">
+        <div class="form-group">
+          <label>TITLE</label>
+          <input type="text" id="iconTitle">
+        </div>
+        <div class="form-group">
+          <label>ORIGINAL CREATOR</label>
+          <input type="text" id="iconCreator">
+        </div>
+        <div class="form-group">
+          <div class="category-wrapper">
+            <i class="fa-solid fa-shapes category-icon"></i>
+            <select class="category-dropdown modal-dropdown" id="iconCategory">
+              <option>Categories</option>
+              <option>ACTIONS</option>
+              <option>ACTIVITIES</option>
+              <option>MOBILE</option>
+              <option>MEDIA</option>
+              <option>BUSINESS</option>
+              <option>MODALS</option>
+              <option>NAVIGATIONS</option>
+              <option>SECURITY</option>
+              <option>PRIVACY</option>
+              <option>SOCIAL</option>
+              <option>DESIGN</option>
+              <option>SYMBOLS</option>
+              <option>EMOJIES</option>
+              <option>EMOTICONS</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>HTML LINK</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-link"></i>
+            <input type="text" id="iconLink">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>SVG</label>
+          <textarea id="iconSVGData" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>PROJECTS APPLIED TO</label>
+          <div class="input-with-icon autocomplete-wrapper">
+            <i class="fa-solid fa-house"></i>
+            <input type="text" id="iconProjects" autocomplete="off">
+            <div class="autocomplete-dropdown" id="addIconProjectList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="modal-col">
+        <div class="form-group">
+          <label>ICON FAMILY</label>
+          <select class="modal-dropdown" id="iconFamily">
+            <option></option>
+            <option>ROUND</option>
+            <option>SHARP</option>
+            <option>COLORED</option>
+            <option>SYMBOL</option>
+            <option>EMOJIES</option>
+            <option>EMOTICONS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>WEIGHT</label>
+          <select class="modal-dropdown" id="iconWeight">
+            <option></option>
+            <option>THIN</option>
+            <option>LIGHT</option>
+            <option>REGULAR</option>
+            <option>BOLD</option>
+            <option>FILL</option>
+            <option>DUOTONE</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>PATH</label>
+          <div class="viewer-box" id="svgViewer">VIEWER</div>
+          <input type="text" id="iconPath" placeholder="filename.svg">
+        </div>
+        <div class="form-group">
+          <label>TAGS</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-hashtag"></i>
+            <input type="text" id="iconTags">
+          </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="modal-actions">
+          <button class="btn-dark" id="saveIconBtn">DONE</button>
+          <button class="btn-dark" id="cancelBtn">CANCEL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- BULK ADD ICONS MODAL -->
+  <div class="modal-overlay" id="bulkAddModal">
+    <div class="modal-content bulk-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Icons</h2>
+        <button class="close-modal" id="closeBulkModalBtn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Drop zone / file picker -->
+      <div class="bulk-dropzone" id="bulkDropzone">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <span>DROP SVG FILES HERE, OR CLICK TO BROWSE</span>
+      </div>
+      <input type="file" id="bulkFileInput" accept=".svg,image/svg+xml" multiple hidden>
+
+      <!-- Defaults applied to every row -->
+      <div class="bulk-defaults">
+        <div class="form-group">
+          <label>CREATOR (ALL)</label>
+          <input type="text" id="bulkCreator" placeholder="e.g. Phosphor">
+        </div>
+        <div class="form-group">
+          <label>CATEGORY (ALL)</label>
+          <select class="modal-dropdown" id="bulkCategory">
+            <option>Categories</option>
+            <option>ACTIONS</option>
+            <option>ACTIVITIES</option>
+            <option>MOBILE</option>
+            <option>MEDIA</option>
+            <option>BUSINESS</option>
+            <option>MODALS</option>
+            <option>NAVIGATIONS</option>
+            <option>SECURITY</option>
+            <option>PRIVACY</option>
+            <option>SOCIAL</option>
+            <option>DESIGN</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>FAMILY (ALL)</label>
+          <select class="modal-dropdown" id="bulkFamily">
+            <option></option>
+            <option>ROUND</option>
+            <option>SHARP</option>
+            <option>COLORED</option>
+            <option>SYMBOL</option>
+            <option>EMOJIES</option>
+            <option>EMOTICONS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>WEIGHT (ALL)</label>
+          <select class="modal-dropdown" id="bulkWeight">
+            <option></option>
+            <option>THIN</option>
+            <option>LIGHT</option>
+            <option>REGULAR</option>
+            <option>BOLD</option>
+            <option>FILL</option>
+            <option>DUOTONE</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>TAGS (ALL)</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-hashtag"></i>
+            <input type="text" id="bulkTags">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>PROJECTS (ALL)</label>
+          <div class="input-with-icon autocomplete-wrapper">
+            <i class="fa-solid fa-house"></i>
+            <input type="text" id="bulkProjects" autocomplete="off">
+            <div class="autocomplete-dropdown" id="bulkProjectList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- One row per dropped file -->
+      <div class="bulk-list" id="bulkList"></div>
+
+      <div class="bulk-footer">
+        <span class="bulk-count" id="bulkCount">NO FILES LOADED</span>
+        <div class="action-buttons">
+          <button class="btn-dark" id="saveBulkBtn">SAVE ALL</button>
+          <button class="btn-dark" id="cancelBulkBtn">CANCEL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. VIEW ICON MODAL (The "Work Card") -->
+  <div class="modal-overlay" id="viewIconModal">
+    <div class="modal-content view-card-content">
+      <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+      
+      <div class="view-card-top">
+        <div class="view-card-icon">
+          <!-- Placeholder SVG -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+        </div>
+        <div class="view-card-titles">
+          <div class="view-title">TITLE</div>
+          <div class="view-creator">CREATOR</div>
+        </div>
+        <div class="view-card-pills">
+          <button class="pill-btn copy-btn" data-copy="path">PATH</button>
+          <button class="pill-btn copy-btn" data-copy="html">HTML</button>
+          <button class="pill-btn copy-btn" data-copy="svg">SVG</button>
+        </div>
+      </div>
+
+      <div class="view-card-bottom">
+        <div class="view-projects">
+          <div class="projects-label"><i class="fa-solid fa-house"></i> PROJECTS APPLIED:</div>
+          <div class="projects-list">PROJECTS HERE</div>
+        </div>
+        
+        <div class="options-container">
+          <!-- The 3 dots -->
+          <button class="options-trigger"><i class="fa-solid fa-ellipsis"></i></button>
+          
+          <!-- Dropdown Menu (Toggle 'show' class to display) -->
+          <div class="options-dropdown">
+            <button class="dropdown-item">EDIT</button>
+            <button class="dropdown-item">ADD PROJECT</button>
+            <button class="dropdown-item">ADD TAG</button>
+            <button class="dropdown-item delete-item">DELETE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. EDIT ICON MODAL -->
+  <div class="modal-overlay" id="editIconModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Edit Icon</h2>
+        <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-col">
+          <div class="form-group"><label>TITLE</label><input type="text" id="editTitle"></div>
+          <div class="form-group"><label>ORIGINAL CREATOR</label><input type="text" id="editCreator"></div>
+          <div class="form-group">
+            <div class="category-wrapper">
+              <i class="fa-solid fa-shapes category-icon"></i>
+              <select class="category-dropdown modal-dropdown" id="editCategory">
+                <option>Categories</option>
+                <option>ACTIONS</option>
+                <option>ACTIVITIES</option>
+                <option>MOBILE</option>
+                <option>MEDIA</option>
+                <option>BUSINESS</option>
+                <option>MODALS</option>
+                <option>NAVIGATIONS</option>
+                <option>SECURITY</option>
+                <option>PRIVACY</option>
+                <option>SOCIAL</option>
+                <option>DESIGN</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label>HTML LINK</label><div class="input-with-icon"><i class="fa-solid fa-link"></i><input type="text" id="editLink"></div></div>
+          <div class="form-group"><label>SVG</label><textarea id="editSVGData" rows="3"></textarea></div>
+          <div class="form-group">
+            <label>PROJECTS APPLIED TO</label>
+            <div class="input-with-icon autocomplete-wrapper">
+              <i class="fa-solid fa-house"></i>
+              <input type="text" id="editProjects" autocomplete="off">
+              <div class="autocomplete-dropdown" id="editIconProjectList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-col">
+          <div class="form-group">
+            <label>ICON FAMILY</label>
+            <select class="modal-dropdown" id="editFamily">
+              <option></option>
+              <option>ROUND</option><option>SHARP</option><option>COLORED</option>
+              <option>SYMBOL</option><option>EMOJIES</option><option>EMOTICONS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>WEIGHT</label>
+            <select class="modal-dropdown" id="editWeight">
+              <option></option>
+              <option>THIN</option><option>LIGHT</option><option>REGULAR</option>
+              <option>BOLD</option><option>FILL</option><option>DUOTONE</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>PATH</label>
+            <div class="viewer-box" id="editViewer">VIEWER</div>
+            <input type="text" id="editPath" placeholder="filename.svg">
+          </div>
+          <div class="form-group"><label>TAGS</label><div class="input-with-icon"><i class="fa-solid fa-hashtag"></i><input type="text" id="editTags"></div></div>
+          <div class="modal-actions">
+            <button class="btn-dark" id="saveEditBtn">SAVE CHANGES</button>
+            <button class="btn-dark close-modal">CANCEL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. DELETE CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal-content small-action-modal">
+      <h3 class="action-title">DELETE</h3>
+      <p class="action-text">ARE YOU SURE YOU WANT TO DELETE<br>THIS ICON?</p>
+      <div class="action-buttons">
+        <button class="btn-dark" id="confirmDeleteBtn" style="background-color: #FF7B7B; border-color: #FF7B7B; width: 120px; border-radius: 25px;">YES</button>
+        <button class="btn-action btn-grey">NO</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ADD PROJECT MODAL (Updated IDs) -->
+  <div class="modal-overlay" id="addProjectModal">
+    <div class="modal-content small-action-modal">
+      <h3 class="action-title">ADD PROJECT</h3>
+      <div class="form-group" style="text-align: left; margin-bottom: 25px;">
+        <div class="input-with-icon autocomplete-wrapper">
+          <i class="fa-solid fa-house"></i>
+          <input type="text" id="quickAddProjectInput" placeholder="Project name..." autocomplete="off">
+          <div class="autocomplete-dropdown" id="quickAddProjectList"></div>
+        </div>
+      </div>
+      <div class="action-buttons">
+        <button class="btn-dark" id="saveQuickAddProjectBtn">ADD</button>
+        <button class="btn-dark close-modal">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. ADD TAG MODAL -->
+  <div class="modal-overlay" id="addTagModal">
+    <div class="modal-content small-action-modal">
+      <h3 class="action-title">ADD TAG</h3>
+      <div class="form-group" style="text-align: left; margin-bottom: 25px;">
+        <div class="input-with-icon">
+          <i class="fa-solid fa-hashtag"></i>
+          <input type="text" id="quickAddTagInput" placeholder="Tag name..." autocomplete="off">
+        </div>
+      </div>
+      <div class="action-buttons">
+        <button class="btn-dark" id="saveQuickAddTagBtn">ADD</button>
+        <button class="btn-dark">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW PROJECT MODAL -->
+  <div class="modal-overlay" id="createNewProjectModal">
+    <div class="modal-content small-action-modal" style="padding: 30px 40px; width: 400px; text-align: left;">
+      <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="action-title" style="text-align: left; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-house" style="color: var(--text-muted); font-size: 1.1rem;"></i> NEW PROJECT
+      </h3>
+      <div class="form-group" style="margin-bottom: 25px;">
+        <input type="text" id="newProjectInput" style="width: 100%;">
+      </div>
+      <div class="action-buttons" style="justify-content: center;">
+        <button class="btn-dark" id="saveNewProjectBtn" style="padding: 10px 40px;">CREATE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. PROJECT DETAIL MODAL -->
+  <div class="modal-overlay" id="projectDetailModal">
+    <div class="modal-content project-detail-content">
+      <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+
+      <!-- Header -->
+      <div class="project-modal-header">
+        <h2 class="project-modal-title" id="projectDetailTitle">Project Name</h2>
+        
+        <div class="project-options-wrapper" style="position: relative;">
+          <button class="project-options-trigger" id="projectOptionsBtn"><i class="fa-solid fa-ellipsis"></i></button>
+          
+          <div class="options-dropdown project-specific-dropdown" id="projectOptionsDropdown">
+            <!-- Changed classes to proj-dropdown-item -->
+            <div class="proj-dropdown-item" id="copyCreditsBtn">COPY CREDITS</div>
+            <div class="proj-dropdown-item delete-action" id="deleteProjectBtn">DELETE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="project-modal-body">
+        <!-- Fonts Section (Now Dynamic) -->
+        <div class="project-section fonts-section">
+          <div class="project-section-label">
+            <span class="font-icon-sample">Aa</span> FONTS:
+          </div>
+          <div class="project-fonts-list" id="projectDetailFontsList">
+            <!-- Filtered project fonts will be injected here -->
+          </div>
+        </div>
+
+        <!-- Icons Section (Dynamic from Firebase) -->
+        <div class="project-section icons-section">
+          <div class="project-section-label">ICONS:</div>
+          <div class="project-icons-grid" id="projectIconsGrid">
+            <!-- Filtered project icons will be injected here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. PROJECT DELETE CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="deleteProjectConfirmModal">
+    <div class="modal-content" style="text-align: center; padding: 40px; width: 420px; border-radius: 25px;">
+      <h3 class="action-title" style="margin-bottom: 25px;">DELETE</h3>
+      <p style="font-family: 'Montserrat', sans-serif; font-size: 0.85rem; color: #8C827A; letter-spacing: 1.5px; margin-bottom: 35px; line-height: 1.6;">
+        ARE YOU SURE YOU WANT TO DELETE<br>THIS PROJECT?
+      </p>
+      <div class="action-buttons" style="justify-content: center; gap: 15px;">
+        <button class="btn-dark" id="confirmDeleteProjectBtn" style="background-color: #FF7B7B; border-color: #FF7B7B; width: 120px; border-radius: 25px;">YES</button>
+        <button class="btn-grey close-modal" style="width: 120px; border: none; border-radius: 5px;">NO</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/icons&fonts.js"></script>
+</body>
+</html>

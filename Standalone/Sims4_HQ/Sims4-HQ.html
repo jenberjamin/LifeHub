@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>LifeHub: Sims 4 HQ</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Icons">
+    
+    <style>
+        /* The Sims 4 Official Font Feel */
+        @import url('https://fonts.cdnfonts.com/css/century-gothic');
+
+        body {
+            font-family: 'Century Gothic', sans-serif;
+            overflow: hidden; /* No scrolling on the lobby */
+        }
+
+        /* Glassmorphism Logic */
+        .glass-nav {
+            background: rgba(0, 0, 0, 0.95); /* Deep black for high contrast */
+            backdrop-filter: blur(5px);
+        }
+
+        /* Text Glow for that 'Premium' feel */
+        .text-glow:hover {
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen relative bg-black">
+
+    <img src="Background_01.webp" 
+         alt="Sims 4 Background" 
+         class="absolute inset-0 w-full h-full object-cover z-0">
+
+    <nav class="glass-nav text-white h-16 flex justify-between items-center px-8 relative z-20 shadow-md">
+        
+        <div class="flex items-baseline space-x-8">
+            <a href="Sims4-HQ.html" class="text-sm font-bold tracking-widest text-white border-b-2 border-white pb-1">HOME</a>
+            <a href="#" class="text-xs font-medium tracking-widest text-gray-300 hover:text-white hover:opacity-100 transition-all">GAMEPLAY</a>
+            <a href="Sims4-Mods.html" class="text-xs font-medium tracking-widest text-gray-300 hover:text-white hover:opacity-100 transition-all">MODS</a>
+            <a href="#" class="text-xs font-medium tracking-widest text-gray-300 hover:text-white hover:opacity-100 transition-all">CUSTOM CONTENT</a>
+            <a href="#" class="text-xs font-medium tracking-widest text-gray-300 hover:text-white hover:opacity-100 transition-all">LOT GALLERY</a>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <button class="flex items-center gap-2 group cursor-pointer">
+                <span class="text-xl font-bold tracking-wider text-glow transition-all">Create-a-Sim</span>
+                <span class="material-icons text-xl group-hover:rotate-90 transition-transform duration-300">wallpaper</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="absolute top-20 left-8 z-10">
+        <img src="Sims4-HQ-logo.webp" 
+             alt="The Sims 4 Logo" 
+             class="w-48 drop-shadow-lg">
+    </div>
+
+    <script type="module" src="sims-core.js"></script>
+
+</body>
+</html>

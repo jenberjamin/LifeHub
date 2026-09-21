@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>LifeHub | Home Upkeep </title>
+    
+
+    <link rel="icon" type="image/png" href="icons/Home-Upkeep.png">
+    <link rel="stylesheet" href="css/lifeHub-tracker-home-upkeep.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+   
+
+<!-- ONE Firebase version. This page loaded 10.7.1, then the navigation
+     core used it, and THEN loaded 9.23.0 — which replaced window.firebase
+     underneath the nav core and left this tracker running on a different
+     SDK than the page had already initialised. -->
+<script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<!-- What a prestige row looks like and which ones move her rank.
+     Shared with every other tracker; must load before the one below,
+     which banks the session wallet through it. -->
+<script defer src="../../JS/lifehub-prestige-ledger.js"></script>
+<script defer src="js/tracker-home-upkeep.js"></script>
+<script defer src="../../JS/lifehub-navigation-core.js"></script>
+
+</head>
+<body>
+
+    <!-- Two ways out: the wallpaper, or the interior. -->
+    <nav class="nav-dock" aria-label="Leave the tracker">
+      <a href="../../LifeHub-HomeScreen.html" class="nav-btn" title="Home Screen" aria-label="Home Screen">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+        <span>Home Screen</span>
+      </a>
+      <a href="../../LifeHub.html" class="nav-btn" title="LifeHub Lobby" aria-label="LifeHub Lobby">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 20V8.2l8-4.2 8 4.2V20"/>
+          <path d="M2.6 20h18.8"/>
+          <path d="M9.9 20v-5.1a2.1 2.1 0 0 1 4.2 0V20"/>
+        </svg>
+        <span>Lobby</span>
+      </a>
+    </nav>
+
+    <main class="main-stage">
+        
+        <div class="unified-glass-panel">
+            
+            <div class="dashboard-grid">
+
+                <div class="panel-section-left">
+                    <div class="section-header">
+                        <h2>Home Upkeep</h2>
+                        <input type="date" id="logDate" class="date-picker-minimal">
+</div>
+
+                    <div class="zone-grid">
+                        <div class="zone-card active" onclick="selectZone(this, 'My Bedroom')">
+                            <div class="zone-content">
+                                <span class="material-symbols-outlined zone-icon">bed</span>
+                                <div class="zone-name">My Bedroom</div>
+                            </div>
+                            <div class="zone-stats">
+                                <div class="stat-row">
+                                    <span>Focus</span>
+                                    <span>-- hrs</span>
+                                </div>
+                                <div class="meter-bg">
+                                    <div class="meter-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="zone-card" onclick="selectZone(this, 'Bathroom')">
+                            <div class="zone-content">
+                                <span class="material-symbols-outlined zone-icon">bathtub</span>
+                                <div class="zone-name">Bathroom</div>
+                            </div>
+                            <div class="zone-stats">
+                                <div class="stat-row">
+                                    <span>Focus</span>
+                                    <span>-- hrs</span>
+                                </div>
+                                <div class="meter-bg">
+                                    <div class="meter-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="zone-card" onclick="selectZone(this, 'Living Room')">
+                            <div class="zone-content">
+                                <span class="material-symbols-outlined zone-icon">chair</span>
+                                <div class="zone-name">Living Room</div>
+                            </div>
+                            <div class="zone-stats">
+                                <div class="stat-row">
+                                    <span>Focus</span>
+                                    <span>-- hrs</span>
+                                </div>
+                                <div class="meter-bg">
+                                    <div class="meter-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="zone-card" onclick="selectZone(this, 'Dining Room')">
+                            <div class="zone-content">
+                                <span class="material-symbols-outlined zone-icon">restaurant</span>
+                                <div class="zone-name">Dining Room</div>
+                            </div>
+                            <div class="zone-stats">
+                                <div class="stat-row">
+                                    <span>Focus</span>
+                                    <span>-- hrs</span>
+                                </div>
+                                <div class="meter-bg">
+                                    <div class="meter-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="zone-card" onclick="selectZone(this, 'Kitchen')">
+                            <div class="zone-content">
+                                <span class="material-symbols-outlined zone-icon">kitchen</span>
+                                <div class="zone-name">Kitchen</div>
+                            </div>
+                            <div class="zone-stats">
+                                <div class="stat-row">
+                                    <span>Focus</span>
+                                    <span>-- hrs</span>
+                                </div>
+                                <div class="meter-bg">
+                                    <div class="meter-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="zone-card" onclick="selectZone(this, 'Balcony')">
+                            <div class="zone-content">
+                                <span class="material-symbols-outlined zone-icon">deck</span>
+                                <div class="zone-name">Balcony</div>
+                            </div>
+                            <div class="zone-stats">
+                                <div class="stat-row">
+                                    <span>Focus</span>
+                                    <span>-- hrs</span>
+                                </div>
+                                <div class="meter-bg">
+                                    <div class="meter-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="zone-card" onclick="selectZone(this, 'Mama\'s Bedroom')">
+                            <div class="zone-content">
+                                <span class="material-symbols-outlined zone-icon">bedroom_parent</span>
+                                <div class="zone-name">Mama's Bedroom</div>
+                            </div>
+                            <div class="zone-stats">
+                                <div class="stat-row">
+                                    <span>Focus</span>
+                                    <span>-- hrs</span>
+                                </div>
+                                <div class="meter-bg">
+                                    <div class="meter-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="zone-card" onclick="selectZone(this, 'Denden\'s Bedroom')">
+                            <div class="zone-content">
+                                <span class="material-symbols-outlined zone-icon">bedroom_parent</span>
+                                <div class="zone-name">Denden's Bedroom</div>
+                            </div>
+                            <div class="zone-stats">
+                                <div class="stat-row">
+                                    <span>Focus</span>
+                                    <span>-- hrs</span>
+                                </div>
+                                <div class="meter-bg">
+                                    <div class="meter-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="zone-card" onclick="selectZone(this, 'Store')">
+                            <div class="zone-content">
+                                <span class="material-symbols-outlined zone-icon">storefront</span>
+                                <div class="zone-name">Store</div>
+                            </div>
+                            <div class="zone-stats">
+                                <div class="stat-row">
+                                    <span>Focus</span>
+                                    <span>-- hrs</span>
+                                </div>
+                                <div class="meter-bg">
+                                    <div class="meter-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mode-controls">
+                        <button class="mode-btn active" onclick="selectTaskMode(this, 'Sanitation')">
+                            <span class="material-symbols-outlined mode-icon">sanitizer</span>
+                            Sanitation Task
+                        </button>
+                        
+                        <button class="mode-btn" onclick="selectTaskMode(this, 'Upkeep')">
+                            <span class="material-symbols-outlined mode-icon">home_and_garden</span>
+                            Home Upkeep
+                        </button>
+                    </div>
+
+                </div> 
+
+                <div class="vertical-divider"></div>
+
+                <div class="panel-section-right">
+    
+    <div class="section-header">
+        <h2 id="rightPanelTitle">Home Health</h2>
+        <span class="date-display" id="todayDate"></span>
+    </div>
+
+    <div id="view-timer">
+        
+        <div class="timer-display">
+            <div class="action-title" id="activeZoneLabel">Ready to Clean: My Bedroom</div>
+            <div class="timer-digits">00:00:00</div>
+            <div class="timer-controls">
+                <button class="timer-btn"><span class="material-symbols-outlined">play_arrow</span></button>
+                <button class="timer-btn"><span class="material-symbols-outlined">stop</span></button>
+            </div>
+        </div>
+
+        <div class="session-wallet" id="walletPanel" style="display:none;">
+            <div class="wallet-header">SESSION EARNINGS</div>
+            <div class="wallet-amount" id="holdingDisplay">0.00</div>
+            <div class="wallet-actions">
+                <button class="wallet-btn deposit" onclick="depositHolding()">
+                    <span class="material-symbols-outlined">savings</span>
+                    Deposit
+                </button>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="log-container">
+            <h3>Today's Upkeep</h3>
+            <br>
+            </div>
+
+    </div> <div id="view-checklist" style="display: none;">
+        
+        <div class="checklist-progress">
+            <div class="cp-text">
+                <span id="cp-count">0/0</span> Completed
+            </div>
+            <div class="cp-bar-bg">
+                <div class="cp-bar-fill" id="checklistProgress"></div>
+            </div>
+        </div>
+
+        <div class="checklist-scroll-area" id="checklistContainer">
+            </div>
+
+    </div>
+
+</div>
+    </main>
+
+</body>
+</html>

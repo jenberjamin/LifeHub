@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <!-- Imgur returns 403 when a Referer header points at an unknown origin
+         (e.g. 127.0.0.1). Sending no referrer at all makes the wallpapers load. -->
+    <meta name="referrer" content="no-referrer">
+    <title>CinemaHub</title>
+
+
+    <link rel="icon" type="image/png" href="css/files/CinemaHub.png">
+    <link rel="stylesheet" href="css/cinemahub.css">
+    <link rel="manifest" href="manifest-cinemahub.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+    <meta name="theme-color" content="#050505">
+    <link rel="apple-touch-icon" href="icon_2.png">
+
+    
+</head>
+<body>
+
+    <div class="cinematic-bg" id="bgContainer">
+        <div class="vignette"></div>
+    </div>
+
+    <div class="header">
+        <div class="brand">
+            <span class="material-symbols-outlined" style="color:var(--color-cyan)">movie_filter</span>
+            Cinema<span>Hub</span>
+        </div>
+        
+        <div class="theme-trigger" onclick="toggleThemeMenu()">
+            <span class="material-symbols-outlined" style="font-size: 28px;">grid_view</span>
+            
+            <div class="theme-menu" id="themeDropdown">
+                <div class="theme-title">Background Cover Themes</div>
+
+                <div class="theme-opt" onclick="switchTheme(event, 'Movie Covers')">MOVIE COVERS</div>
+                <div class="theme-opt" onclick="switchTheme(event, 'Cinematic')">CINEMATIC</div>
+                <div class="theme-opt" onclick="switchTheme(event, 'Horror')">HORROR</div>
+                <div class="theme-opt" onclick="switchTheme(event, 'Superheroes')">SUPERHEROES</div>
+                <div class="theme-opt" onclick="switchTheme(event, 'Standard Covers')">STANDARD COVERS</div>
+                
+                <div class="theme-divider"></div>
+                
+                <div class="theme-opt" onclick="window.location.href='../../LifeHub.html'">EXIT TO HUB</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-content">
+        <div class="tagline type-writer-text">Welcome Back</div>
+        
+        <div class="big-title">
+            <span class="hero-line line-1">MOVIE</span>
+            <span class="hero-line line-2">BUFF</span>
+            <span class="hero-line line-3">MODE</span>
+        </div>
+        
+        <div class="description hero-desc-fade">
+            Track your watchlist and rate your favorites.
+        </div>
+
+        <a href="CinemaHub-Collections.html" class="main-entry-btn">
+            <span class="entry-text">My Watch List</span>
+            <span class="material-symbols-outlined entry-icon">arrow_forward</span>
+            <div class="entry-glow"></div>
+        </a>
+    </div>
+
+    <div class="nav-dock">
+    
+        <a href="CinemaHub-Collections.html?filter=watchlist" class="nav-btn">
+            <span class="material-symbols-outlined btn-icon">bookmark_add</span>
+            <div class="btn-text">
+                <span class="btn-title">To Watch</span>
+                <span class="btn-sub">Your Queue</span>
+            </div>
+        </a>
+
+        <a href="CinemaHub-Collections.html?filter=watching" class="nav-btn">
+            <span class="material-symbols-outlined btn-icon">play_circle</span>
+            <div class="btn-text">
+                <span class="btn-title">In Progress</span>
+                <span class="btn-sub">Resume Playing</span>
+            </div>
+        </a>
+
+        <a href="CinemaHub-Collections.html?filter=watched" class="nav-btn">
+            <span class="material-symbols-outlined btn-icon">check_circle</span>
+            <div class="btn-text">
+                <span class="btn-title">Finished</span>
+                <span class="btn-sub">Library & Ratings</span>
+            </div>
+        </a>
+
+        <a href="CinemaHub-Collections.html?filter=favorites" class="nav-btn">
+            <span class="material-symbols-outlined btn-icon">favorite</span>
+            <div class="btn-text">
+                <span class="btn-title">Hall of Fame</span>
+                <span class="btn-sub">All-time Favorites</span>
+            </div>
+        </a>
+
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span class="stat-num" id="statMovies">0</span>
+            <span class="stat-lbl">Total Movies</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num" id="statSeries">0</span>
+            <span class="stat-lbl">Total Series</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num" id="statHours">0h</span>
+            <span class="stat-lbl">Watch Time</span>
+        </div>
+    </div>
+
+<script>
+/* =========================================
+       1. THE INFINITE WALLPAPER SHUFFLER (THEME ENGINE)
+       ========================================= */
+    let currentTheme = localStorage.getItem('CinemaHub_Theme') || 'Cinematic';
+
+    function initWallpaperDeck(themeName) {
+        const container = document.getElementById('bgContainer');
+        
+        // 1. CLEANUP: Remove old slides (But NOT the vignette or the base CSS image)
+        const oldSlides = container.querySelectorAll('.bg-slide');
+        oldSlides.forEach(slide => slide.remove());
+
+        // 2. CONFIGURATION
+        const SLIDE_DURATION = 12; // Seconds per slide
+        const MAX_SLIDES = 10;     // Chunking Rule
+        
+        // 3. THE COLLECTIONS
+        const collections = {
+"Standard Covers": [
+    'https://i.imgur.com/EgJKZzc.jpeg', 'https://i.imgur.com/qB1ZFTA.jpeg',
+    'https://i.imgur.com/MAfpdLY.jpeg', 'https://i.imgur.com/e7N1AsS.jpeg',
+    'https://i.imgur.com/WLNT8uO.jpeg', 'https://i.imgur.com/OP3xBq6.jpeg',
+    'https://i.imgur.com/Tiaghf1.jpeg', 'https://i.imgur.com/wZLYLcc.jpeg',
+    'https://i.imgur.com/WO9JhgT.jpeg', 'https://i.imgur.com/PWALtg0.jpeg',
+    'https://i.imgur.com/PWALtg0.jpeg', 'https://i.imgur.com/Kv49hhm.jpeg',
+    'https://i.imgur.com/gA6AMZy.jpeg', 'https://i.imgur.com/ZjEzmEf.jpeg',
+    'https://i.imgur.com/r5E7PvZ.jpeg', 'https://i.imgur.com/6a0i8Ns.jpeg',
+    'https://i.imgur.com/XzffLs8.jpeg', 'https://i.imgur.com/27ncgbw.jpeg',
+    'https://i.imgur.com/VItWm1l.jpeg', 'https://i.imgur.com/A0C7DGp.jpeg',
+    'https://i.imgur.com/PiZUkDN.jpeg', 'https://i.imgur.com/QCT6BsO.jpeg',
+    'https://i.imgur.com/oFxXV5T.jpeg', 'https://i.imgur.com/eCyukyb.jpeg',
+    'https://i.imgur.com/l6V7HXe.jpeg', 'https://i.imgur.com/pf6edEf.png',
+    'https://i.imgur.com/7aVk1Dd.jpeg', 'https://i.imgur.com/fv8awtW.jpeg',
+    'https://i.imgur.com/7M6YKnW.jpeg', 'https://i.imgur.com/yIEP8nD.jpeg',
+    'https://i.imgur.com/XLhqHkv.jpeg', 'https://i.imgur.com/DPVLyBo.jpeg',
+    'https://i.imgur.com/RFX4buV.jpeg', 'https://i.imgur.com/qWNOQE5.jpeg',
+    'https://i.imgur.com/oSWDAET.jpeg', 'https://i.imgur.com/74pam2u.jpeg',
+    'https://i.imgur.com/73JCS5A.jpeg', 'https://i.imgur.com/hudu9pT.jpeg',
+    'https://i.imgur.com/5HXWR9X.jpeg', 'https://i.imgur.com/jyAjHET.jpeg',
+    'https://i.imgur.com/Mv00G6s.jpeg', 'https://i.imgur.com/EUi7jTF.jpeg',
+    'https://i.imgur.com/BLdqT0y.jpeg', 'https://i.imgur.com/lvUseVO.jpeg',
+    'https://i.imgur.com/spwmcv4.jpeg', 'https://i.imgur.com/liLIz6a.jpeg',
+    'https://i.imgur.com/UH1ug68.jpeg', 'https://i.imgur.com/xg7mrH8.jpeg',
+    'https://i.imgur.com/juHIKFB.jpeg', 'https://i.imgur.com/OioKBpO.jpeg',
+    'https://i.imgur.com/ZHsFU7T.jpeg', 'https://i.imgur.com/4rs7NPL.jpeg',
+    'https://i.imgur.com/VixPVn7.jpeg', 'https://i.imgur.com/YDhXvvy.png',
+    'https://i.imgur.com/JCwgtBB.jpeg', 'https://i.imgur.com/tXr6fns.jpeg',
+    'https://i.imgur.com/KfzwlXE.jpeg', 'https://i.imgur.com/fqz41gc.jpeg',
+    'https://i.imgur.com/dWTCUpB.jpeg', 'https://i.imgur.com/sosXaZi.jpeg',
+    'https://i.imgur.com/tiEPUBw.jpeg', 'https://i.imgur.com/85bhhKj.jpeg',
+    'https://i.imgur.com/QlXySVb.jpeg', 'https://i.imgur.com/kMBcQ4r.jpeg',
+    'https://i.imgur.com/OHHARe3.jpeg', 'https://i.imgur.com/eLgHBWL.jpeg',
+    'https://i.imgur.com/4Dn7pQq.jpeg', 'https://i.imgur.com/aNOLwxL.jpeg',
+    'https://i.imgur.com/fXpjOUX.jpeg', 'https://i.imgur.com/hD7YXMo.jpeg',
+    'https://i.imgur.com/EbI9iXH.jpeg', 'https://i.imgur.com/bz20w1K.jpeg',
+    'https://i.imgur.com/OjfK6Gn.jpeg', 'https://i.imgur.com/9s9Xic8.jpeg',
+    'https://i.imgur.com/CosK9GT.jpeg', 'https://i.imgur.com/6tcdpwr.jpeg',
+    'https://i.imgur.com/aErQAKh.jpeg', 'https://i.imgur.com/18IFoRo.jpeg',
+    'https://i.imgur.com/9HJgGU6.jpeg', 'https://i.imgur.com/TaH4eXh.jpeg',
+    'https://i.imgur.com/jJUPYyy.jpeg', 'https://i.imgur.com/JQzTiJg.jpeg',
+    'https://i.imgur.com/MeUJUpZ.jpeg', 'https://i.imgur.com/D5HanDL.jpeg',
+    'https://i.imgur.com/PSuohAF.jpeg', 'https://i.imgur.com/WfDnIEO.jpeg',
+    'https://i.imgur.com/NHFtUqC.jpeg', 'https://i.imgur.com/2vh8U82.jpeg',
+    'https://i.imgur.com/ZYDLdBU.jpeg', 'https://i.imgur.com/nlsFA75.jpeg',
+    'https://i.imgur.com/WdVVpVo.jpeg', 'https://i.imgur.com/SGoV6Rv.jpeg',
+    'https://i.imgur.com/4WB00mX.jpeg', 'https://i.imgur.com/xcuTC0s.jpeg',
+    'https://i.imgur.com/PPeMJzz.jpeg', 'https://i.imgur.com/GQi13bH.jpeg',
+    'https://i.imgur.com/R7gPsBG.jpeg', 'https://i.imgur.com/yIrVoy3.jpeg',
+    'https://i.imgur.com/CCqBxtM.jpeg', 'https://i.imgur.com/giFXWNz.jpeg',
+    'https://i.imgur.com/nImhsHx.jpeg', 'https://i.imgur.com/wvPZ5sN.jpeg',
+    'https://i.imgur.com/ckJm6fy.jpeg'
+],
+
+"Horror": [
+    'https://i.imgur.com/68HQqOZ.jpeg', 'https://i.imgur.com/RcCX26c.jpeg',
+    'https://i.imgur.com/zrretgR.jpeg', 'https://i.imgur.com/wiL6uXK.jpeg',
+    'https://i.imgur.com/OGghnEb.jpeg', 'https://i.imgur.com/AOMon68.jpeg',
+    'https://i.imgur.com/UwlExeb.jpeg', 'https://i.imgur.com/HnwEFfc.jpeg',
+    'https://i.imgur.com/TCuazOm.jpeg', 'https://i.imgur.com/8vitq5A.jpeg',
+    'https://i.imgur.com/oPpNzCE.jpeg', 'https://i.imgur.com/e9Z54Et.jpeg',
+    'https://i.imgur.com/rNrghXk.jpeg', 'https://i.imgur.com/LM5vrig.jpeg'
+],
+
+"Movie Covers": [
+    'https://i.imgur.com/pwIgb2o.jpeg', 'https://i.imgur.com/8FLhSnZ.jpeg',
+    'https://i.imgur.com/V0EwLkG.jpeg', 'https://i.imgur.com/6ms3TSQ.jpeg',
+    'https://i.imgur.com/GH7tfPW.jpeg', 'https://i.imgur.com/LJm6QZj.jpeg',
+    'https://i.imgur.com/ymDQAsv.jpeg', 'https://i.imgur.com/h06TbyW.jpeg',
+    'https://i.imgur.com/jDoM1Yn.jpeg', 'https://i.imgur.com/tDHG07q.jpeg',
+    'https://i.imgur.com/mqS7YFv.jpeg', 'https://i.imgur.com/1a1g47b.jpeg',
+    'https://i.imgur.com/gkU3Z8H.jpeg', 'https://i.imgur.com/cGRbRwI.jpeg',
+    'https://i.imgur.com/S2cDKQr.jpeg', 'https://i.imgur.com/cA7kA0j.jpeg',
+    'https://i.imgur.com/nO4gWVv.jpeg', 'https://i.imgur.com/jgPvktu.jpeg',
+    'https://i.imgur.com/LeJhssd.jpeg', 'https://i.imgur.com/DNqPZ2B.jpeg',
+    'https://i.imgur.com/BHw100B.jpeg', 'https://i.imgur.com/fG600Ph.jpeg',
+    'https://i.imgur.com/msrowUa.jpeg', 'https://i.imgur.com/WnfPRcD.jpeg',
+    'https://i.imgur.com/YFgoCBW.jpeg', 'https://i.imgur.com/m3Mheby.jpeg',
+    'https://i.imgur.com/XPkXQAJ.jpeg', 'https://i.imgur.com/0Cjr5D6.jpeg',
+    'https://i.imgur.com/7oQtRLo.jpeg', 'https://i.imgur.com/agCvblU.jpeg',
+    'https://i.imgur.com/DTjNyx4.jpeg', 'https://i.imgur.com/LMCh2u0.jpeg',
+    'https://i.imgur.com/gpI95Qe.jpeg'
+],
+
+"Superheroes": [
+    'https://i.imgur.com/PLW9w18.jpeg', 'https://i.imgur.com/5pN2fBm.jpeg',
+    'https://i.imgur.com/v4R24u2.jpeg', 'https://i.imgur.com/QvYK9pn.jpeg',
+    'https://i.imgur.com/UImVS9v.jpeg', 'https://i.imgur.com/uW3ZIT1.jpeg',
+    'https://i.imgur.com/pGMInDd.jpeg', 'https://i.imgur.com/zr2kHM5.jpeg',
+    'https://i.imgur.com/lyZ14gW.jpeg', 'https://i.imgur.com/h4zDLi2.jpeg',
+    'https://i.imgur.com/HCPyFLd.jpeg', 'https://i.imgur.com/1tBngCJ.jpeg',
+    'https://i.imgur.com/20Dpgbu.jpeg', 'https://i.imgur.com/3F58OtM.jpeg',
+    'https://i.imgur.com/AhM9YdD.jpeg', 'https://i.imgur.com/GDXNRj7.jpeg',
+    'https://i.imgur.com/l1FsSjL.jpeg', 'https://i.imgur.com/3nalnYq.jpeg',
+    'https://i.imgur.com/EGjvJ89.jpeg', 'https://i.imgur.com/Qt0p3ND.jpeg',
+    'https://i.imgur.com/txDzR3Y.jpeg', 'https://i.imgur.com/HZUKIty.jpeg',
+    'https://i.imgur.com/e3P7WFe.jpeg', 'https://i.imgur.com/JQ8lpzL.jpeg',
+    'https://i.imgur.com/f8GTRYo.jpeg', 'https://i.imgur.com/w5NJT2M.jpeg',
+    'https://i.imgur.com/GySjApb.jpeg', 'https://i.imgur.com/AWn14Qe.jpeg',
+    'https://i.imgur.com/No0eZYz.jpeg', 'https://i.imgur.com/px0nZkO.jpeg',
+    'https://i.imgur.com/gHWtCCM.jpeg', 'https://i.imgur.com/3tkDt6Y.jpeg',
+    'https://i.imgur.com/GCNZoaG.jpeg', 'https://i.imgur.com/00a69IM.jpeg',
+    'https://i.imgur.com/qa6QxBD.jpeg', 'https://i.imgur.com/Qgd4dHJ.jpeg',
+    'https://i.imgur.com/aRomK4g.jpeg', 'https://i.imgur.com/RiHrf3Q.jpeg',
+    'https://i.imgur.com/1AAJ5ul.jpeg', 'https://i.imgur.com/4pT3cEI.jpeg',
+    'https://i.imgur.com/WRQj5OA.jpeg', 'https://i.imgur.com/sFHRqZK.jpeg',
+    'https://i.imgur.com/cHk7Qll.jpeg', 'https://i.imgur.com/vag9iol.jpeg',
+    'https://i.imgur.com/vSGJXs7.jpeg', 'https://i.imgur.com/ihkw9ny.jpeg',
+    'https://i.imgur.com/nhLt7kw.jpeg', 'https://i.imgur.com/Zq9leOX.jpeg',
+    'https://i.imgur.com/a1pk95Y.jpeg', 'https://i.imgur.com/jAzoqOV.jpeg',
+    'https://i.imgur.com/zDWAPP6.jpeg', 'https://i.imgur.com/amf1jRl.jpeg',
+    'https://i.imgur.com/q5twhkR.jpeg', 'https://i.imgur.com/tLfyN9V.jpeg',
+    'https://i.imgur.com/P92rm0s.jpeg', 'https://i.imgur.com/LvGsNoh.jpeg',
+    'https://i.imgur.com/o5l6FNH.jpeg', 'https://i.imgur.com/Zhu0JRS.jpeg',
+    'https://i.imgur.com/op6Cy8r.jpeg', 'https://i.imgur.com/drvBrDO.jpeg',
+    'https://i.imgur.com/9fz3e9s.jpeg', 'https://i.imgur.com/2vEFAKL.jpeg',
+    'https://i.imgur.com/1wWy9dp.jpeg'
+],
+
+"Cinematic": [
+    'https://i.imgur.com/IiLJDgj.jpeg', 'https://i.imgur.com/bgRh5WG.jpeg',
+    'https://i.imgur.com/0MGWVtP.jpeg', 'https://i.imgur.com/buwfHdA.jpeg',
+    'https://i.imgur.com/NN6gkQq.jpeg', 'https://i.imgur.com/OQWHStl.jpeg',
+    'https://i.imgur.com/zN2E6jK.jpeg', 'https://i.imgur.com/FoUinWa.jpeg',
+    'https://i.imgur.com/e9mLHb1.jpeg', 'https://i.imgur.com/UPflBmK.jpeg',
+    'https://i.imgur.com/bBj7JoW.jpeg', 'https://i.imgur.com/1yc1tcA.jpeg',
+    'https://i.imgur.com/nbJaE1b.jpeg', 'https://i.imgur.com/P8lSZ8D.jpeg',
+    'https://i.imgur.com/EGqJ4mN.jpeg', 'https://i.imgur.com/cX9TmCe.jpeg',
+    'https://i.imgur.com/6q5U2hx.jpeg', 'https://i.imgur.com/iX5OvMK.jpeg',
+    'https://i.imgur.com/9WYZR1q.jpeg', 'https://i.imgur.com/2UufjmK.jpeg',
+    'https://i.imgur.com/ZX20IM6.jpeg', 'https://i.imgur.com/NxYlvLs.jpeg',
+    'https://i.imgur.com/Gg1OXTD.jpeg', 'https://i.imgur.com/WKP45mH.jpeg',
+    'https://i.imgur.com/Tp9zMex.jpeg', 'https://i.imgur.com/rDG3xDs.jpeg',
+    'https://i.imgur.com/NJUWPsQ.jpeg', 'https://i.imgur.com/py6T8EZ.jpeg',
+    'https://i.imgur.com/DCMmBSF.jpeg', 'https://i.imgur.com/7jRThTm.jpeg',
+    'https://i.imgur.com/pm3o6hG.jpeg', 'https://i.imgur.com/E6XCitw.jpeg',
+    'https://i.imgur.com/OTkBqa3.jpeg', 'https://i.imgur.com/angGR3y.jpeg',
+    'https://i.imgur.com/45neXhC.jpeg', 'https://i.imgur.com/Y8Dlf51.jpeg',
+    'https://i.imgur.com/lUNMmsc.png',  'https://i.imgur.com/5WimzCr.jpeg',
+    'https://i.imgur.com/XR8qSoG.jpeg', 'https://i.imgur.com/OaZx69J.jpeg',
+    'https://i.imgur.com/jdIvbDo.jpeg', 'https://i.imgur.com/EfjALfZ.jpeg',
+    'https://i.imgur.com/ij3I1wK.jpeg', 'https://i.imgur.com/n9nTweP.jpeg',
+    'https://i.imgur.com/SPLwvGO.jpeg', 'https://i.imgur.com/wY3ipr8.jpeg',
+    'https://i.imgur.com/01Tigit.jpeg', 'https://i.imgur.com/1uvgZEj.jpeg',
+    'https://i.imgur.com/NLv8lMB.jpeg', 'https://i.imgur.com/FtO7yIh.jpeg',
+    'https://i.imgur.com/jNMiAzH.jpeg', 'https://i.imgur.com/w2Llqjf.jpeg',
+    'https://i.imgur.com/bESvEsd.jpeg', 'https://i.imgur.com/2bGa9MU.jpeg',
+    'https://i.imgur.com/1I3wP5S.jpeg', 'https://i.imgur.com/nRcgzrN.jpeg',
+    'https://i.imgur.com/B8e9iDf.jpeg', 'https://i.imgur.com/HxSt7MU.jpeg',
+    'https://i.imgur.com/gfvNSZa.jpeg', 'https://i.imgur.com/A0ywnlo.jpeg',
+    'https://i.imgur.com/s7oUoR1.png', 'https://i.imgur.com/3ZtdiPX.jpeg',
+    'https://i.imgur.com/T0OA06P.jpeg', 'https://i.imgur.com/VBoFhMh.jpeg'
+]
+
+        };
+
+        // 4. SELECT THEME (Logic: Check theme -> Get List -> Shuffle -> Pick 10)
+        let wallpapers = [];
+        if (collections[themeName]) {
+            wallpapers = [...collections[themeName]];
+        } else {
+            console.warn("Theme missing, defaulting to Cinematic");
+            // Fallback to a category we KNOW exists
+            wallpapers = [...collections['Cinematic']]; 
+        }
+
+        // 5. SHUFFLE
+        for (let i = wallpapers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [wallpapers[i], wallpapers[j]] = [wallpapers[j], wallpapers[i]];
+        }
+        const activeSlides = wallpapers.slice(0, MAX_SLIDES);
+
+        // 6. BUILD ANIMATION
+        const count = activeSlides.length; 
+        if(count === 0) return; 
+
+        const cycleTime = count * SLIDE_DURATION; 
+        const partPercent = 100 / count;    
+        const fadePercent = (1 / cycleTime) * 100;
+
+        const oldStyle = document.getElementById('dynamic-anim-style');
+        if(oldStyle) oldStyle.remove();
+
+        const style = document.createElement('style');
+        style.id = 'dynamic-anim-style';
+        style.innerHTML = `
+            @keyframes dynamicFade {
+                0% { opacity: 0; transform: scale(1); }
+                ${fadePercent.toFixed(2)}% { opacity: 1; }
+                ${partPercent.toFixed(2)}% { opacity: 1; }
+                ${(partPercent + fadePercent).toFixed(2)}% { opacity: 0; transform: scale(1.1); }
+                100% { opacity: 0; transform: scale(1.1); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 7. INJECT SLIDES (They float ON TOP of background.jpg)
+        const vignette = container.querySelector('.vignette');
+        activeSlides.forEach((url, index) => {
+            const slide = document.createElement('div');
+            slide.className = 'bg-slide';
+            slide.style.backgroundImage = `url('${url}')`;
+            slide.style.animation = `dynamicFade ${cycleTime}s infinite linear`;
+            slide.style.animationDelay = `${index * SLIDE_DURATION}s`;
+            
+            // We insert them before the vignette so the vignette stays on top
+            container.insertBefore(slide, vignette);
+        });
+    }
+
+    /* --- THEME CONTROLS --- */
+    function toggleThemeMenu() {
+            const menu = document.getElementById('themeDropdown');
+            menu.classList.toggle('active');
+        }
+
+    function switchTheme(event, newTheme) {
+            event.stopPropagation();
+            currentTheme = newTheme;
+            localStorage.setItem('CinemaHub_Theme', newTheme);
+            initWallpaperDeck(newTheme);
+            setTimeout(() => {
+                document.getElementById('themeDropdown').classList.remove('active');
+            }, 200);
+        }
+
+    // Close menu if clicking outside
+    document.addEventListener('click', function(e) {
+        const trigger = document.querySelector('.theme-trigger');
+        const menu = document.getElementById('themeDropdown');
+        if (!trigger.contains(e.target)) {
+            menu.classList.remove('active');
+        }
+    });
+
+    /* =========================================
+       2. THE LOBBY ACCOUNTANT (Stats)
+       ========================================= */
+    function initStats() {
+        // Updated to match core.js naming
+        const DB_NAME = 'LifeHub_CinemaVault'; 
+        const data = JSON.parse(localStorage.getItem(DB_NAME)) || [];
+
+            const movies = data.filter(m => (m.type || 'movie').toLowerCase() === 'movie');
+            const series = data.filter(m => (m.type || 'movie').toLowerCase() === 'series');
+
+            document.getElementById('statMovies').innerText = movies.length;
+            document.getElementById('statSeries').innerText = series.length;
+
+            let totalMinutes = 0;
+            data.forEach(item => {
+                if (item.status === 'watched') {
+                    let runtime = item.runtime || "0";
+                    let mins = parseInt(runtime.split(' ')[0]);
+                    if (!isNaN(mins)) totalMinutes += mins;
+                }
+            });
+        const hours = Math.round(totalMinutes / 60);
+            document.getElementById('statHours').innerText = `${hours}h`;
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+    initWallpaperDeck(currentTheme);
+    initStats();
+});
+
+
+</script>
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('✅ LifeHub Worker Registered'))
+                    .catch(err => console.log('❌ Worker Failed:', err));
+            });
+        }
+    </script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="js/cinema-sync.js"></script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>
+

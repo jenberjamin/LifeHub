@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>LifeHub | Self Upkeep</title>
+    
+    <link rel="icon" type="image/png" href="icons/Self-Upkeep.png">
+    <link rel="stylesheet" href="css/lifehub-tracker-self-upkeep.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    
+
+<!-- ONE Firebase version. This page loaded 10.7.1, let the navigation
+     core use it, and THEN loaded 9.23.0 — replacing window.firebase
+     underneath the nav core. -->
+<script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<!-- What a prestige row looks like and which ones move her rank.
+     Shared with every other tracker, so an un-ticked task is marked
+     as a correction rather than relying on its wording. -->
+<script defer src="../../JS/lifehub-prestige-ledger.js"></script>
+<script defer src="js/tracker-self-upkeep.js"></script>
+<script defer src="../../JS/lifehub-navigation-core.js"></script>
+
+
+</head>
+<body>
+
+    <!-- Two ways out: the wallpaper, or the interior. -->
+    <nav class="nav-dock" aria-label="Leave the tracker">
+      <a href="../../LifeHub-HomeScreen.html" class="nav-btn" title="Home Screen" aria-label="Home Screen">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+        <span>Home Screen</span>
+      </a>
+      <a href="../../LifeHub.html" class="nav-btn" title="LifeHub Lobby" aria-label="LifeHub Lobby">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 20V8.2l8-4.2 8 4.2V20"/>
+          <path d="M2.6 20h18.8"/>
+          <path d="M9.9 20v-5.1a2.1 2.1 0 0 1 4.2 0V20"/>
+        </svg>
+        <span>Lobby</span>
+      </a>
+    </nav>
+
+    <main class="main-stage">
+        
+        <div class="unified-glass-panel">
+            
+            <div class="dashboard-grid">
+
+                <div class="panel-section-left">
+                    <div class="section-header">
+                        <h2>Self Upkeep</h2>
+                        <input type="date" id="logDate" class="date-picker-minimal">
+                    </div>
+
+                    <div class="zone-grid">
+    <div class="zone-card active" onclick="selectZone(this, 'Facial Care')" data-zone="Facial Care">
+        <div class="zone-content">
+            <span class="material-symbols-outlined zone-icon">face</span>
+            <div class="zone-name">Facial Care</div>
+        </div>
+        <div class="consistency-label">
+            <span>7-DAY FOCUS</span>
+            <span class="consistency-text">0%</span>
+        </div>
+        <div class="consistency-track">
+            <div class="consistency-fill"></div>
+        </div>
+    </div>
+
+    <div class="zone-card" onclick="selectZone(this, 'Hair Care')" data-zone="Hair Care">
+        <div class="zone-content">
+            <span class="material-symbols-outlined zone-icon">face_3</span>
+            <div class="zone-name">Hair Care</div>
+        </div>
+        <div class="consistency-label">
+            <span>7-DAY FOCUS</span>
+            <span class="consistency-text">0%</span>
+        </div>
+        <div class="consistency-track">
+            <div class="consistency-fill"></div>
+        </div>
+    </div>
+
+    <div class="zone-card" onclick="selectZone(this, 'Skin Care')" data-zone="Skin Care">
+        <div class="zone-content">
+            <span class="material-symbols-outlined zone-icon">spa</span>
+            <div class="zone-name">Skin Care</div>
+        </div>
+        <div class="consistency-label">
+            <span>7-DAY FOCUS</span>
+            <span class="consistency-text">0%</span>
+        </div>
+        <div class="consistency-track">
+            <div class="consistency-fill"></div>
+        </div>
+    </div>
+
+    <div class="zone-card" onclick="selectZone(this, 'Dental Care')" data-zone="Dental Care">
+        <div class="zone-content">
+            <span class="material-symbols-outlined zone-icon">dentistry</span>
+            <div class="zone-name">Dental Care</div>
+        </div>
+        <div class="consistency-label">
+            <span>7-DAY FOCUS</span>
+            <span class="consistency-text">0%</span>
+        </div>
+        <div class="consistency-track">
+            <div class="consistency-fill"></div>
+        </div>
+    </div>
+
+    <div class="zone-card" onclick="selectZone(this, 'Eye Care')" data-zone="Eye Care">
+        <div class="zone-content">
+            <span class="material-symbols-outlined zone-icon">visibility</span>
+            <div class="zone-name">Eye Care</div>
+        </div>
+        <div class="consistency-label">
+            <span>7-DAY FOCUS</span>
+            <span class="consistency-text">0%</span>
+        </div>
+        <div class="consistency-track">
+            <div class="consistency-fill"></div>
+        </div>
+    </div>
+
+    <div class="zone-card" onclick="selectZone(this, 'Miles Care')" data-zone="Miles Care">
+        <div class="zone-content">
+            <span class="material-symbols-outlined zone-icon">pets</span>
+            <div class="zone-name">Miles Care</div>
+        </div>
+        <div class="consistency-label">
+            <span>7-DAY FOCUS</span>
+            <span class="consistency-text">0%</span>
+        </div>
+        <div class="consistency-track">
+            <div class="consistency-fill"></div>
+        </div>
+    </div>
+
+    <div class="zone-card" onclick="selectZone(this, 'Other Self Care')" data-zone="Other Self Care">
+        <div class="zone-content">
+            <span class="material-symbols-outlined zone-icon">accessibility_new</span>
+            <div class="zone-name">Other Self Care</div>
+        </div>
+        <div class="consistency-label">
+            <span>7-DAY FOCUS</span>
+            <span class="consistency-text">0%</span>
+        </div>
+        <div class="consistency-track">
+            <div class="consistency-fill"></div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+                <div class="vertical-divider"></div>
+
+                <div class="panel-section-right">
+                    
+                    <div class="section-header">
+                        <h2 id="rightPanelTitle">Facial Care</h2>
+                        <div id="dailySummary" class="date-display"></div>
+                    </div>
+
+                    <div class="checklist-progress">
+                        <div class="cp-text">
+                            <span id="cp-count">0/0</span> Completed
+                        </div>
+                        <div class="cp-bar-bg">
+                            <div class="cp-bar-fill" id="checklistProgress"></div>
+                        </div>
+                    </div>
+
+                    <div class="checklist-scroll-area" id="checklistContainer">
+                        </div>
+
+                    <div class="history-trigger-container">
+                        <button class="history-btn" id="historyBtn">View Full History</button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Care Archive</div>
+                <span class="material-symbols-outlined modal-close" id="closeModal">close</span>
+            </div>
+            <div class="modal-body" id="historyList">
+                </div>
+        </div>
+    </div>
+
+</body>
+</html>

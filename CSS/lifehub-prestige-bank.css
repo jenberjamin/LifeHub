@@ -1,0 +1,280 @@
+/* --- CORE VARIABLES --- */
+        :root {
+            --font-main: 'Red Hat Display', sans-serif;
+            --color-text-muted: #8b857e; 
+            --color-gold: #D4AF37;       /* Classic Gold */
+            --color-gold-light: #F3E5AB; /* Champagne */
+            --color-gold-dark: #AA8828;  /* Antique Gold */
+            
+            --bg-image: url('files/LifeHub_Prestige-Bank_BG.webp'); 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            /* Dark overlay to make the gold pop */
+            background-blend-mode: multiply;
+            background-color: rgba(0,0,0,0.2); 
+            
+            display: flex; /* Sidebar | Main Content */
+        }
+
+        /* --- 1. SIDEBAR (Keeping consistency) --- */
+        .sidebar-container {
+            width: 25%; /* Fixed width zone */
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding-left: 80px; 
+            padding-top: 60px; /* Aligning logo */
+        }
+
+        .logo {
+            width: 160px;   
+            margin-bottom: 80px; /* Space between logo and menu */
+            opacity: 0.9;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 45px; 
+        }
+
+        .nav-item {
+            color: var(--color-text-muted);
+            text-decoration: none;
+            font-size: 13px; 
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        /* --- NOT BUILT YET --- */
+        /* Links to pages that don't exist. Dimmed and inert rather than
+           deleted: they are the plan for this section, and the page should
+           be honest about which of them you can actually reach.
+           pointer-events:none also kills the hover states below, so a dead
+           link can't light up as though it were going somewhere.
+           Delete the class from the markup when the page lands. */
+        .nav-item.is-unbuilt,
+        .gold-btn.is-unbuilt {
+            opacity: 0.28;
+            cursor: default;
+            pointer-events: none;
+            filter: grayscale(0.6);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #ffffff;
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active .arrow { color: var(--color-gold); } /* Gold arrow for active page */
+
+        .arrow { font-size: 14px; opacity: 0.7; }
+
+        .add-btn {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            color: var(--color-text-muted);
+            font-size: 24px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .add-btn:hover { color: #fff; transform: rotate(90deg); }
+
+
+        /* --- 2. MAIN STAGE (The Bank Interface) --- */
+        .bank-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* --- THE GOLD CARD (ATM Style) --- */
+        .prestige-card {
+            width: 600px;
+            height: 340px;
+            background: linear-gradient(135deg, #B8860B 0%, #E5C100 50%, #B8860B 100%);
+            border-radius: 30px;
+            position: relative;
+            box-shadow: 
+                0 20px 50px rgba(0,0,0,0.5),
+                inset 0 0 0 1px rgba(255,255,255,0.2); /* Inner rim light */
+            margin-bottom: 50px; /* Space before buttons */
+            padding: 40px;
+            overflow: hidden;
+        }
+
+        /* Card Texture overlay (optional shine) */
+        .prestige-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 60%);
+            pointer-events: none;
+        }
+
+        /* Card Elements Layout */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+        }
+
+        .card-title-img {
+            height: 50px; 
+            width: auto; /* Fixes aspect ratio so text doesn't look squished */
+            
+            /* THE POP FACTOR */
+            /* 1. Drop Shadow: Creates separation from the background */
+            /* 2. Brightness/Contrast: Makes the gold finish gleam */
+            filter: drop-shadow(0 3px 6px rgba(60, 40, 10, 0.6)) brightness(1.1) contrast(1.1);
+            
+            margin-top: 5px; /* Slight adjustment for alignment */
+        }
+        
+
+        .club-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(58, 43, 8, 0.6); /* Dark gold/brown text */
+            font-weight: 600;
+        }
+
+        .balance-area {
+            margin-bottom: 50px;
+        }
+        .balance-amount {
+            font-size: 35px;
+            font-weight: 500; /* Slightly thicker to take the carving effect */
+            letter-spacing: 1px;
+            font-family: 'Red Hat Display', sans-serif;
+            
+            /* THE CARVED LOOK */
+            color: rgba(62, 49, 19, 0.85); /* Dark brown-gold ink */
+            text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.3), /* Light bottom edge highlight */
+                         -1px -1px 1px rgba(0, 0, 0, 0.1);    /* Subtle inner shadow */
+        }
+        .balance-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(62, 49, 19, 0.5);
+            margin-top: 5px;
+            border-top: 1px solid rgba(62, 49, 19, 0.2);
+            display: inline-block;
+            padding-top: 5px;
+            width: 150px;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            position: absolute;
+            bottom: 30px; /* Moved down slightly (was 30px) to give the logo room */
+            left: 40px;
+            right: 40px;
+        }
+
+        .chip-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .emv-chip {
+            width: 30px; /* Sized down as requested */
+            height: auto;
+            border-radius: 5px;
+        }
+        .card-name {
+            font-family: 'cinzel';
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(62, 49, 19, 0.85); /* Dark brown-gold ink */
+            font-weight: 500;
+        }
+
+        .card-logo {
+            width: 70px; 
+            opacity: 0.5; /* Increased visibility */
+            mix-blend-mode: multiply; 
+            
+            /* Move it lower */
+            transform: translateY(20px); 
+        }
+
+
+        /* --- 3. COMMAND DECK (The Buttons) --- */
+        .command-deck {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2 Columns */
+            gap: 15px; /* Tighter gap feels more organized */
+            width: 700px;
+        }
+
+        .gold-btn {
+            /* CORPORATE LOOK: Dark, Solid, Structural */
+            background: linear-gradient(180deg, rgba(40, 40, 40, 0.7) 0%, rgba(20, 20, 20, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            border-left: 3px solid var(--color-gold); /* The "Bank Accent" Stripe */
+            
+            padding: 25px 30px; /* More vertical breathing room */
+            border-radius: 8px; /* Slight curve, but mostly square (Professional) */
+            
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .gold-btn:hover {
+            background: linear-gradient(180deg, rgba(50, 50, 50, 0.8) 0%, rgba(30, 30, 30, 0.9) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            border-left-color: #fff; /* Stripe turns white on hover */
+        }
+
+        .btn-text {
+            color: #E8E3D9; /* Changed to Cream/White for better contrast against dark */
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 500;
+        }
+
+        .btn-arrow {
+            color: var(--color-gold); /* Arrow stays gold */
+            font-size: 14px;
+            opacity: 0.7;
+            transition: 0.3s;
+        }
+        
+        .gold-btn:hover .btn-arrow { 
+            opacity: 1; 
+            transform: translateX(5px); 
+        }

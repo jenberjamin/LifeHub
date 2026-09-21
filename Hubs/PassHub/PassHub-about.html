@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>PassHub | About Me</title>
+
+    <link rel="icon" type="image/png" href="css/files/PassHub.png">
+    <link rel="stylesheet" href="css/passhub-about.css">
+
+    <!-- ── SECURITY SENSOR ──
+         Same guard as the lobby, same placement: in <head> so it
+         runs before anything paints. location.replace so the bounce
+         leaves no history entry for the back button to land on. -->
+    <script>
+    if (!sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+        window.location.replace('PassHub.html');
+    }
+    </script>
+
+</head>
+<body>
+
+    <header>
+        <h1>About Me</h1>
+        <div class="subtitle">Profile &amp; Context</div>
+    </header>
+
+    <div class="toolbar">
+        <button id="btn-edit" class="btn">Edit</button>
+        <button id="btn-add-section" class="btn" hidden>+ Add section</button>
+        <button id="btn-poppy" class="btn">Copy for Poppy</button>
+        <span id="save-state" class="save-state">Loading…</span>
+    </div>
+
+    <div class="profile" id="profile"></div>
+
+    <a href="PassHub-landing_page.html" class="back-nav">← Back to PassHub</a>
+
+    <!-- ── ADD SECTION ── -->
+    <div class="overlay" id="overlay-add" hidden>
+        <div class="modal">
+            <h3>New section</h3>
+
+            <div class="modal-field">
+                <label for="new-title">Section name</label>
+                <input type="text" id="new-title" placeholder="e.g. Skills &amp; Certifications" autocomplete="off">
+            </div>
+
+            <div class="modal-field">
+                <label>Shape</label>
+
+                <label style="display:flex; gap:9px; align-items:flex-start; text-transform:none; letter-spacing:0; font-family:inherit; font-size:13px; font-weight:400; color:var(--text); margin-bottom:10px; cursor:pointer;">
+                    <input type="radio" name="new-type" value="fields" checked style="width:auto; margin-top:3px;">
+                    <span>
+                        <strong>Fields</strong>
+                        <span class="hint" style="margin-top:2px;">One of each — a label and a value. Best for things you only have one of.</span>
+                    </span>
+                </label>
+
+                <label style="display:flex; gap:9px; align-items:flex-start; text-transform:none; letter-spacing:0; font-family:inherit; font-size:13px; font-weight:400; color:var(--text); cursor:pointer;">
+                    <input type="radio" name="new-type" value="records" style="width:auto; margin-top:3px;">
+                    <span>
+                        <strong>Records</strong>
+                        <span class="hint" style="margin-top:2px;">Set the fields once, then add as many entries as you need. Best for anything that repeats.</span>
+                    </span>
+                </label>
+            </div>
+
+            <div class="modal-actions">
+                <button class="mini" id="add-cancel">Cancel</button>
+                <button class="btn" id="add-confirm">Add section</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── POPPY EXPORT ── -->
+    <div class="overlay" id="overlay-poppy" hidden>
+        <div class="modal">
+            <h3>Copy for Poppy</h3>
+
+            <div class="modal-actions" style="justify-content:flex-start; margin:0 0 14px;">
+                <button class="mini is-active" id="fmt-text">Outline</button>
+                <button class="mini" id="fmt-json">JSON</button>
+            </div>
+
+            <textarea id="export-box" class="export-box" spellcheck="false" readonly></textarea>
+            <p class="hint">Outline drops into a system prompt as-is. JSON is keyed for Poppy to parse. Blank fields are left out of both.</p>
+
+            <div class="modal-actions">
+                <button class="mini" id="poppy-close">Close</button>
+                <button class="btn" id="poppy-copy">Copy</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-database-compat.js"></script>
+    <script src="js/passhub-firebase.js"></script>
+    <script src="js/passhub-store.js"></script>
+
+    <script src="js/PassHub-about.js"></script>
+    <script src="../../JS/lifehub-navigation-core.js"></script>
+
+</body>
+</html>

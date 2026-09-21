@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Fitness Centre | Progress Tracker</title>
+
+    <link rel="manifest" href="manifest-fitness.json">
+    <link rel="icon" type="image/png" href="css/files/icon-192.png">
+    <link rel="stylesheet" href="css/fitness-progress_tracker.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+
+</head>
+<body>
+
+    <div class="overlay"></div>
+
+    <div class="container">
+        <div class="top-bar">
+            <div class="header-left">
+                <span class="material-symbols-outlined back-btn" onclick="window.location.href='FITNESS-CENTRE.html'">arrow_back</span>
+                <div class="page-title">
+                    <span>FITNESS CENTRE</span>
+                    PROGRESS TRACKER
+                </div>
+            </div>
+            
+            <button class="log-trigger" onclick="toggleLog()">
+                VIEW LOG <span class="material-symbols-outlined" style="font-size:18px;">history</span>
+            </button>
+        </div>
+
+        <div class="tracker-grid">
+
+            <div class="glass-card photo-col">
+                <div class="profile-frame">
+    <div class="profile-slide active" id="slideLayer1"></div>
+    <div class="profile-slide" id="slideLayer2"></div>
+</div>
+                <div class="update-photo-btn" onclick="openPhotoModal()">UPDATE PROFILE IMAGE</div>
+            </div>
+
+            <div class="glass-card stats-col">
+                
+                <div class="main-level-block">
+                    <div class="level-top-row">
+                        <div class="level-title">LEVEL <span id="mainLevelNum">1</span></div>
+                        
+                        <div class="prestige-badge">
+                            <div style="text-align:right">
+                                <div class="p-amount" id="prestigeDisplay">0</div>
+                                <div class="p-label">PRESTIGE</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="big-progress-track">
+                        <div class="big-progress-fill" id="mainBar" style="width: 0%"></div>
+                    </div>
+                    <div class="level-sub" id="mainLevelSub">0 / 100 FP</div>
+                </div>
+
+                <div class="muscle-list" id="muscleContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="log-drawer" id="logDrawer">
+        <div class="drawer-header">
+            <span class="drawer-title">LEVELING LOG</span>
+            <span class="material-symbols-outlined close-drawer" onclick="toggleLog()">close</span>
+        </div>
+        <div class="drawer-filters">
+            <input type="text" class="log-input" placeholder="SEARCH LOGS..." id="logSearch" onkeyup="filterLogs()">
+            <input type="date" class="log-input" style="width: 140px;" id="logDate" onchange="filterLogs()">
+        </div>
+        <div class="log-feed" id="logFeed">
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="photoModal">
+        <div class="modal-box">
+            <div class="modal-title">MANAGE PHOTOS (MAX 20)</div>
+            <div style="margin-bottom: 20px; font-size: 12px; color: #888;">Paste direct image links (Imgur, etc). Empty lines are ignored.</div>
+            <div id="photoInputsList"></div> <button class="btn-save" onclick="savePhotos()">SAVE GALLERY</button>
+            <div class="btn-cancel" onclick="closePhotoModal()">CANCEL</div>
+        </div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script src="js/gatekeeper.js"></script>
+
+    <script src="js/fitness-core.js"></script>
+
+    <script src="js/fitness-progress_tracker.js"></script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

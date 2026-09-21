@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sims 4 Menu</title>
+    <!-- Import Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Import Century Gothic font */
+        @import url('https://fonts.cdnfonts.com/css/century-gothic');
+
+        body, html {
+            font-family: 'Century Gothic', sans-serif;
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling on the main body */
+        }
+
+        /* --- Gallery (Home) View Styles --- */
+        #gallery-view {
+            background-image: url('https://i.imgur.com/SyuVLuZ.jpeg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 255, 255, 0.7);
+        }
+
+        .button-glow {
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.7), 0 0 12px rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .button-glow:hover {
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 16px rgba(255, 255, 255, 0.8);
+            transform: scale(1.02);
+        }
+        
+        /* --- Create-a-Sim (CAS) View Styles --- */
+        #cas-view {
+            background-image: url('https://i.imgur.com/nr7YA7b.jpeg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+        }
+
+        /* Style for the dark category buttons in CAS */
+        .cas-button {
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .cas-button:hover {
+            background-color: #444;
+            border-color: #777;
+            transform: scale(1.02);
+        }
+        
+        /* Style for the active category button */
+        .cas-button.active {
+             background-color: #555;
+             border-color: #999;
+             box-shadow: 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.2);
+             transform: scale(1.03);
+        }
+
+        /* Helper to make sure views take full height */
+        .view {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body class="bg-black">
+
+    <!-- 
+      VIEW 1: GALLERY (Original Page)
+    -->
+    <div id="gallery-view" class="view">
+        <!-- Top Navigation Bar -->
+        <nav class="bg-black text-white h-16 flex justify-between items-center px-6 md:px-10 flex-shrink-0">
+            <!-- Left-side links -->
+            <div class="flex items-baseline space-x-6">
+                <a href="#" class="text-xl font-bold tracking-wide hover:opacity-80 transition-opacity">HOME</a>
+                <a href="#" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">GAMEPLAY</a>
+                <a href="#" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">MODS</a>
+                <a href="#" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">CUSTOM CONTENTS</a>
+            </div>
+            
+            <!-- Right-side "Create-a-Sim" button -->
+            <div>
+                <button id="goto-cas-btn" class="text-2xl font-bold text-glow tracking-wider cursor-pointer hover:opacity-80 transition-opacity">
+                    Create-a-Sim
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow relative">
+            <!-- Sims 4 Logo -->
+            <img src="https://i.imgur.com/QdFZp1V.png" 
+                 alt="The Sims 4 Logo" 
+                 class="absolute top-2 left-6 md:left-10 w-36 md:w-48"
+                 onerror="this.style.display='none'"> <!-- Hide if logo fails to load -->
+
+            <!-- Button Grid -->
+            <div class="absolute top-8 right-8 md:right-16 lg:right-24">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <!-- Row 1 -->
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Lot Trait</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">CAS Traits</button>
+                    <!-- Row 2 -->
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Traditions</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Aspirations</button>
+                    <!-- Row 3 -->
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Events</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Animations</button>
+                    <!-- Row 4 -->
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Bug Fix</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Interactions</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 
+      VIEW 2: CREATE-A-SIM (New Page)
+      This is hidden by default.
+    -->
+    <div id="cas-view" class="view hidden">
+        <!-- CAS Navigation Bar -->
+        <nav class="bg-black text-white h-16 flex justify-between items-center px-6 md:px-10 flex-shrink-0">
+            <!-- Left-side: Home, Title -->
+            <div class="flex items-center space-x-6">
+                <!-- Home Button -->
+                <button id="goto-gallery-btn" class="text-white hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                </button>
+                
+                <!-- Title -->
+                <span class="text-2xl font-bold tracking-wider">CREATE-A-SIM</span>
+            </div>
+        </nav>
+
+        <!-- CAS Main Content -->
+        <main class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6 p-6 md:p-10">
+            <!-- Left Side: Sim Placeholder (2/3 width on desktop) -->
+            <div class="md:col-span-2 h-[calc(100vh-150px)] relative">
+                <!-- Logo moved here as requested -->
+                <img src="https://i.imgur.com/yJqfSdj.png" 
+                     alt="Sims 4 Logo" 
+                     class="h-14 absolute top-0 left-0" 
+                     onerror="this.style.display='none'">
+                
+                <!-- This area is now empty, ready for the Sim model -->
+            </div>
+
+            <!-- Right Side: Categories (1/3 width on desktop) -->
+            <div class="flex flex-col space-y-4 pt-4">
+                <!-- Category Buttons -->
+                <div id="category-buttons" class="flex flex-wrap gap-4">
+                    <button class="cas-button px-6 py-3 rounded-full font-bold text-lg" data-category="Facial Contents">
+                        Facial Contents
+                    </button>
+                    <button class="cas-button px-6 py-3 rounded-full font-bold text-lg" data-category="Wardrobe">
+                        Wardrobe
+                    </button>
+                </div>
+
+                <!-- Add New Button -->
+                <button id="add-new-btn" class="cas-button px-6 py-3 rounded-full font-bold text-lg w-fit">
+                    + Add New
+                </button>
+                
+                <!-- Input for new category (hidden by default) -->
+                <div id="new-category-input-container" class="hidden flex gap-2">
+                    <input type="text" id="new-category-name" class="bg-white text-black px-4 py-2 rounded-full flex-grow" placeholder="Category Name...">
+                    <button id="save-category-btn" class="bg-green-500 text-white px-4 py-2 rounded-full font-bold">Save</G>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- Get DOM Elements ---
+        const galleryView = document.getElementById('gallery-view');
+        const casView = document.getElementById('cas-view');
+        
+        const gotoCasBtn = document.getElementById('goto-cas-btn');
+        const gotoGalleryBtn = document.getElementById('goto-gallery-btn');
+        
+        const categoryButtonsContainer = document.getElementById('category-buttons');
+        // const categoryContentArea = document.getElementById('category-content-area'); // Removed
+        
+        const addNewBtn = document.getElementById('add-new-btn');
+        const newCategoryInputContainer = document.getElementById('new-category-input-container');
+        const newCategoryNameInput = document.getElementById('new-category-name');
+        const saveCategoryBtn = document.getElementById('save-category-btn');
+
+        // --- View Switching Logic ---
+        function showView(viewId) {
+            if (viewId === 'cas-view') {
+                galleryView.classList.add('hidden');
+                casView.classList.remove('hidden');
+            } else {
+                casView.classList.add('hidden');
+                galleryView.classList.remove('hidden');
+            }
+        }
+
+        gotoCasBtn.addEventListener('click', () => showView('cas-view'));
+        gotoGalleryBtn.addEventListener('click', () => showView('gallery-view'));
+
+        // --- Category Logic ---
+
+        // Function to show content for a category
+        function showCategoryContent(categoryName) {
+            // Update active button state
+            document.querySelectorAll('.cas-button[data-category]').forEach(btn => {
+                if (btn.dataset.category === categoryName) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Content area has been removed, so we no longer update it.
+            // You can add logic here for what *should* happen,
+            // e.g., loading items into the main placeholder area.
+            console.log("Switched to category:", categoryName);
+        }
+        
+        // Function to create a new category button
+        function createCategoryButton(categoryName) {
+            const newButton = document.createElement('button');
+            newButton.className = 'cas-button px-6 py-3 rounded-full font-bold text-lg';
+            newButton.dataset.category = categoryName;
+            newButton.textContent = categoryName;
+            
+            // Add click listener to the new button
+            newButton.addEventListener('click', () => {
+                showCategoryContent(categoryName);
+            });
+            
+            categoryButtonsContainer.appendChild(newButton);
+        }
+
+        // Add click listeners to initial buttons
+        document.querySelectorAll('.cas-button[data-category]').forEach(button => {
+            button.addEventListener('click', () => {
+                showCategoryContent(button.dataset.category);
+            });
+        });
+
+        // --- "Add New" Button Logic ---
+        addNewBtn.addEventListener('click', () => {
+            // Show the input field
+            newCategoryInputContainer.classList.remove('hidden');
+            addNewBtn.classList.add('hidden');
+        });
+        
+        saveCategoryBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Prevent potential form submission
+            const categoryName = newCategoryNameInput.value.trim();
+            
+            if (categoryName) {
+                // Create the new button
+                createCategoryButton(categoryName);
+                
+                // Hide input and show "+ Add New" button again
+                newCategoryInputContainer.classList.add('hidden');
+                addNewBtn.classList.remove('hidden');
+                newCategoryNameInput.value = ''; // Clear input
+                
+                // Automatically "select" the new category
+                showCategoryContent(categoryName);
+            } else {
+                // We shouldn't use alert()
+                console.warn("Please enter a category name.");
+                newCategoryNameInput.focus();
+            }
+        });
+
+        // Show Gallery view by default on load
+        showView('gallery-view');
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeHub: Mods Manager</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* --- CORE VARIABLES: BRIGHT GLASS / DARK NAV --- */
+        :root {
+            --font-display: 'Oswald', sans-serif; 
+            --font-body: 'Red Hat Display', sans-serif; 
+            
+            /* The Sims Green */
+            --color-accent: #18e248; 
+            
+            /* WHITE Glass Panels for Content */
+            --glass-panel-sidebar: rgba(255, 255, 255, 0.90); /* Keep sidebar readable */
+        --glass-panel-main: rgba(255, 255, 255, 0.60);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            
+            --text-main: #1a1a1a;
+            --text-muted: #555555;
+        }
+
+        /* Override Tailwind Defaults for Light Mode Body */
+        body {
+            font-family: var(--font-body);
+            background-color: #333; /* Just a fallback */
+            color: var(--text-main);
+            overflow: hidden; 
+        }
+
+        /* --- 1. BACKGROUND (RAW IMAGE) --- */
+        .bg-layer {
+            position: absolute; inset: 0; z-index: 0;
+            background-image: url('Background_mods.webp'); 
+            background-size: cover; background-position: center;
+            /* PURE IMAGE. NO EFFECTS. */
+        }
+
+        /* --- 2. GLOBAL NAV (RESTORED TO BLACK GLASS) --- */
+        .glass-nav {
+            background: rgba(0, 0, 0, 0.95); /* Deep black for high contrast */
+            backdrop-filter: blur(5px);
+        }
+
+        /* Text Glow for that 'Premium' feel */
+        .text-glow:hover {
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+        }
+
+
+        /* NOTE: We rely on the original HTML tailwind classes (text-gray-400, hover:text-white) 
+           now that the background is black again. */
+
+        /* --- 3. DASHBOARD CONTAINER --- */
+        .dashboard-container {
+            position: absolute; 
+            top: 64px; bottom: 0; left: 0; right: 0;
+            z-index: 10;
+            display: flex; 
+        }
+
+        /* --- LEFT: INSPECTOR PANE (Sidebar - White Glass) --- */
+        .inspector-pane {
+            width: 400px; 
+            height: 100%;
+            background: var(--glass-panel-sidebar);
+            border-right: var(--glass-border);
+            display: flex; flex-direction: column;
+            padding: 30px;
+            overflow-y: auto;
+            box-shadow: 5px 0 30px rgba(0,0,0,0.05);
+        }
+
+        /* Hero Image Area */
+        .mod-thumbnail-frame {
+            width: 100%; aspect-ratio: 1/1; 
+            background: #f0f0f0;
+            border: 1px solid rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .mod-thumbnail-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Typography Overrides for Light Sidebar */
+        .mod-title { 
+            font-family: var(--font-display); 
+            font-size: 32px; line-height: 1; text-transform: uppercase; 
+            margin-bottom: 5px; color: #111 !important; 
+        }
+        .mod-creator { 
+            color: var(--color-accent) !important; 
+            font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; 
+            margin-bottom: 20px; 
+        }
+        
+        .mod-description {
+            font-size: 14px; color: #444 !important; line-height: 1.6; margin-bottom: 30px;
+            border-top: 2px solid rgba(0,0,0,0.05); padding-top: 20px;
+            font-weight: 500;
+        }
+
+        /* Override the Tailwind text-white classes in the metadata grid to be dark */
+        .inspector-pane .text-white { color: #333 !important; }
+        .inspector-pane .text-gray-500 { color: #666 !important; }
+
+        /* Action Button */
+        .action-area { margin-top: auto; }
+        
+        .action-btn {
+            width: 100%; height: 50px;
+            background: #111;
+            color: #fff;
+            border: none; font-weight: 800; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+            cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            border-radius: 4px;
+        }
+        .action-btn:hover { 
+            background: var(--color-accent); 
+            color: #000;
+            box-shadow: 0 5px 20px rgba(24, 226, 72, 0.4); 
+        }
+
+        /* --- RIGHT: VAULT PANE (Content Area - More Transparent White Glass) --- */
+        .vault-pane {
+            flex: 1; 
+            height: 100%;
+            background: var(--glass-panel-main); 
+            display: flex; flex-direction: column;
+        }
+
+        /* Filter Header */
+        .vault-toolbar {
+            height: 80px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 40px;
+            border-bottom: var(--glass-border);
+            background: rgba(255,255,255,0.4);
+        }
+
+        .section-title { 
+            font-family: var(--font-display); font-size: 24px; text-transform: uppercase; letter-spacing: 2px; 
+            color: #111 !important;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .section-divider { width: 2px; height: 20px; background: rgba(0,0,0,0.1); }
+
+        .filter-group { display: flex; gap: 25px; }
+        .f-link { 
+            font-size: 12px; text-transform: uppercase; letter-spacing: 2px; 
+            color: #666 !important; cursor: pointer; transition: 0.3s; font-weight: 600;
+        }
+        .f-link:hover { color: #000 !important; }
+        .f-link.active { 
+            color: #1a1a1a !important;
+            border-bottom: 2px solid var(--color-accent);
+            padding-bottom: 2px;
+        }
+
+        /* Search Bar Light Mode */
+        .search-wrapper {
+            background: rgba(255,255,255,0.6);
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 8px 15px; border-radius: 4px;
+            display: flex; align-items: center; gap: 10px; width: 300px;
+            transition: 0.3s;
+        }
+        .search-wrapper:hover { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .search-input { background: transparent; border: none; color: #111; outline: none; font-size: 13px; width: 100%; font-family: var(--font-body); font-weight: 600; }
+        
+        /* Icons in toolbar */
+        .vault-toolbar .material-icons { color: #555; }
+        .vault-toolbar .material-icons:hover { color: #000; }
+        .vault-toolbar .text-\[\#00e5ff\] { color: var(--color-accent) !important; }
+
+        /* The Grid */
+        .mod-grid {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-auto-rows: 260px;
+            gap: 20px;
+        }
+
+        /* Scrollbar */
+        .mod-grid::-webkit-scrollbar { width: 6px; }
+        .mod-grid::-webkit-scrollbar-track { background: rgba(255,255,255,0.3); }
+        .mod-grid::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px;}
+        .mod-grid::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
+
+        /* Grid Item (Light Card) */
+        .grid-card {
+            background: rgba(255,255,255,0.8);
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: 0.3s; cursor: pointer;
+            position: relative; overflow: hidden;
+            display: flex; flex-direction: column;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .grid-card:hover { 
+            border-color: var(--color-accent); 
+            transform: translateY(-5px); 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            background: white;
+        }
+
+        .card-thumb { height: 180px; background-size: cover; background-position: center; opacity: 1; transition: 0.3s; }
+        
+        .card-info { 
+            flex: 1; padding: 15px; 
+            display: flex; flex-direction: column; justify-content: center; 
+            background: transparent;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        .card-name { 
+            font-family: var(--font-display); font-size: 14px; text-transform: uppercase; 
+            color: #111; margin-bottom: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; 
+        }
+        .card-type { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+
+        /* Specific override for the status dot and text colors defined in HTML */
+        .bg-\[\#00e5ff\] { background-color: var(--color-accent) !important; box-shadow: none !important; }
+        .text-\[\#00e5ff\] { color: var(--color-accent) !important; }
+        .shadow-\[0_0_10px_\#00e5ff\] { box-shadow: 0 0 8px var(--color-accent) !important; }
+
+/* Add this inside your <style> tag */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+
+    </style>
+</head>
+<body class="text-white">
+
+<img src="Background_mods.webp" 
+     alt="Mods Background" 
+     class="absolute inset-0 w-full h-full object-cover z-0">
+
+    <nav class="glass-nav text-white h-16 flex justify-between items-center px-8 relative z-20 shadow-md">
+        
+        <div class="flex items-baseline space-x-8">
+            <a href="Sims4-HQ.html" class="text-xs font-medium tracking-widest text-gray-300 hover:text-white hover:opacity-100 transition-all">HOME</a>
+            <a href="#" class="text-xs font-medium tracking-widest text-gray-300 hover:text-white hover:opacity-100 transition-all">GAMEPLAY</a>
+            <a href="Sims4-Mods.html" class="text-sm font-bold tracking-widest text-white border-b-2 border-[#00e5ff] pb-1" style="text-shadow: 0 0 10px rgba(255,255,255,0.5);">MODS</a>
+            <a href="#" class="text-xs font-medium tracking-widest text-gray-300 hover:text-white hover:opacity-100 transition-all">CUSTOM CONTENT</a>
+            <a href="#" class="text-xs font-medium tracking-widest text-gray-300 hover:text-white hover:opacity-100 transition-all">LOT GALLERY</a>
+        </div>
+        <div class="flex items-center gap-4">
+            <button class="flex items-center gap-2 group cursor-pointer">
+                <span class="text-xl font-bold tracking-wider text-glow transition-all">Create-a-Sim</span>
+                <span class="material-icons text-xl group-hover:rotate-90 transition-transform duration-300">wallpaper</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+    
+    <div class="inspector-pane" id="inspector-pane">
+        
+        <div id="inspector-empty" class="flex flex-col items-center justify-center h-full text-center opacity-40">
+            <span class="material-icons text-6xl mb-4 text-gray-400">touch_app</span>
+            <p class="font-bold tracking-widest uppercase text-gray-500">Select a Mod<br>to view details</p>
+        </div>
+
+        <div id="inspector-content" class="hidden h-full flex flex-col">
+            
+            <div class="mod-thumbnail-frame">
+                <img id="insp-img" src="" class="hidden w-full h-full object-cover">
+                <div id="insp-placeholder" class="absolute inset-0 bg-gray-200 flex items-center justify-center text-gray-400">
+                    <span class="material-icons text-6xl">extension</span>
+                </div>
+            </div>
+
+            <h1 id="insp-title" class="mod-title text-gray-800">--</h1>
+            <div class="mod-creator mb-4">
+                <span id="insp-creator" class="font-bold">--</span> 
+                <span class="text-gray-400 mx-2">//</span> 
+                <span id="insp-category" class="text-gray-500 text-xs tracking-wider">--</span>
+            </div>
+
+            <div class="flex items-center gap-3 mb-6">
+                <div class="h-2 w-2 rounded-full bg-[#18e248] shadow-[0_0_10px_#18e248]"></div>
+                <span class="text-xs font-bold tracking-widest text-[#18e248]">STATUS: ACTIVE</span>
+            </div>
+
+            <div id="insp-desc" class="mod-description text-gray-600 text-sm leading-relaxed border-t border-gray-200 pt-4 mb-6">
+                --
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-8 text-xs text-gray-500 uppercase tracking-wider">
+                <div>
+                    <span class="block text-gray-800 mb-1 font-bold">Theme</span>
+                    <span id="insp-theme">--</span>
+                </div>
+                <div>
+                    <span class="block text-gray-800 mb-1 font-bold">Generational</span>
+                    <span id="insp-gen">--</span>
+                </div>
+            </div>
+
+            <div class="action-area mt-auto space-y-3">
+                <a id="btn-download" href="#" target="_blank" class="action-btn flex items-center justify-center gap-2 bg-black text-white py-3 rounded hover:bg-[#18e248] hover:text-black transition-colors">
+                    <span class="material-symbols-outlined">download</span> VISIT PAGE
+                </a>
+                <div class="text-[10px] text-center text-gray-400 font-mono" id="insp-path">
+                    Path: /Mods/Undefined
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="vault-pane flex-1 flex flex-col relative">
+        
+        <div class="vault-toolbar h-20 border-b border-white/50 bg-white/40 flex items-center justify-between px-8 backdrop-blur-md">
+            
+            <div class="flex items-center gap-6">
+                <span id="vault-title" class="section-title text-2xl font-display uppercase tracking-wider text-gray-800">
+                    Loading...
+                </span> 
+                
+                <div class="section-divider w-px h-6 bg-gray-400/30"></div>
+                
+                <div class="filter-group flex gap-4 text-xs font-bold tracking-widest uppercase text-gray-500">
+                    <span class="f-link active cursor-pointer text-black border-b-2 border-[#18e248] pb-1">All Items</span>
+                    </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="search-wrapper bg-white/60 border border-white/50 rounded flex items-center px-3 py-2 w-64">
+                    <span class="material-icons text-gray-400 text-sm mr-2">search</span>
+                    <input type="text" id="vault-search" class="bg-transparent border-none outline-none text-sm w-full font-medium" placeholder="Search this collection...">
+                </div>
+                
+                <button id="btn-add-mod" class="cursor-pointer text-[#18e248] hover:text-black hover:bg-[#18e248] p-2 rounded-full transition-all" title="Add New Mod">
+                    <span class="material-icons text-3xl">add_circle</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="vault-grid" class="mod-grid flex-1 p-8 overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-6">
+            </div>
+
+    </div>
+
+</div>
+
+
+<div id="modal-item" class="fixed inset-0 z-50 hidden font-body transition-all duration-300">
+    
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-xl w-full max-w-lg max-h-[85vh] overflow-y-auto scrollbar-hide flex flex-col border border-white/40">
+            
+            <div class="flex justify-between items-center p-6 border-b border-gray-100 bg-white/50 backdrop-blur-md sticky top-0 z-10">
+                <div>
+                    <h2 class="text-2xl font-display font-bold text-gray-900 tracking-wide uppercase leading-none">NEW</h2>
+                    <p class="text-[10px] font-bold text-[#18e248] tracking-[0.2em] uppercase mt-1">Modification</p>
+                </div>
+                <button id="btn-close-item" class="group flex items-center justify-center w-8 h-8 rounded-full hover:bg-black hover:text-white transition-all">
+                    <span class="material-icons text-gray-400 group-hover:text-white text-lg">close</span>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5">
+                
+                <div class="group">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 group-focus-within:text-black transition-colors">Mod Name</label>
+                    <input type="text" id="inp-item-name" class="w-full bg-gray-50 border-b border-gray-200 focus:border-black px-3 py-2 text-base font-bold text-gray-800 outline-none transition-all placeholder-gray-300" placeholder=" ">
+                </div>
+
+                <div class="grid grid-cols-2 gap-x-4 gap-y-5">
+                    
+                    <div class="group relative">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 group-focus-within:text-[#18e248] transition-colors">Creator</label>
+                        <div class="flex items-center gap-1">
+                            <input list="list-creators" type="text" id="inp-item-creator" class="flex-1 bg-gray-50 border-b border-gray-200 focus:border-[#18e248] px-2 py-1.5 text-xs font-medium text-gray-700 outline-none transition-all" placeholder="Select...">
+                            <datalist id="list-creators"></datalist>
+                            <button id="btn-del-creator" class="text-gray-300 hover:text-red-500 transition-colors p-1"><span class="material-icons text-sm">remove_circle_outline</span></button>
+                        </div>
+                    </div>
+
+                    <div class="group relative">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 group-focus-within:text-[#18e248] transition-colors">Functionality</label>
+                        <div class="flex items-center gap-1">
+                            <input list="list-funcs" type="text" id="inp-item-func" class="flex-1 bg-gray-50 border-b border-gray-200 focus:border-[#18e248] px-2 py-1.5 text-xs font-medium text-gray-700 outline-none transition-all" placeholder="Select...">
+                            <datalist id="list-funcs"></datalist>
+                            <button id="btn-del-func" class="text-gray-300 hover:text-red-500 transition-colors p-1"><span class="material-icons text-sm">remove_circle_outline</span></button>
+                        </div>
+                    </div>
+
+                    <div class="group relative">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 group-focus-within:text-[#18e248] transition-colors">Theme</label>
+                        <div class="flex items-center gap-1">
+                            <input list="list-themes" type="text" id="inp-item-theme" class="flex-1 bg-gray-50 border-b border-gray-200 focus:border-[#18e248] px-2 py-1.5 text-xs font-medium text-gray-700 outline-none transition-all" placeholder="Select...">
+                            <datalist id="list-themes"></datalist>
+                            <button id="btn-del-theme" class="text-gray-300 hover:text-red-500 transition-colors p-1"><span class="material-icons text-sm">remove_circle_outline</span></button>
+                        </div>
+                    </div>
+
+                    <div class="group relative">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 group-focus-within:text-[#18e248] transition-colors">Generational</label>
+                        <div class="flex items-center gap-1">
+                            <input list="list-gens" type="text" id="inp-item-gen" class="flex-1 bg-gray-50 border-b border-gray-200 focus:border-[#18e248] px-2 py-1.5 text-xs font-medium text-gray-700 outline-none transition-all" placeholder="Select...">
+                            <datalist id="list-gens"></datalist>
+                            <button id="btn-del-gen" class="text-gray-300 hover:text-red-500 transition-colors p-1"><span class="material-icons text-sm">remove_circle_outline</span></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Description</label>
+                        <textarea id="inp-item-desc" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded p-2 text-xs text-gray-600 outline-none focus:border-black transition-all resize-none" placeholder=""></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tags</label>
+                        <input type="text" id="inp-item-tags" class="w-full bg-transparent border-b border-gray-200 focus:border-black px-2 py-1 text-xs font-mono text-gray-500 outline-none" placeholder="#gameplay #script">
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100">
+                    <label class="block text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-3">Technical Data</label>
+                    <div class="space-y-3">
+                        <input type="text" id="inp-item-img" class="w-full bg-transparent border-b border-gray-100 focus:border-black text-[10px] py-1 text-gray-500 outline-none transition-all" placeholder="Image URL">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="inp-item-link" class="w-full bg-transparent border-b border-gray-100 focus:border-black text-[10px] py-1 text-gray-500 outline-none transition-all" placeholder="Page Link">
+                            <input type="text" id="inp-item-dl" class="w-full bg-transparent border-b border-gray-100 focus:border-black text-[10px] py-1 text-gray-500 outline-none transition-all" placeholder="Download Link">
+                        </div>
+                        <input type="text" id="inp-item-path" class="w-full bg-transparent border-b border-gray-100 focus:border-black text-[10px] py-1 text-gray-500 font-mono outline-none transition-all" placeholder="Local Path (e.g. /Mods/Core)">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="p-4 bg-gray-50/50 border-t border-gray-200 flex justify-end gap-3 rounded-b-xl backdrop-blur-sm sticky bottom-0 z-10">
+                <button id="btn-cancel-item" class="px-5 py-2 rounded text-[10px] font-bold text-gray-400 hover:text-black transition-colors uppercase tracking-widest">Cancel</button>
+                <button id="btn-save-item" class="px-6 py-2 rounded bg-black text-white hover:bg-[#18e248] hover:text-black transition-all shadow-lg text-[10px] font-bold uppercase tracking-[0.15em]">Save Entry</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="core-mods.js"></script> 
+</body>
+</html>

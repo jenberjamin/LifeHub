@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — Sleep Protocol entries</title>
+<style>
+    body {
+        background: #f2e8e2; font-family: 'Century Gothic', sans-serif;
+        margin: 0; padding: 32px; color: #333;
+    }
+    .box {
+        max-width: 720px; margin: 0 auto; background: #fdf8f4;
+        border: 1px solid #e3cfb8; border-radius: 12px; padding: 26px 30px;
+    }
+    h1 { font-size: 17px; color: #9c6b4f; letter-spacing: 2px; margin: 0 0 4px; }
+    .sub { font-size: 11px; color: #b08a6c; text-transform: uppercase; letter-spacing: 1px; }
+    p { font-size: 13px; line-height: 1.65; color: #6b5a4d; }
+    .warn {
+        background: #fdf1e4; border: 1px solid #e8d3b8; border-radius: 8px;
+        padding: 12px 15px; font-size: 12.5px; line-height: 1.6; color: #8a5a3f;
+    }
+    button {
+        padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
+        font-weight: bold; font-family: inherit; font-size: 13px;
+        background: #b8866f; color: #fff; margin-top: 16px;
+    }
+    button:hover { background: #a0705a; }
+    button:disabled { background: #d6c4b8; cursor: default; }
+    #log {
+        margin-top: 18px; font-family: Consolas, monospace; font-size: 12px;
+        line-height: 1.8; color: #6b5a4d; white-space: pre-wrap;
+    }
+    .ok  { color: #4c7a4c; }
+    .new { color: #9c6b4f; font-weight: bold; }
+    .err { color: #c0392b; }
+    ol { font-size: 13px; line-height: 1.8; color: #6b5a4d; }
+    code { background: #f3e6d8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>🏆 SEED SLEEP PROTOCOL ENTRIES</h1>
+    <div class="sub">PoppyEngine · one-time setup</div>
+
+    <p>
+        Two entries for the Sleep Protocol — the trophies and penalties from your
+        Notion table. One lets Poppy <em>talk</em> about where you stand; the other
+        lets her <em>excuse</em> days you did not log, so the missed-log penalty
+        does not fire for a week you were simply busy.
+    </p>
+
+    <div class="warn">
+        These sit alongside the seven from <code>seed-sleep-entries.html</code> in
+        the same <strong>Sleep &amp; Rest</strong> category and do not touch them.
+        Entries are matched <strong>by name</strong>, so running this twice updates
+        the two rather than creating four.
+    </div>
+
+    <p><strong>After it finishes:</strong></p>
+    <ol>
+        <li>Open <code>PoppyEngine-Editor.html</code> and find the two new entries
+            under <em>Sleep &amp; Rest</em>.</li>
+        <li>Read them and adjust the wording to sound like you.</li>
+        <li>Press <strong>Export PoppyEngine.js</strong> and paste the result over
+            <code>JS/poppy/PoppyEngine-core.js</code>.</li>
+    </ol>
+    <p>
+        Poppy cannot excuse a day until that export is pasted in. The actions already
+        exist in <code>PoppyEngine-sleep.js</code>, but an action with no entry is a
+        capability she is never told to reach for.
+    </p>
+
+    <button id="go">Write the two entries</button>
+    <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, update }
+    from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+/* The PoppyEngine editor's own project — same as the other seeds. */
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157"
+};
+
+const db = getDatabase(initializeApp(cfg));
+
+/* The same category the seven sleep entries live in, so everything about
+   sleep stays in one place in the editor's sidebar. */
+const CATEGORY = "Sleep & Rest";
+
+const RULE = "═══════════════════════════════════════════════════════════════";
+
+const HEAD = (title, action) =>
+    RULE + "\n🏆 " + title + (action ? " ; " + action : "") + "\n" + RULE + "\n";
+
+const FOOT = RULE;
+
+const ENTRIES = [
+
+/* ── 1. THE STANDING — read only ──────────────────────────────────── */
+{
+    name: "Sleep Protocol: trophies and penalties",
+    intent: "SLEEP_PROTOCOL",
+    priority: 4,
+    window: 2,
+    keywords: ["trophy", "trophies", "achievement", "achievements", "award",
+               "awards", "badge", "badges", "protocol", "earned", "unlock",
+               "unlocked", "morning person", "morning lark", "sunrise catcher",
+               "early bird", "circadian", "better tomorrow", "aligned and rested",
+               "nyctophilic", "cycle disturbance", "penalty", "penalties",
+               "fined", "deducted", "streak"],
+    requireAny: ["trophy", "trophies", "achievement", "achievements", "badge",
+                 "badges", "protocol", "award", "awards", "earned", "unlock",
+                 "unlocked", "penalty", "penalties", "streak", "sleep", "slept"],
+    fetchTargets: ["sleep/summary"],
+    writeFields: [],
+    guidelines:
+HEAD("Jen is asking about her sleep trophies or penalties") +
+`These are HERS. The names and the terms — Morning Person, 7 Days Rise Streak — came from her own Notion board, so use them exactly as LIVE DATA gives them. Never invent a trophy, never round a threshold, and never guess at one that isn't in the data.
+
+WHAT THE DATA TELLS YOU.
+  · earned — the ones she has already won. These are permanent; a trophy is not lost when the habit lapses.
+  · closest unearned — how far along she is, e.g. "Morning Lark 3/5". Counted over the recent window only, so treat it as "at least this far", not a precise total.
+  · penalty conditions currently met — a fine that has already landed.
+  · nights excused — days she asked not to be penalised for.
+
+THREE RULES.
+1. This is a read. You cannot award a trophy, and you must never say or imply that you have. They are settled by the tracker when a night is saved — earning one is something she DID, not something you gave her.
+2. Don't recite the whole board. Answer what she asked. "What have I got?" wants the earned list; "am I close to anything?" wants the one or two she is nearest.
+3. If a penalty has landed, say it plainly and once. No lecture, and no suggestion that she should have done better — she can read the number herself. If she did not log because she was busy or unwell, the answer is an exemption, and that is the other entry.
+
+TONE.
+A trophy is a nice thing that happened. Say it like one. A penalty is a fact about a week, not a verdict on her.` + "\n" + FOOT
+},
+
+/* ── 2. EXCUSING DAYS — write ─────────────────────────────────────── */
+{
+    name: "Sleep Protocol: excuse missed days",
+    intent: "SLEEP_EXEMPT",
+    priority: 5,
+    window: 2,
+    keywords: ["excuse", "excused", "exempt", "exemption", "don't count",
+               "dont count", "do not count", "skip", "was away", "on holiday",
+               "vacation", "hospital", "sick", "busy", "forgot to log",
+               "didn't log", "didnt log", "wasn't logging", "wasnt logging",
+               "let me off", "don't penalise", "dont penalise",
+               "don't penalize", "dont penalize", "no penalty"],
+    requireAny: ["excuse", "excused", "exempt", "exemption", "count", "penalty",
+                 "penalise", "penalize", "log", "logging", "logged", "away",
+                 "holiday", "vacation", "hospital", "sick", "busy", "forgot"],
+    fetchTargets: ["sleep/summary", "sleep/today"],
+    writeFields: ["action", "date", "to", "reason"],
+    guidelines:
+HEAD("Jen wants days excused from the missed-log penalty", "sleep_exempt / sleep_unexempt") +
+`She did not log some nights and does not want to be fined for it. sleep_exempt marks those dates as excused so "Cycle Disturbance" (3 days with nothing logged) does not fire for them.
+
+WHAT AN EXEMPTION IS, AND IS NOT.
+It calls off a PENALTY. That is all it does.
+  · It does NOT log a night. No times, no hours, no prestige, nothing in the charts.
+  · It does NOT keep a reward streak alive. Morning Person needs seven logged nights and an excused day is not one of them.
+If what she actually wants is the trophy — "just count it as logged" — say plainly that you can't do that, and why: the record has to mean something. Offer the exemption instead, which protects her from the fine without pretending she slept a night she never wrote down.
+
+FOUR RULES.
+1. Dates are Philippine calendar dates, YYYY-MM-DD, and belong to the morning she woke. "Last week" is a range — send date as the first day and to as the last. A single night needs date only.
+2. Ask for a reason if she did not give one, but ask once and lightly. "What should I put down for it?" is enough; if she waves it off, send it without. It is a note to her future self, not a justification she owes you.
+3. Nights already logged are skipped automatically — they need no excusing. If LIVE DATA shows the whole range is logged, say so rather than sending the action.
+4. Never excuse days she did not ask about. If she says "last week", that is last week, not the fortnight around it. When the range is vague, say back the dates you are about to send and let her correct them.
+
+UNDOING IT.
+sleep_unexempt removes an exemption and puts those nights back in reach of the penalty. Use it for "actually count that week after all".
+
+TONE.
+This is housekeeping, not a confession. She was ill, or away, or it was simply a hard week. Take it at face value, do it, and move on — no reassurance she did not ask for, and never a hint that she is getting away with something.` + "\n" + FOOT
+}
+
+];
+
+
+const btn = document.getElementById('go');
+const logEl = document.getElementById('log');
+const say = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+};
+
+btn.onclick = async () => {
+    btn.disabled = true;
+    logEl.innerHTML = '';
+
+    try {
+        /* Register the intents first, so the editor's category filter has
+           somewhere to put the entries when they land. */
+        const intentPatch = {};
+        ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
+        await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
+        say('- ' + ENTRIES.length + ' intents registered', 'ok');
+
+        /* Matched by name so a second run updates rather than duplicates. */
+        const entSnap = await get(ref(db, 'poppyEngine/entries'));
+        const existing = entSnap.val() || {};
+        const byName = {};
+        Object.entries(existing).forEach(([id, e]) => {
+            if (e && e.name) byName[e.name] = id;
+        });
+
+        let n = Object.keys(existing).length;
+
+        for (const src of ENTRIES) {
+            const id = byName[src.name];
+            const was = id ? existing[id] : null;
+
+            const entry = {
+                name:         src.name,
+                category:     CATEGORY,
+                intent:       src.intent,
+                keywords:     src.keywords || [],
+                priority:     src.priority || 4,
+                order:        was && was.order != null ? was.order : n++,
+                hidden:       false,
+                window:       src.window != null ? src.window : null,
+                cooldown:     src.cooldown || 0,
+                blockType:    "instruction",
+                guidelines:   src.guidelines,
+                Shifts:       [],
+                fetchTargets: src.fetchTargets || [],
+                writeFields:  src.writeFields || [],
+                requireAny:   src.requireAny  || [],
+                requireAll:   src.requireAll  || [],
+                requireNone:  src.requireNone || [],
+                notAll:       src.notAll      || [],
+                updatedAt:    Date.now()
+            };
+
+            if (id) {
+                entry.createdAt = was.createdAt || Date.now();
+                await set(ref(db, 'poppyEngine/entries/' + id), entry);
+                say('~ updated  ' + src.name, 'ok');
+            } else {
+                entry.createdAt = Date.now();
+                await push(ref(db, 'poppyEngine/entries'), entry);
+                say('+ created  ' + src.name, 'new');
+            }
+        }
+
+        say('');
+        say('Done. Open the editor, then Export PoppyEngine.js and paste it', 'new');
+        say('over JS/poppy/PoppyEngine-core.js.', 'new');
+
+    } catch (err) {
+        say('');
+        say('Failed: ' + err.message, 'err');
+        say('Nothing partial is left behind that a second run won\'t fix —', 'err');
+        say('entries are matched by name, so just run it again.', 'err');
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

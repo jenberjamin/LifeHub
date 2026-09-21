@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>TAGBOOK (Traffic Control)</title>
+
+    <link rel="icon" type="image/png" href="css/files/TagBook.png">
+    <link rel="stylesheet" href="css/tagbook.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+</head>
+<body>
+
+<a href="../../LifeHub.html" class="back-nav">â† LifeHub</a>
+    <main class="main-stage">
+
+    <div class="top-bar">
+        <div class="logo">
+            <span class="material-icons">architecture</span>
+            TAGBOOK
+        </div>
+        <div class="actions">
+            <button class="btn btn-secondary" style="margin-top:0;" onclick="triggerGoogleSync()">
+                <span class="material-icons">cloud_done</span> <span id="syncText">Sync Brain</span>
+            </button>
+            <button class="btn btn-secondary" style="margin-top:0;" onclick="openImport()">
+                <span class="material-icons">upload</span> Load Brain
+            </button>
+            <button class="btn btn-primary" style="margin-top:0;" onclick="generateAndExport()">
+                <span class="material-icons">download</span> Get Code
+            </button>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span>Rooms</span>
+                <button class="icon-btn" onclick="addRoom()" title="Add New Room" style="color:#b8866f; opacity:1;">
+                    <span class="material-icons">add_circle</span>
+                </button>
+            </div>
+            <div class="room-list" id="roomList"></div>
+        </div>
+
+        <div class="main-stage">
+            <div class="entry-editor">
+                <div class="editor-row">
+                    <div class="input-group">
+                        <label>Keyword / Trigger</label>
+                        <input type="text" id="newKey" class="input-box" placeholder="e.g. smile/grin">
+                    </div>
+                    <div class="input-group">
+                        <label>Tags (Comma separated)</label>
+                        <input type="text" id="newTags" class="input-box" placeholder="e.g. #Joyful, #Face" autocomplete="off">
+                        <div class="tag-preview-area" id="tagPreview"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="smartAddEntry()">
+                        <span class="material-icons">auto_fix_high</span> Smart Add
+                    </button>
+                </div>
+            </div>
+
+            <div class="entries-list" id="entriesList">
+                <div style="text-align: center; color: #999; margin-top: 50px;">
+                    Select a Room on the left, or just start typing above.<br>
+                    Look for <strong>Purple Tags</strong> to see where items will route. ðŸŸ£
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Entry saved!</div>
+
+    <div class="modal" id="ioModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Import/Export</h2>
+            <p id="modalDesc">Paste your brain.js content here.</p>
+            <textarea class="code-area" id="codeIO"></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn btn-secondary" style="margin-top:0;" onclick="closeModal()">Close</button>
+                <button class="btn btn-primary" style="margin-top:0;" id="modalActionBtn" onclick="processImport()">Load Data</button>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+        // --- FIREBASE IMPORTS ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- FIREBASE CONFIG (Connected to Wordbook Project) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTc5nvEKAhSytX_TSAyTQUv-yQJmOk96I",
+            authDomain: "wordbook-8087b.firebaseapp.com",
+            databaseURL: "https://wordbook-8087b-default-rtdb.firebaseio.com",
+            projectId: "wordbook-8087b",
+            storageBucket: "wordbook-8087b.firebasestorage.app",
+            messagingSenderId: "746574723269",
+            appId: "1:746574723269:web:90b0a2cd1f563ed923d8ac",
+            measurementId: "G-JTXH9PSX1P"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // --- GLOBAL VARIABLES ---
+        let brainData = {}; 
+        let currentRoom = null;
+        let userId = null; // Store the Google User ID
+        const LOCAL_STORAGE_KEY = 'jen_brain_architect_v1';
+
+        // --- CONFIG: MASTER TAGS ---
+        const ROUTING_RULES = {
+            // BASE
+            '#expression': 'BASE EXPRESSIONS', '#action': 'ACTIONS', '#movement': 'MOVEMENTS',
+            // SENSATION
+            '#feeling': 'SENSATIONS', '#sensation': 'SENSATIONS',
+            // EMOTIONS
+            '#emotion': 'EMOTIONS', '#mood': 'EMOTIONS',
+            // BODY
+            '#body': 'BODY LANGUAGE', '#posture': 'BODY LANGUAGE', '#gesture': 'BODY LANGUAGE',
+            // PARTS
+            '#anatomy': 'ANATOMY', '#part': 'ANATOMY', '#parts': 'ANATOMY',
+            // SOUND
+            '#sound': 'AUDITORY', '#voice': 'AUDITORY', '#speech': 'AUDITORY', '#tone': 'AUDITORY',
+            // SETTINGS
+            '#setting': 'SETTINGS', '#place': 'SETTINGS', '#environment': 'SETTINGS', '#time': 'SETTINGS',
+            // OTHERS
+            '#cognition': 'COGNITION', '#role': 'ROLES', '#manner': 'MANNER',
+            // NSFW
+            '#nsfw': 'NSFW', '#kink': 'NSFW'
+        };
+
+        // --- INITIALIZATION ---
+        console.log("ðŸš€ Tagbook: Simple Mode Active.");
+        userId = "Jen_Master_User"; 
+        
+        // Skip the bouncer and go straight to the data
+        // Module scripts are deferred by default, so DOM is ready â€” but guard anyway
+        if (document.readyState !== 'loading') {
+            updateSyncButton(true, "Master_Admin");
+        } else {
+            document.addEventListener('DOMContentLoaded', () => updateSyncButton(true, "Master_Admin"));
+        }
+
+        // Use an immediately invoked function to handle the 'async' cloud load
+        (async () => {
+            try {
+                await loadFromCloud(); 
+                renderRooms();
+                const rooms = Object.keys(brainData);
+                if (rooms.length > 0 && !currentRoom) {
+                    selectRoom(rooms[0]);
+                }
+            } catch (e) {
+                console.error("Initialization failed:", e);
+                loadFromLocal(); // Safety fallback
+            }
+        })();
+
+        // --- SYNC LOGIC ---
+        window.triggerGoogleSync = async function() {
+            alert("The Brain is already synced! Any changes you make are being saved to the cloud automatically.");
+        };
+
+        function updateSyncButton(isLoggedIn, email = "") {
+            const btnText = document.getElementById('syncText');
+            if (isLoggedIn) {
+                btnText.innerText = "Synced";
+                btnText.parentElement.style.borderColor = "#4caf50";
+                btnText.parentElement.style.color = "#4caf50";
+                btnText.parentElement.title = `Logged in as ${email}`;
+            } else {
+                btnText.innerText = "Sync Brain";
+                btnText.parentElement.style.borderColor = "#b8866f";
+                btnText.parentElement.style.color = "#b8866f";
+            }
+        }
+
+        // --- STORAGE HANDLERS ---
+        async function saveToStorage() {
+            // 1. Always save to LocalStorage (Safety Net)
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(brainData));
+
+            // 2. If logged in, save to Cloud
+            if (userId) {
+                try {
+                    // We added '/data' at the end to make it a valid 6-segment path
+const docRef = doc(db, `artifacts/tagbook/users/${userId}/brain_files/main_brain`);
+                    // We wrap the data in a 'data' field to be safe
+                    await setDoc(docRef, { 
+                        data: JSON.stringify(brainData), 
+                        lastUpdated: new Date() 
+                    });
+                    console.log("â˜ï¸ Saved to Cloud");
+                    showToast("Entry saved (Local + Cloud)!");
+                } catch (e) {
+                    console.error("Cloud Save Error:", e);
+                    showToast("Saved Locally (Cloud Error)");
+                }
+            } else {
+                showToast("Entry saved (Local Only)");
+            }
+        }
+
+        async function loadFromCloud() {
+            try {
+                // We added '/data' at the end to make it a valid 6-segment path
+const docRef = doc(db, `artifacts/tagbook/users/${userId}/brain_files/main_brain`);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const cloudString = docSnap.data().data;
+                    if (cloudString) {
+                        brainData = JSON.parse(cloudString);
+                        console.log("â˜ï¸ Loaded from Cloud");
+                        
+                        // Update UI
+                        renderRooms();
+                        if (Object.keys(brainData).length > 0 && !currentRoom) {
+                            selectRoom(Object.keys(brainData)[0]);
+                        }
+                        return;
+                    }
+                }
+                
+                // If no cloud data exists yet, check if we have local data to upload?
+                console.log("â˜ï¸ No cloud data found. Checking local...");
+                loadFromLocal();
+                // If we found local data, let's auto-upload it to initialize the cloud
+                if (Object.keys(brainData).length > 0) {
+                    saveToStorage(); 
+                }
+
+            } catch (e) {
+                console.error("Error loading from cloud:", e);
+                loadFromLocal();
+            }
+        }
+
+        function loadFromLocal() {
+            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (saved) {
+                try { brainData = JSON.parse(saved); } 
+                catch(e) { brainData = {}; }
+            } else {
+                brainData = {};
+            }
+        }
+
+        // --- GLOBAL TAG SCANNER ---
+        function getAllExistingTags() {
+            const allTags = new Set();
+            Object.keys(brainData).forEach(room => {
+                brainData[room].forEach(entry => {
+                    entry.tags.forEach(tag => {
+                        allTags.add(tag.toLowerCase());
+                    });
+                });
+            });
+            return allTags;
+        }
+
+        // --- UI LOGIC ---
+        const newTagsInput = document.getElementById('newTags');
+        const tagPreview = document.getElementById('tagPreview');
+
+        if (newTagsInput) {
+            newTagsInput.addEventListener('input', function() {
+                const raw = this.value;
+                tagPreview.innerHTML = '';
+                if (!raw.trim()) return;
+                const globalTags = getAllExistingTags();
+                const tags = raw.split(',').filter(t => t.trim() !== '');
+
+                tags.forEach(t => {
+                    let clean = t.trim();
+                    if (!clean.startsWith('#')) clean = '#' + clean;
+                    const lower = clean.toLowerCase();
+
+                    const pill = document.createElement('div');
+                    let icon = 'local_offer';
+                    let typeClass = 'new';
+                    let titleText = "New Tag";
+
+                    if (ROUTING_RULES[lower]) {
+                        typeClass = 'router';
+                        icon = 'alt_route'; 
+                        titleText = `Master Tag! Routes to: ${ROUTING_RULES[lower]}`;
+                    } 
+                    else if (globalTags.has(lower)) {
+                        typeClass = 'clone';
+                        icon = 'check_circle';
+                        titleText = "Existing Tag";
+                    }
+
+                    pill.className = `preview-pill ${typeClass}`;
+                    pill.title = titleText;
+                    pill.innerHTML = `<span class="material-icons" style="font-size:14px">${icon}</span> ${clean}`;
+                    tagPreview.appendChild(pill);
+                });
+            });
+        }
+
+        // --- ROOM MANAGEMENT ---
+        window.renderRooms = function() {
+            const list = document.getElementById('roomList');
+            if(!list) return;
+            list.innerHTML = '';
+
+            Object.keys(brainData).forEach(roomName => {
+                const count = brainData[roomName].length;
+                const item = document.createElement('div');
+                item.className = `room-item ${currentRoom === roomName ? 'active' : ''}`;
+                item.onclick = () => selectRoom(roomName);
+
+                item.innerHTML = `
+                    <span class="material-icons" style="font-size: 16px;">folder</span>
+                    <span class="room-name" title="${roomName}">${roomName}</span>
+                    <span class="room-count">${count}</span>
+                    <div class="room-controls">
+                        <button class="tiny-btn" title="Move Up" onclick="reorderRoom('${roomName}', -1, event)">
+                            <span class="material-icons" style="font-size: 14px;">arrow_upward</span>
+                        </button>
+                        <button class="tiny-btn" title="Move Down" onclick="reorderRoom('${roomName}', 1, event)">
+                            <span class="material-icons" style="font-size: 14px;">arrow_downward</span>
+                        </button>
+                        <button class="tiny-btn" title="Rename" onclick="renameRoom('${roomName}', event)">
+                            <span class="material-icons" style="font-size: 14px;">edit</span>
+                        </button>
+                        <button class="tiny-btn" title="Delete Room" onclick="deleteRoom('${roomName}', event)">
+                            <span class="material-icons" style="font-size: 14px; color: #ff6b6b;">close</span>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        window.selectRoom = function(roomName) {
+            currentRoom = roomName;
+            renderRooms();
+            renderEntries();
+        }
+
+        window.reorderRoom = function(roomName, direction, e) {
+            e.stopPropagation();
+            const keys = Object.keys(brainData);
+            const idx = keys.indexOf(roomName);
+            if (idx === -1) return;
+            if (direction === -1 && idx === 0) return;
+            if (direction === 1 && idx === keys.length - 1) return;
+
+            const newIdx = idx + direction;
+            [keys[idx], keys[newIdx]] = [keys[newIdx], keys[idx]];
+
+            const newBrainData = {};
+            keys.forEach(k => newBrainData[k] = brainData[k]);
+            brainData = newBrainData;
+            
+            saveToStorage();
+            renderRooms();
+        }
+
+        window.renameRoom = function(oldName, e) {
+            e.stopPropagation();
+            const newName = prompt("Rename room:", oldName);
+            if (!newName || newName === oldName) return;
+            const cleanName = newName.toUpperCase();
+            if (brainData[cleanName]) { alert("Room name already exists!"); return; }
+
+            const keys = Object.keys(brainData);
+            const newBrainData = {};
+            keys.forEach(k => {
+                if (k === oldName) newBrainData[cleanName] = brainData[oldName];
+                else newBrainData[k] = brainData[k];
+            });
+            brainData = newBrainData;
+            if (currentRoom === oldName) currentRoom = cleanName;
+            saveToStorage();
+            renderRooms();
+            renderEntries();
+        }
+
+        window.deleteRoom = function(roomName, e) {
+            e.stopPropagation(); 
+            if (confirm(`Delete Room '${roomName}' and all its entries?`)) {
+                delete brainData[roomName];
+                if (currentRoom === roomName) currentRoom = null;
+                saveToStorage();
+                renderRooms();
+                document.getElementById('entriesList').innerHTML = '';
+            }
+        }
+
+        window.addRoom = function() {
+            const name = prompt("Name your new Room (e.g., 'WEATHER'):");
+            if (name) {
+                const cleanName = name.toUpperCase();
+                if (!brainData[cleanName]) {
+                    brainData[cleanName] = [];
+                    saveToStorage();
+                    selectRoom(cleanName);
+                }
+            }
+        }
+
+        window.renderEntries = function() {
+            const list = document.getElementById('entriesList');
+            list.innerHTML = '';
+            if (!currentRoom || !brainData[currentRoom]) return;
+
+            list.innerHTML = `<h3 style="margin-top:0; color:#b8866f;">${currentRoom}</h3>`;
+
+            brainData[currentRoom].forEach((entry, index) => {
+                const row = document.createElement('div');
+                row.className = 'entry-row';
+                const tagHtml = entry.tags.map(t => `<span class="tag-pill-display">${t}</span>`).join('');
+                row.innerHTML = `
+                    <div class="entry-key">${entry.key}</div>
+                    <div class="entry-tags">${tagHtml}</div>
+                    <div class="entry-actions">
+                        <button class="icon-btn" onclick="editEntry(${index})" title="Edit">
+                            <span class="material-icons">edit</span>
+                        </button>
+                        <button class="icon-btn" onclick="deleteEntry(${index})" title="Delete">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        // --- THE SORTING HAT LOGIC ---
+        function determineRoom(tags) {
+            // 1. Check Hard Rules
+            for (let t of tags) {
+                let lower = t.toLowerCase();
+                if (ROUTING_RULES[lower]) return ROUTING_RULES[lower];
+            }
+            // 2. Check Associations
+            let scores = {};
+            let bestScore = 0;
+            let bestRoom = currentRoom; 
+
+            Object.keys(brainData).forEach(room => {
+                brainData[room].forEach(entry => {
+                    entry.tags.forEach(existingTag => {
+                        if (tags.includes(existingTag)) {
+                            scores[room] = (scores[room] || 0) + 1;
+                        }
+                    });
+                });
+            });
+            Object.keys(scores).forEach(room => {
+                if (scores[room] > bestScore) {
+                    bestScore = scores[room];
+                    bestRoom = room;
+                }
+            });
+            return bestRoom || "UNSORTED";
+        }
+
+        // --- SMART ADD ENTRY ---
+        window.smartAddEntry = function() {
+            const keyInput = document.getElementById('newKey');
+            const tagsInput = document.getElementById('newTags');
+            const fullKeyString = keyInput.value.trim();
+            const rawTags = tagsInput.value.trim();
+
+            if (!fullKeyString || !rawTags) return;
+
+            const tags = rawTags.split(',').map(t => {
+                let clean = t.trim();
+                if (!clean.startsWith('#')) clean = '#' + clean;
+                return clean;
+            }).filter(t => t !== '#');
+
+            let targetRoom = determineRoom(tags);
+            if (targetRoom === "UNSORTED" && currentRoom) {
+                targetRoom = currentRoom;
+            }
+            if (!brainData[targetRoom]) {
+                brainData[targetRoom] = [];
+            }
+
+            // Conflict Check
+            const newCandidates = fullKeyString.split('/').map(k => k.trim().toLowerCase());
+            let conflictFound = null;
+            Object.keys(brainData).forEach(room => {
+                brainData[room].forEach(entry => {
+                    const existingWords = entry.key.split('/').map(k => k.trim().toLowerCase());
+                    for (let c of newCandidates) {
+                        if (existingWords.includes(c)) {
+                            conflictFound = { culprit: c, room: room };
+                        }
+                    }
+                });
+            });
+
+            if (conflictFound) {
+                alert(`â›” ACCESS DENIED\nWord "${conflictFound.culprit.toUpperCase()}" taken in room "${conflictFound.room}".`);
+                return;
+            }
+
+            brainData[targetRoom].push({ key: fullKeyString, tags });
+            saveToStorage();
+
+            showToast(`âœ¨ Auto-sorted to [${targetRoom}]`);
+            
+            if (currentRoom !== targetRoom) {
+                selectRoom(targetRoom);
+            } else {
+                renderEntries();
+                renderRooms(); 
+            }
+
+            keyInput.value = '';
+            tagsInput.value = '';
+            document.getElementById('tagPreview').innerHTML = ''; 
+            keyInput.focus(); 
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        window.editEntry = function(index) {
+            const entry = brainData[currentRoom][index];
+            document.getElementById('newKey').value = entry.key;
+            document.getElementById('newTags').value = entry.tags.join(', ');
+            document.getElementById('newTags').dispatchEvent(new Event('input'));
+            brainData[currentRoom].splice(index, 1);
+            saveToStorage();
+            renderEntries();
+            renderRooms();
+            document.getElementById('newKey').focus();
+        };
+
+        window.deleteEntry = function(index) {
+            if (confirm("Remove this entry?")) {
+                brainData[currentRoom].splice(index, 1);
+                saveToStorage();
+                renderEntries();
+                renderRooms(); 
+            }
+        };
+
+        // --- EXPORT / IMPORT LOGIC ---
+        function generateCodeFromObjects() {
+            let code = `/* ðŸ§  THE TAGGING BRAIN */\n\nconst tagDictionary = {\n`;
+            Object.keys(brainData).forEach(room => {
+                code += `\n    // --- ${room} ---\n`;
+                brainData[room].forEach(entry => {
+                    const tagString = entry.tags.map(t => `"${t}"`).join(', ');
+                    code += `    "${entry.key}": [${tagString}],\n`;
+                });
+            });
+            code += `    "DONOTDELETETHIS": ["#DONOTDELETETHIS"]\n};\n\n`;
+            code += `/* --- âš™ï¸ THE ENGINE (Precision & Variations Support) --- */
+function generateSmartTags(text) {
+    if (!text) return "";
+    let suggestedTags = new Set(); 
+    for (const [key, tags] of Object.entries(tagDictionary)) {
+        const variations = key.split('/');
+        const matchFound = variations.some(trigger => {
+            const cleanTrigger = trigger.trim();
+            if (!cleanTrigger) return false;
+            const regex = new RegExp(\`\\\\b\${cleanTrigger}\\\\b\`, 'i');
+            return regex.test(text);
+        });
+        if (matchFound) {
+            tags.forEach(t => suggestedTags.add(t));
+        }
+    }
+    return Array.from(suggestedTags).join(" ");
+}
+console.log("ðŸ§  Brain Module Loaded (Precision Mode).");`;
+            return code;
+        }
+
+        function parseCodeToObjects(code) {
+            const lines = code.split('\n');
+            const newData = {};
+            let activeRoom = "UNSORTED";
+            lines.forEach(line => {
+                const trim = line.trim();
+                if (!trim) return;
+                if (trim.startsWith('// ---') && trim.endsWith('---')) {
+                    activeRoom = trim.replace(/\/\/ ---/g, '').replace(/---/g, '').trim();
+                    if (!newData[activeRoom]) newData[activeRoom] = [];
+                    return;
+                }
+                if (trim.includes(':') && trim.includes('[') && trim.includes(']')) {
+                    try {
+                        const parts = trim.split(':');
+                        let key = parts[0].trim();
+                        if (key.startsWith('"') || key.startsWith("'")) key = key.slice(1, -1);
+                        let valString = parts.slice(1).join(':').trim(); 
+                        if (valString.endsWith(',')) valString = valString.slice(0, -1);
+                        const tagMatches = valString.match(/"(.*?)"/g);
+                        let tags = [];
+                        if (tagMatches) tags = tagMatches.map(t => t.replace(/"/g, ''));
+                        if (!newData[activeRoom]) newData[activeRoom] = [];
+                        newData[activeRoom].push({ key, tags });
+                    } catch (e) { console.log("Skipping line:", trim); }
+                }
+            });
+            return newData;
+        }
+
+        window.generateAndExport = function() {
+            const code = generateCodeFromObjects();
+            const modal = document.getElementById('ioModal');
+            const codeIO = document.getElementById('codeIO');
+            document.getElementById('modalTitle').innerText = "Export Brain";
+            document.getElementById('modalDesc').innerText = "Copy this code and overwrite your brain.js file.";
+            const btn = document.getElementById('modalActionBtn');
+            btn.innerText = "Copy to Clipboard";
+            codeIO.value = code;
+            btn.onclick = () => {
+                codeIO.select();
+                document.execCommand('copy');
+                btn.innerText = "Copied!";
+                setTimeout(() => closeModal(), 1000);
+            };
+            modal.classList.add('active');
+        };
+
+        window.openImport = function() {
+            const modal = document.getElementById('ioModal');
+            const codeIO = document.getElementById('codeIO');
+            document.getElementById('modalTitle').innerText = "Load Brain";
+            document.getElementById('modalDesc').innerText = "Paste your current brain.js content here.";
+            document.getElementById('modalActionBtn').innerText = "Load Data";
+            document.getElementById('modalActionBtn').onclick = window.processImport;
+            codeIO.value = "";
+            modal.classList.add('active');
+        };
+
+        window.processImport = function() {
+            const code = document.getElementById('codeIO').value;
+            if (!code) return;
+            brainData = parseCodeToObjects(code);
+            saveToStorage(); // This triggers cloud save if logged in
+            renderRooms();
+            closeModal();
+            const firstRoom = Object.keys(brainData)[0];
+            if (firstRoom) selectRoom(firstRoom);
+        };
+
+        window.closeModal = function() {
+            document.getElementById('ioModal').classList.remove('active');
+        };
+    </script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

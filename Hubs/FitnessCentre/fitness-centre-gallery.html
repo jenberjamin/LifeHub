@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Fitness Gallery</title>
+
+    <link rel="manifest" href="manifest-fitness.json">
+    <link rel="icon" type="image/png" href="css/files/icon-192.png">
+    <link rel="stylesheet" href="css/fitness-centre-gallery.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+
+</head>
+<body>
+
+    <div class="gallery-container">
+        <div class="header-row">
+            <div class="title-group">
+                <span class="material-symbols-outlined back-btn" onclick="window.location.href='FITNESS-CENTRE.html'">keyboard_backspace</span>
+                <h1>Fitness Gallery</h1>
+            </div>
+            
+            <div class="filter-bar">
+                <select id="catFilter" class="filter-input" onchange="renderGrid()">
+                    <option value="DEFAULT">Front (Default)</option>
+                    <option value="BACK">Back</option>
+                    <option value="SIDE">Side</option>
+                    <option value="UPPER">Upper</option>
+                    <option value="LOWER">Lower</option>
+                </select>
+                <input type="text" id="tagFilter" class="filter-input" placeholder="SEARCH TAGS..." onkeyup="renderGrid()">
+                <select id="timeFilter" class="filter-input" onchange="renderGrid()">
+    <option value="ALL">All Time</option>
+    <option value="THIS_WEEK">This Week</option>
+    <option value="LAST_WEEK">Last Week</option>
+    <option value="THIS_MONTH">This Month</option>
+    <option value="LAST_MONTH">Last Month</option>
+    <option value="THIS_YEAR">This Year</option>
+    <option value="LAST_YEAR">Last Year</option>
+</select>
+                <input type="date" id="dateFilter" class="filter-input" onchange="renderGrid()">
+            </div>
+        </div>
+
+        <div class="photo-grid" id="photoGrid"></div>
+
+        <div class="footer-bar">
+            <button class="toggle-btn" onclick="openComparison()"><span class="material-symbols-outlined">view_column</span> Compare</button>
+            <div class="add-fab" onclick="openNewPost()"><span class="material-symbols-outlined">add</span></div>
+        </div>
+    </div>
+
+    <div class="overlay-fs" id="newPostOverlay">
+        <div class="np-header">
+            <span class="material-symbols-outlined" style="font-size: 40px; color: var(--color-accent);">add_a_photo</span> 
+            <span id="npTitle">NEW RECORD</span>
+        </div>
+        <div class="np-container">
+            <div class="np-left">
+                <div><div class="input-label">FRONT (Required)</div><input type="text" id="inFront" class="np-input" placeholder="Paste Imgur Link"></div>
+                <div><div class="input-label">BACK</div><input type="text" id="inBack" class="np-input" placeholder="Paste Imgur Link"></div>
+                <div><div class="input-label">SIDE</div><input type="text" id="inSide" class="np-input" placeholder="Paste Imgur Link"></div>
+                <div><div class="input-label">UPPER</div><input type="text" id="inUpper" class="np-input" placeholder="Paste Imgur Link"></div>
+                <div><div class="input-label">LOWER</div><input type="text" id="inLower" class="np-input" placeholder="Paste Imgur Link"></div>
+            </div>
+            <div class="np-right">
+                <div style="display:flex; gap:20px;">
+                    <div style="flex:1"><div class="input-label">Date Captured</div><input type="date" id="inDate" class="np-input"></div>
+                    <div style="flex:1"><div class="input-label">Category (Tag)</div><input type="text" id="inTag" class="np-input" placeholder="e.g. Check-in"></div>
+                </div>
+                <div class="input-label">Log / Diary</div>
+                <textarea id="inDiary" class="np-textarea" placeholder="System Notes..."></textarea>
+                
+                <div class="action-row">
+                    <button class="btn-action btn-cancel" onclick="tryClosePost()">CANCEL</button>
+                    <button class="btn-action btn-save" onclick="savePost()">SAVE RECORD</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay-fs" id="viewPostOverlay">
+        <div class="vp-container">
+            <div class="vp-image-area">
+                <div class="vp-cat-label" id="vpCatLabel">FRONT</div>
+                <span class="material-symbols-outlined slider-nav nav-prev" onclick="slide(-1)">chevron_left</span>
+                <img id="vpImg" src="" class="vp-img">
+                <span class="material-symbols-outlined slider-nav nav-next" onclick="slide(1)">chevron_right</span>
+            </div>
+
+            <div class="vp-details-area">
+                <div class="vp-actions">
+                    <span class="material-symbols-outlined vp-icon" onclick="triggerEdit()" title="Edit Post">edit_square</span>
+                    <span class="material-symbols-outlined vp-icon delete" onclick="deletePost()" title="Delete Post">delete</span>
+                    <span class="material-symbols-outlined vp-icon" onclick="closeViewPost()" style="margin-left: 20px;">close</span>
+                </div>
+                <div style="margin-bottom: 40px;">
+                    <h2 id="vpDateCapTitle" style="font-family: var(--font-header); font-size: 40px; letter-spacing: 2px; color: #fff;">DATE</h2>
+                    <span id="vpTagDisplay" style="color: var(--color-accent); font-family: var(--font-body); letter-spacing: 3px; text-transform: uppercase; font-size: 12px;">TAG</span>
+                </div>
+
+                <div class="vp-meta">
+                    <div class="vp-meta-row"><span>POSTED</span> <span id="vpDatePost"></span></div>
+                    <div class="vp-meta-row"><span>WEIGHT</span> <span id="vpWeight" style="color: var(--color-accent);"></span></div>
+                    <div class="vp-meta-row"><span>BMI</span> <span id="vpBMI"></span></div>
+                </div>
+
+                <div class="vp-diary" id="vpDiaryDisplay"></div>
+                <div class="slider-dots" id="vpDots" style="display:flex; gap:5px; margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay-fs" id="compOverlay">
+        <div class="comp-header">
+            <div class="title-group">
+                <span class="material-symbols-outlined" style="font-size: 40px; color: var(--color-accent);">compare_arrows</span>
+                <h1>Progress Diagnostics</h1>
+            </div>
+            <span class="material-symbols-outlined" style="font-size: 32px; cursor: pointer; color: rgba(255,255,255,0.5);" onclick="closeComparison()">close</span>
+        </div>
+
+        <div class="comp-grid">
+    <div class="comp-panel">
+        <div class="panel-header-row">
+            <div class="input-label" style="margin-bottom:0">BASELINE (THEN)</div>
+            <div id="leftStatDisplay">
+                <span class="panel-stat-val">--</span><span class="panel-stat-unit">BMI</span>
+            </div>
+        </div>
+        <select id="compDateLeft" class="filter-input" style="width: 100%; margin-bottom: 10px;" onchange="renderCompPanel('left')"></select>
+        
+        <div class="comp-img-box">
+            <img id="leftImg" class="comp-img" src="" style="display:none;">
+            <div id="leftNoImg" class="no-image-txt">NO DATA</div>
+        </div>
+    </div>
+
+    <div class="comp-controls">
+        <div class="diff-label">DELTA</div>
+        <div class="diff-val" id="deltaWeight">--</div>
+
+        <button class="comp-btn active" id="btnFront" onclick="setCompCat('FRONT')">FRONT</button>
+        <button class="comp-btn" id="btnBack" onclick="setCompCat('BACK')">BACK</button>
+        <button class="comp-btn" id="btnSide" onclick="setCompCat('SIDE')">SIDE</button>
+        <button class="comp-btn" id="btnUpper" onclick="setCompCat('UPPER')">UPPER</button>
+        <button class="comp-btn" id="btnLower" onclick="setCompCat('LOWER')">LOWER</button>
+    </div>
+
+    <div class="comp-panel active">
+        <div class="panel-header-row">
+            <div class="input-label" style="margin-bottom:0">CURRENT (NOW)</div>
+            <div id="rightStatDisplay">
+                <span class="panel-stat-val">--</span><span class="panel-stat-unit">BMI</span>
+            </div>
+        </div>
+        <select id="compDateRight" class="filter-input" style="width: 100%; margin-bottom: 10px;" onchange="renderCompPanel('right')"></select>
+        
+        <div class="comp-img-box">
+            <img id="rightImg" class="comp-img" src="" style="display:none;">
+            <div id="rightNoImg" class="no-image-txt">NO DATA</div>
+        </div>
+    </div>
+</div>
+    </div>
+
+    <div class="safety-dialog" id="safetyDialog">
+        <div class="safety-box">
+            <div class="safety-title">SYSTEM ALERT</div>
+            <div style="color:#aaa; margin-bottom: 30px; font-size: 13px; line-height: 1.5;">UNSAVED DATA DETECTED.<br>TERMINATING THIS PROCESS WILL RESULT IN DATA LOSS.</div>
+            <div class="action-row" style="justify-content: center; gap: 15px;">
+                <button class="btn-action btn-save" onclick="document.getElementById('safetyDialog').style.display='none'">RESUME</button>
+                <button class="btn-action btn-cancel" onclick="confirmDiscard()">DISCARD</button>
+            </div>
+        </div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script src="js/gatekeeper.js"></script>
+    <script src="js/fitness-core.js"></script>
+    <script src="js/fitness-gallery.js"></script> 
+    <script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — FLO entries</title>
+<style>
+    body {
+        background: #f2e8e2; font-family: 'Century Gothic', sans-serif;
+        margin: 0; padding: 32px; color: #333;
+    }
+    .box {
+        max-width: 720px; margin: 0 auto; background: #fdf8f4;
+        border: 1px solid #e3cfb8; border-radius: 12px; padding: 26px 30px;
+    }
+    h1 { font-size: 17px; color: #9c6b4f; letter-spacing: 2px; margin: 0 0 4px; }
+    .sub { font-size: 11px; color: #b08a6c; text-transform: uppercase; letter-spacing: 1px; }
+    p { font-size: 13px; line-height: 1.65; color: #6b5a4d; }
+    .warn {
+        background: #fdf1e4; border: 1px solid #e8d3b8; border-radius: 8px;
+        padding: 12px 15px; font-size: 12.5px; line-height: 1.6; color: #8a5a3f;
+    }
+    button {
+        padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
+        font-weight: bold; font-family: inherit; font-size: 13px;
+        background: #b8866f; color: #fff; margin-top: 16px;
+    }
+    button:hover { background: #a0705a; }
+    button:disabled { background: #d6c4b8; cursor: default; }
+    #log {
+        margin-top: 18px; font-family: Consolas, monospace; font-size: 12px;
+        line-height: 1.8; color: #6b5a4d; white-space: pre-wrap;
+    }
+    .ok  { color: #4c7a4c; }
+    .new { color: #9c6b4f; font-weight: bold; }
+    .err { color: #c0392b; }
+    code { background: #f3e6d8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>🌸 SEED FLO ENTRIES</h1>
+    <div class="sub">PoppyEngine · one-time setup</div>
+
+    <p>
+        Six entries. <strong>The pill:</strong> logging a tablet, and questions
+        about the pack. <strong>The cycle:</strong> logging a period start or
+        end, where she is now, when the next one is coming, and ovulation.
+        Writes into the editor's Firebase, not into
+        <code>PoppyEngine-core.js</code>.
+    </p>
+
+    <div class="warn">
+        Matched <strong>by name</strong>, so a second run updates the six rather
+        than creating twelve. Your other entries are never read or changed.
+        <br><br>
+        Flow, symptoms, mood, basal temp, discharge and notes are deliberately
+        not here — those are their own job, later.
+    </div>
+
+    <p><strong>After it finishes:</strong> open the editor, read them, then
+        <strong>Export PoppyEngine.js</strong> over <code>JS/poppy/PoppyEngine-core.js</code>.
+        One export covers this and any earlier seeder you haven't exported yet.</p>
+
+    <button id="go">Write the six entries</button>
+    <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, update }
+    from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157"
+};
+
+const db = getDatabase(initializeApp(cfg));
+
+const CATEGORY = "FLO";
+
+/* What makes a message about the tablet at all. "Pill" alone is not
+   enough — she takes other medicine, and the FLO tracker has a
+   separate Medicine field for those. */
+const ABOUT_PILL = [
+    "pill", "pills", "tablet", "tablets", "althea", "birth control",
+    "contraceptive", "the pill", "my pill", "pack", "blister"
+];
+
+/* What makes a message about the cycle. Kept away from the pill words
+   on purpose: "when is my period" and "did I take my pill" are
+   different questions with different data behind them. */
+const ABOUT_CYCLE = [
+    "period", "periods", "cycle", "menstrual", "menstruation", "bleeding",
+    "bleed", "spotting", "flow", "ovulation", "ovulating", "ovulate",
+    "fertile", "fertility", "luteal", "follicular", "pms", "flo",
+    "time of the month", "on my period", "due on"
+];
+
+const RULE = "═══════════════════════════════════════════════════════════════";
+
+const HEAD = (title, action) =>
+    RULE + "\n🌸 " + title + (action ? " ; " + action : "") + "\n" + RULE + "\n";
+
+const FOOT = RULE;
+
+const ENTRIES = [
+
+/* ── 1. LOGGING THE TABLET ────────────────────────────────────────── */
+{
+    name: "FLO: Log the pill",
+    intent: "FLO_LOG_PILL",
+    priority: 5,
+    /* Three. Most of the time this is one message ("took my pill"),
+       but "did I take it?" → "no, just now" is a real two-turn path,
+       and she sometimes qualifies it a message later ("that was late
+       actually"). */
+    window: 3,
+    keywords: ["took", "take", "taken", "taking", "swallowed", "had",
+               "just", "log", "record", "missed", "miss", "forgot",
+               "skipped", "skip", "late", "on time", "ran out",
+               "out of", "no stock", "finished", "pill", "tablet",
+               "althea"],
+    requireAny: ABOUT_PILL,
+    /* Questions go to the status entry, not this one. Logging on a
+       question is how "did I take my pill?" becomes a log. */
+    requireNone: ["did i", "have i", "when is", "what is", "how many",
+                  "should i", "when do", "what time"],
+    fetchTargets: ["flo/pill"],
+    writeFields: ["action", "status"],
+    guidelines:
+HEAD("Jen is telling you about her tablet", "flo_log_pill") +
+`THIS IS MEDICATION. That changes three things about how you handle it, and they outrank everything below.
+
+1. NEVER INFER A STATUS SHE DID NOT GIVE YOU. "I think I took it" is not a log — ask. "I took it" with no time is "ontime". Only send "missed" when she actually says she missed, forgot or skipped it: it is a 2,500 prestige fine, and guessing it on her behalf is both expensive and insulting.
+
+2. CHECK THE BREAK WEEK FIRST. LIVE DATA tells you whether today is a tablet day. During the pack's 7-day break there is NO tablet due. If she says she took one on a break day, something has gone wrong — say so plainly and don't write it down. That is worth more to her than a tidy log.
+
+3. READ WHETHER TODAY IS ALREADY DOWN. LIVE DATA says. If it is, the action refuses, and you should not have sent it. Changing a logged day moves prestige, and that belongs in the FLO tracker where she can see the cost.
+
+THE FOUR STATUSES. Send exactly one of these strings:
+  ontime    she took it, at or near her usual hour. The default when she just says she took it.
+  late      she says she took it late, or hours after her time.
+  nostock   she ran out. Pays nothing — running out is a supply problem, not a lapse, and she should never feel fined for telling you the truth about it.
+  missed    she says she missed, forgot or skipped it. -2,500 prestige.
+
+WHAT IT PAYS. ontime 500, late 200, nostock 0, missed -2,500. Streak milestones on top: 7 days 1,050, 14 days 2,800, 21 days 5,250 — 21 being a full pack of active tablets. The receipt carries the real numbers; use those rather than repeating these.
+
+WHAT TO SAY AFTER. One line. What you logged, what it paid, the streak. If a milestone landed, that is worth a sentence of actual pleasure — 21 days is a whole pack taken properly.
+
+If she missed one, log it and move on. Do not add advice about how important it is, do not mention effectiveness, do not ask if she is alright. She knows what a missed pill is, and a tracker that lectures is a tracker she stops telling the truth to. The ledger already took 2,500 off her; that is the whole comment.
+
+The ONE exception: if LIVE DATA shows two or more skipped in a row ending today, say it once, plainly, without alarm — that is a real pattern and it is the thing she would want flagged. Once. Not every time.
+
+MEDICAL ADVICE IS NOT YOURS TO GIVE. What to do about missed tablets, whether she needs backup contraception, anything about effectiveness — that is her OB's, and she has one. If she asks, say you would rather she asked them, and offer to note the question down so she remembers.
+` + FOOT
+},
+
+/* ── 2. THE PACK ──────────────────────────────────────────────────── */
+{
+    name: "FLO: Pill status",
+    intent: "FLO_PILL_STATUS",
+    priority: 4,
+    window: 2,
+    keywords: ["did i", "have i", "what tablet", "which tablet", "how many",
+               "when is", "when do", "what time", "how long", "break",
+               "new pack", "next pack", "streak", "pack", "pill",
+               "tablet", "althea", "due"],
+    requireAny: ABOUT_PILL,
+    fetchTargets: ["flo/pill", "prestige/standing"],
+    guidelines:
+HEAD("Jen is asking about her tablet or her pack") +
+`Answer from LIVE DATA. Everything below is in the Althea pill block: which tablet today is, whether it is logged and at what time, her dose hour, the streak, how this pack has actually gone, and when the break starts.
+
+SAY THE TABLET NUMBER. "Tablet 5 of 21" is the answer to most of these questions and it is the thing she cannot work out in her head.
+
+CHECK THE FRESHNESS LINE. The block ends with how recently the FLO tracker synced. If it says STALE, say so — "as of Tuesday" is honest, quoting a three-day-old streak as today's is not.
+
+THE BREAK WEEK IS NOT A GAP. Seven days with no tablet is the pack working as designed, not a lapse. Never describe it as days missed, and if she asks why her streak stopped moving, that is the answer.
+
+A BLEED IN THE BREAK IS NOT HER PERIOD. It is a withdrawal bleed on the pack's schedule. Worth saying when it comes up, because it is the difference between "my cycle is 28 days now" and "the pack is 28 days".
+
+NO DOSE TIME SET is worth mentioning ONCE if she asks about timing — she can set the hour in the pack settings on the FLO tracker, and the homescreen reminder needs it to say anything useful. Once. It is not a nag.
+
+If she asks what the pill has earned her, prestige/standing is there. Keep it to a number.
+` + FOOT
+},
+
+/* ── 3. LOGGING THE PERIOD ────────────────────────────────────────
+   Telling Poppy it started or finished. Kept apart from the question
+   entries below because the failure modes are opposite: a question
+   answered badly is a wrong sentence, a period logged badly moves
+   every cycle length behind it. */
+{
+    name: "FLO: Log the period",
+    intent: "FLO_LOG_PERIOD",
+    priority: 5,
+    window: 3,
+    keywords: ["started", "start", "began", "come", "came on", "got",
+               "arrived", "ended", "end", "over", "finished", "done",
+               "stopped", "period", "cycle", "bleeding", "bleed"],
+    requireAny: ABOUT_CYCLE,
+    /* Questions belong to the status entries. Logging on a question is
+       how "when is my period?" becomes a period. */
+    requireNone: ["when is", "when will", "when do", "how long until",
+                  "am i due", "is my period due", "what phase",
+                  "how many days until"],
+    fetchTargets: ["flo/cycle"],
+    writeFields: ["action"],
+    guidelines:
+HEAD("Jen is telling you her period started or ended", "flo_period_start / flo_period_end") +
+`TWO ACTIONS, NO FIELDS. flo_period_start marks today as day one. flo_period_end marks today as the last day. Neither takes a date — both are always today.
+
+READ LIVE DATA FIRST. The Cycle block says whether a period is already running and when it started. Starting one that is already running is refused, and so is ending one that is not.
+
+NEVER BACKDATE. If she says "it started on Tuesday", do NOT send the action. Backdating a start moves every cycle length behind it and reshapes her whole history, so that one goes in the FLO tracker where she can see what it changes. Say that plainly — it is a real reason, not a brush-off.
+
+ASK FOR THE END. This is the half everyone forgets, and it is the half that matters most. Ending a period fills in all the days between the start and today, which is what her cycle-length statistics are actually computed from. Without it a five-day period goes on record as a one-day one and every average behind it is wrong.
+So: when she logs a start, mention lightly that you'll want to know when it's done. Once, at the start. Not every day.
+
+SPOTTING IS NOT A START. If she describes it as light, brown, mid-cycle, or "just a bit", that is spotting — do not send flo_period_start. Ask whether she wants it logged as the start proper, and leave it if she is unsure. A false start is worse than a late one.
+
+IF SHE IS ON A PACK, the action handles it: the bleed is stamped as a pack bleed so it will not be counted as one of her own cycles. Say so in a few words when it happens — the distinction is the difference between "my cycle is 28 days now" and "the pack is 28 days".
+
+WHAT TO SAY AFTER. One line. It is not an achievement and not a commiseration; do not congratulate her and do not say sorry. If she seems miserable about it, that is worth a warm sentence, but it comes from her tone, not from the log.
+
+There is no prestige on this. A period is not a task.
+` + FOOT
+},
+
+/* ── 4. WHERE SHE IS NOW ──────────────────────────────────────────── */
+{
+    name: "FLO: Cycle status",
+    intent: "FLO_CYCLE_STATUS",
+    priority: 4,
+    window: 2,
+    keywords: ["what day", "cycle day", "what phase", "which phase",
+               "phase", "luteal", "follicular", "where am i", "status",
+               "am i on", "still on", "cycle"],
+    requireAny: ABOUT_CYCLE,
+    /* The forward-looking questions belong to the prediction entry. */
+    requireNone: ["when is", "when will", "how many days until", "ovulat",
+                  "fertile"],
+    fetchTargets: ["flo/cycle"],
+    guidelines:
+HEAD("Jen is asking where she is in her cycle right now") +
+`Answer from the Cycle block in LIVE DATA: whether a period is running, the phase, and the cycle day.
+
+OBSERVED vs ESTIMATED — this is the whole job of this entry. The phase line says which. An ESTIMATED phase is arithmetic from her cycle length, not something she logged: say "probably" and mean it. An OBSERVED one she actually recorded, and can be stated flatly. Blurring the two is the single most misleading thing you can do here, because an estimate said confidently is indistinguishable from a fact.
+
+A PERIOD MARKED AS RUNNING that started a long time ago usually means she forgot to end it, not that she has been bleeding for two weeks. If the start date looks far back, ask whether it has finished rather than reporting it as ongoing.
+
+CHECK THE FRESHNESS LINE at the end of the block. If it says STALE, say "as of Tuesday" rather than passing an old cycle day off as today's.
+
+IF SHE IS ON A PACK the block says so, and then the phase is largely the pack's schedule rather than her body's. Worth one clause, not a lecture.
+
+Keep it short. This is a "where am I" question and the answer is one or two sentences.
+` + FOOT
+},
+
+/* ── 5. WHAT IS COMING ────────────────────────────────────────────── */
+{
+    name: "FLO: Period prediction",
+    intent: "FLO_PREDICT",
+    priority: 4,
+    window: 2,
+    keywords: ["when is", "when will", "when do", "how long until",
+               "next period", "due", "late", "overdue", "coming",
+               "expect", "expecting", "predict", "soon"],
+    requireAny: ABOUT_CYCLE,
+    fetchTargets: ["flo/cycle"],
+    guidelines:
+HEAD("Jen is asking when her next period is coming") +
+`HER CYCLE IS IRREGULAR. That is the fact this entire entry is built around. A textbook 28-day model would tell her what she ought to be doing instead of what she is doing, and she built this tracker specifically to stop that. NEVER quote 28 days. Never borrow an average from anywhere but her own records.
+
+ANSWER AS A RANGE. The block gives an earliest and a latest as well as a likely day. "Somewhere between three and nine days" is the honest shape of it. A single date is a false promise, and she will remember the date and not the hedge.
+
+LOW CONFIDENCE MEANS HEDGE HARDER. The block flags it when there are few recorded cycles or the spread is wide. Then the honest answer is closer to "your cycles have been anywhere from 24 to 40 days, so I genuinely can't call this one" than to a number.
+
+NO COMPLETE CYCLES RECORDED means there is no baseline at all. Say that. Do not fill the gap with a general figure — an invented prediction is worse than none, and she will plan around it.
+
+"AM I LATE?" is the same question with more feeling behind it. Answer it against HER median, say how many days past it she is, and stop. Do not speculate about why. Do not raise pregnancy unless she raises it first, and if she does, the answer is a test and her OB, not your opinion.
+
+IF SHE IS ON A PACK, a bleed in the break week is a withdrawal bleed on the pack's 28-day schedule, not her own cycle arriving. That is usually the actual answer to "when is my period" while she is on a pack, and it is much more predictable than her natural cycle. Say which one she is asking about if it is unclear.
+
+CHECK THE FRESHNESS LINE. A prediction computed four days ago is four days wrong.
+` + FOOT
+},
+
+/* ── 6. OVULATION AND FERTILITY ───────────────────────────────────
+   Its own entry because it needs the strictest guardrails in LifeHub,
+   and folding it in with the others dilutes them. */
+{
+    name: "FLO: Ovulation and fertility",
+    intent: "FLO_OVULATION",
+    priority: 5,
+    window: 2,
+    keywords: ["ovulation", "ovulating", "ovulate", "ovulated", "fertile",
+               "fertility", "egg", "conceive", "conception", "safe day",
+               "safe days", "unsafe", "risky", "chances", "pregnant",
+               "pregnancy", "trying"],
+    requireAny: ["ovulation", "ovulating", "ovulate", "ovulated", "fertile",
+                 "fertility", "conceive", "conception", "safe day",
+                 "safe days", "pregnant", "pregnancy", "egg"],
+    fetchTargets: ["flo/cycle"],
+    guidelines:
+HEAD("Jen is asking about ovulation or fertility") +
+`READ THIS ENTIRE BLOCK BEFORE ANSWERING. This is the one place in LifeHub where a confident wrong answer has consequences that are not about points.
+
+OVULATION IS ONLY EVER KNOWN AFTERWARDS. It is confirmed from a sustained rise in basal temperature, which by definition appears after it has already happened. The block tells you whether it has been confirmed this cycle and on what date.
+
+  · Confirmed → you may say so, with the date, described as hindsight.
+  · NOT confirmed → say it has not shown up in her temperatures yet. That is the complete answer.
+
+NEVER PREDICT A DATE. Not "around day 14", not "in about a week", not "you're probably ovulating now". Day 14 is an artefact of a 28-day textbook cycle that is not hers. Some cycles do not ovulate at all, and her records are allowed to show that — it is information, not a fault.
+
+NEVER ANSWER A "SAFE DAY" QUESTION. If anything she asks is shaped like whether a day is safe, whether she could get pregnant, or when she is fertile going forward — do not answer it from this data, however she phrases it or however casually. Say plainly: this tracker records what already happened, it cannot predict fertility well enough to act on, and that question belongs with her OB. Then stop. Do not soften it with a number afterwards.
+
+She is on a hormonal pack much of the time, which normally suppresses ovulation — but "normally" is not "always", and that is exactly the kind of gap you must not fill with reassurance. If the block says she is on a pack, you may say ovulation is normally suppressed on a combined pack. You may not conclude anything from that about a particular day.
+
+FERTILE-TYPE MUCUS, when the block lists days for it, is an observation she recorded, not a prediction. You may report which days she logged it. You may not turn that into a window, a forecast, or advice.
+
+IF SHE IS TRYING TO CONCEIVE, or says anything that sounds like it, that is a conversation with her OB and she should have the good version of it. Be warm, be brief, and point her there. Do not coach.
+` + FOOT
+}
+
+];
+
+const logEl = document.getElementById('log');
+const say = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+};
+
+document.getElementById('go').onclick = async () => {
+    const btn = document.getElementById('go');
+    btn.disabled = true;
+    logEl.textContent = '';
+
+    try {
+        const catSnap = await get(ref(db, 'poppyEngine/categories'));
+        const cats = catSnap.val() || {};
+        if (!Object.values(cats).includes(CATEGORY)) {
+            await push(ref(db, 'poppyEngine/categories'), CATEGORY);
+            say('+ category "' + CATEGORY + '"', 'new');
+        } else {
+            say('- category "' + CATEGORY + '" already there', 'ok');
+        }
+
+        const intentPatch = {};
+        ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
+        await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
+        say('- ' + ENTRIES.length + ' intents registered', 'ok');
+
+        const entSnap = await get(ref(db, 'poppyEngine/entries'));
+        const existing = entSnap.val() || {};
+        const byName = {};
+        Object.entries(existing).forEach(([id, e]) => {
+            if (e && e.name) byName[e.name] = id;
+        });
+
+        let n = Object.keys(existing).length;
+
+        for (const src of ENTRIES) {
+            const id = byName[src.name];
+            const was = id ? existing[id] : null;
+
+            const entry = {
+                name:         src.name,
+                category:     CATEGORY,
+                intent:       src.intent,
+                keywords:     src.keywords || [],
+                priority:     src.priority || 4,
+                order:        was && was.order != null ? was.order : n++,
+                hidden:       false,
+                window:       src.window != null ? src.window : null,
+                cooldown:     src.cooldown || 0,
+                blockType:    src.blockType || "instruction",
+                guidelines:   src.guidelines,
+                Shifts:       [],
+                fetchTargets: src.fetchTargets || [],
+                writeFields:  src.writeFields || [],
+                requireAny:   src.requireAny  || [],
+                requireAll:   src.requireAll  || [],
+                requireNone:  src.requireNone || [],
+                notAll:       src.notAll      || [],
+                updatedAt:    Date.now()
+            };
+
+            if (id) {
+                entry.createdAt = was.createdAt || Date.now();
+                await set(ref(db, 'poppyEngine/entries/' + id), entry);
+                say('~ updated  ' + src.name, 'ok');
+            } else {
+                entry.createdAt = Date.now();
+                await push(ref(db, 'poppyEngine/entries'), entry);
+                say('+ created  ' + src.name, 'new');
+            }
+        }
+
+        say('');
+        say('Done. Open the editor, then Export PoppyEngine.js and paste it', 'new');
+        say('over JS/poppy/PoppyEngine-core.js.', 'new');
+
+    } catch (err) {
+        say('');
+        say('Failed: ' + err.message, 'err');
+        say('Entries are matched by name, so just run it again.', 'err');
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

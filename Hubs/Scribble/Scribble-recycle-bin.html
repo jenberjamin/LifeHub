@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Scribble | Recycle Bin</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Free 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Scribble Styles -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#5C5C52">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+    <link rel="stylesheet" href="css/scribble.css">
+    <link rel="stylesheet" href="css/scribble-recycle-bin.css">
+
+    <!-- Gate + 30-minute idle lock. In <head> and synchronous on
+         purpose: a locked session must redirect before the page paints. -->
+    <script src="js/scribble-guard.js"></script>
+</head>
+<body>
+
+<!-- ▸ HEADER ─────────────────────────────────────────── -->
+<header>
+    <div class="header-brand">
+        <span class="brand-name">Scribble</span>
+    </div>
+    <div class="header-right">
+        <!-- ▸ 2026-09-17 — matched to Scribble.html. Was a single button
+             on gotoLifeHub(), which is a console.log stub in
+             js/scribble-recycle-bin.js and went nowhere. Plain links, so
+             they work even if the app script fails to load. -->
+        <a href="../../LifeHub-HomeScreen.html" class="header-lifehub-btn icon-only"
+           title="Home Screen" aria-label="Home Screen">
+            <i class="fa-solid fa-display"></i>
+        </a>
+        <a href="../../LifeHub.html" class="header-lifehub-btn icon-only"
+           title="LifeHub Lobby" aria-label="LifeHub Lobby">
+            <i class="fa-solid fa-house-chimney"></i>
+        </a>
+    </div>
+</header>
+
+<!-- ▸ SHELL ──────────────────────────────────────────── -->
+<div class="shell">
+
+    <!-- ▸ SIDEBAR ──────────────────────────────────── -->
+    <aside id="sidebar">
+        <nav class="nav-group">
+
+            <div class="nav-item" onclick="gotoAllProjects()">
+                <span class="material-symbols-outlined nav-icon">deployed_code</span>
+                <span class="nav-text">All Projects</span>
+            </div>
+
+            <div class="nav-item" onclick="gotoAllProjects()">
+                <i class="fa-solid fa-layer-group nav-icon"></i>
+                <span class="nav-text">Deployment</span>
+            </div>
+
+            <div class="nav-add" onclick="gotoAllProjects()">
+                <i class="fa-solid fa-plus nav-icon"></i>
+                <span class="nav-text">Project</span>
+            </div>
+
+        </nav>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- RECENT — populated by js/scribble-recent.js -->
+        <div class="logs-section">
+            <div class="logs-header" onclick="toggleLogs()">
+                <i class="fa-regular fa-clock logs-icon"></i>
+                <span class="logs-label">Recent</span>
+                <i class="fa-solid fa-chevron-down logs-chevron" id="logs-chevron"></i>
+            </div>
+            <div class="logs-list" id="recent-list">
+                <div class="logs-empty">Loading…</div>
+            </div>
+        </div>
+
+        <!-- Archive shortcut -->
+        <div class="sidebar-archive-wrap">
+            <div class="sidebar-archive-btn" title="Archive"
+                 onclick="window.location.href='Scribble-archive.html'">
+                <span class="material-symbols-outlined archive-icon">inventory_2</span>
+                <span class="archive-text">Archive</span>
+            </div>
+        </div>
+
+        <!-- RECYCLE BIN NAV — active on this page -->
+        <div class="sidebar-recycle-wrap">
+            <div class="sidebar-recycle-btn active" title="Recycle Bin">
+                <span class="material-symbols-outlined recycle-icon">recycling</span>
+                <span class="recycle-text">Bin</span>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ▸ MAIN ─────────────────────────────────────── -->
+    <main id="main-panel">
+        <div class="bin-view">
+
+            <!-- Toolbar: search + sort/filter -->
+            <div class="bin-toolbar">
+                <input class="bin-search" type="text" id="bin-search"
+                       placeholder="Search…"
+                       oninput="binSearch(this.value)">
+                <select class="bin-sort-select" id="bin-sort" onchange="onSortChange(this.value)">
+                    <option value="expires-soonest">Expires Soonest</option>
+                    <option value="expires-latest">Expires Latest</option>
+                    <option value="date-newest">Date Deleted (Newest)</option>
+                    <option value="date-oldest">Date Deleted (Oldest)</option>
+                    <option value="name-az">Name (A → Z)</option>
+                    <option disabled>──────────</option>
+                    <option value="all-projects">All Projects</option>
+                    <option value="all-modules">All Modules</option>
+                    <option value="all-sections">All Sections</option>
+                    <option value="all-files">All Files</option>
+                </select>
+            </div>
+
+            <!-- Bin header: icon + title + bulk actions -->
+            <div class="bin-header-row">
+                <span class="material-symbols-outlined bin-title-icon">recycling</span>
+                <span class="bin-title">Recycle Bin</span>
+
+                <!-- Bulk actions — hidden until at least one item is checked -->
+                <div class="bin-bulk-actions" id="bulk-actions" style="display:none">
+                    <button class="bin-bulk-btn danger"
+                            title="Permanently Delete Selected Groups"
+                            onclick="confirmBulkDelete()">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                    <button class="bin-bulk-btn"
+                            title="Restore Selected Groups"
+                            onclick="confirmBulkRestore()">
+                        <i class="fa-regular fa-circle-up"></i>
+                    </button>
+                    <button class="bin-bulk-btn"
+                            title="Move to Archive (Coming Soon)"
+                            onclick="confirmBulkArchive()">
+                        <i class="fa-regular fa-folder-open"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="bin-table-wrap">
+                <table class="bin-table">
+                    <colgroup>
+                        <col class="col-check">
+                        <col class="col-name">
+                        <col class="col-type">
+                        <col class="col-del">
+                        <col class="col-size">
+                        <col class="col-path">
+                        <col class="col-days">
+                        <col class="col-action">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th class="center">Deleted On</th>
+                            <th class="center">Group</th>
+                            <th class="center">Original Path</th>
+                            <th>Days Left</th>
+                            <th class="center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bin-tbody">
+                        <tr>
+                            <td colspan="8">
+                                <div class="bin-table-empty">Loading…</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+
+</div>
+
+<!-- Guard -->
+<script src="js/scribble-sw-register.js"></script>
+<!-- Open-documents strip, carried over from the editor -->
+<script src="js/scribble-session-tabs.js"></script>
+
+<!-- App logic (sync — defines BIN_READY before the module fires) -->
+<script src="js/scribble-recycle-bin.js"></script>
+<script type="module" src="js/scribble-bin-expiry.js"></script>
+
+<!-- Firebase module (deferred — fires after the scripts above) -->
+<script type="module" src="js/scribble-recycle-bin-firebase.js"></script>
+<!-- Sidebar "Recent" — shared by every page with a #recent-list -->
+<script type="module" src="js/scribble-recent.js"></script>
+<!-- Defines window.openAccessLog and the backup for the header menu -->
+<script type="module" src="js/scribble-access-log.js"></script>
+<!-- Registers this device and defines window.openScribbleDevices -->
+<script type="module" src="js/scribble-devices.js"></script>
+<!-- PASSAGE, added 2026-09-17 — see js/scribble-passage.js -->
+<script type="module" src="js/scribble-passage.js"></script>
+<script type="module" src="js/scribble-backup.js"></script>
+<script src="js/scribble-menu.js"></script>
+<!-- POPPY, added 2026-09-17 — until now only Scribble.html carried this,
+     so Poppy could not tell you were in the bin and "close that" did
+     nothing here. This page is already in the PAGES map inside
+     LifeHub-surface.js, so one tag is the whole change. Gives the
+     green dot, the surface report, and close/confirm. Restore and
+     permanent delete come later, in
+     js/scribble-recycle-bin-poppy-commands.js. -->
+<script src="js/LifeHub-surface.js"></script>
+
+</body>
+</html>

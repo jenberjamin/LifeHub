@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Scribble | Workshop</title>
+
+    <!-- Installable app: manifest + icons. Paths are relative, so this
+         works whether the deploy root is this folder or the whole hub. -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#5C5C52">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <!-- Both, on purpose (2026-09-17): Chrome deprecated the apple-
+         prefixed one and logs a warning asking for the standard name,
+         but iOS Safari still reads only the apple- form. Dropping
+         either one loses something. -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Scribble">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Free 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Scribble Styles -->
+    <link rel="stylesheet" href="css/scribble.css">
+    <!-- ▸ Phase 3: recycle bin CSS also linked here for the sidebar icon styles -->
+    <link rel="stylesheet" href="css/scribble-recycle-bin.css">
+    <link rel="stylesheet" href="css/scribble-archive.css">
+    <!-- ▸ Phase 5: Editor CSS -->
+    <link rel="stylesheet" href="css/scribble-editor.css">
+
+    <!-- Gate + 30-minute idle lock. In <head> and synchronous on
+         purpose: a locked session must redirect before the page
+         paints, or you get a flash of the workshop on the way out. -->
+    <script src="js/scribble-guard.js"></script>
+</head>
+<body>
+
+<!-- ▸ HEADER ─────────────────────────────────────────── -->
+<header>
+    <div class="header-brand">
+        <span class="brand-name">Scribble</span>
+    </div>
+    <div class="header-right">
+        <!-- ▸ 2026-09-17 — two ways out, same pair as FoodHub and the
+             Fitness Centre. Replaces a single LifeHub button wired to
+             gotoLifeHub(), which was a console.log stub and went
+             nowhere. That stub — and the matching ones on the project,
+             archive and bin pages — was removed the same day, and all
+             four headers now carry this pair. Plain links, so they
+             work even if the app script fails to load.
+             Icons only — the label lives in title/aria-label, so the
+             hover tooltip and a screen reader still name each one. -->
+        <a href="../../LifeHub-HomeScreen.html" class="header-lifehub-btn icon-only"
+           title="Home Screen" aria-label="Home Screen">
+            <i class="fa-solid fa-display"></i>
+        </a>
+        <a href="../../LifeHub.html" class="header-lifehub-btn icon-only"
+           title="LifeHub Lobby" aria-label="LifeHub Lobby">
+            <i class="fa-solid fa-house-chimney"></i>
+        </a>
+    </div>
+</header>
+
+<!-- ▸ SHELL ──────────────────────────────────────────── -->
+<div class="shell">
+
+    <!-- ▸ SIDEBAR ──────────────────────────────────── -->
+    <aside id="sidebar">
+        <nav class="nav-group">
+
+            <div class="nav-item active" id="nav-all" onclick="switchView('all')">
+                <span class="material-symbols-outlined nav-icon">deployed_code</span>
+                <span class="nav-text">All Projects</span>
+            </div>
+
+            <div class="nav-item" id="nav-deploy" onclick="switchView('deploy')">
+                <i class="fa-solid fa-layer-group nav-icon"></i>
+                <span class="nav-text">Deployment</span>
+            </div>
+
+            <div class="nav-add" onclick="addNew()">
+                <i class="fa-solid fa-plus nav-icon"></i>
+                <span class="nav-text">Project</span>
+            </div>
+
+        </nav>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- RECENT -->
+        <div class="logs-section">
+            <div class="logs-header" onclick="toggleLogs()">
+                <i class="fa-regular fa-clock logs-icon"></i>
+                <span class="logs-label">Recent</span>
+                <i class="fa-solid fa-chevron-down logs-chevron" id="logs-chevron"></i>
+            </div>
+            <div class="logs-list" id="recent-list">
+                <div class="logs-empty">Loading…</div>
+            </div>
+        </div>
+
+        <!-- ▸ Archive shortcut (static — Phase 4 prep) -->
+        <div class="sidebar-archive-wrap">
+            <div class="sidebar-archive-btn" title="Archive" onclick="gotoArchive()">
+                <span class="material-symbols-outlined archive-icon">inventory_2</span>
+                <span class="archive-text">Archive</span>
+            </div>
+        </div>
+
+        <!-- ▸ Phase 3: Recycle Bin shortcut (bottom of sidebar) -->
+        <div class="sidebar-recycle-wrap">
+            <div class="sidebar-recycle-btn" title="Recycle Bin" onclick="gotoRecycleBin()">
+                <span class="material-symbols-outlined recycle-icon">recycling</span>
+                <span class="recycle-text">Bin</span>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ▸ MAIN ─────────────────────────────────────── -->
+    <main id="main-panel">
+        <div class="empty-state">
+            <i class="fa-regular fa-folder-open empty-icon"></i>
+            <span class="empty-label">Loading…</span>
+        </div>
+    </main>
+
+</div>
+
+<!-- Offline shell — registers sw.js, no-ops if unsupported -->
+<script src="js/scribble-sw-register.js"></script>
+
+<!-- Shared "that name is taken" dialog; must load before the app -->
+<script src="js/scribble-name-clash.js"></script>
+<!-- Open-documents strip, carried over from the editor -->
+<script src="js/scribble-session-tabs.js"></script>
+
+<!-- App logic runs second (sync) — defines window.SCRIBBLE_READY before module fires -->
+<script src="js/scribble-app.js"></script>
+
+
+<!-- Firebase module is always deferred — fires after both scripts above -->
+<script type="module" src="js/scribble-firebase.js"></script>
+<!-- Sidebar "Recent" — shared by every page with a #recent-list -->
+<script type="module" src="js/scribble-recent.js"></script>
+<!-- Expiry sweep also runs here, not just on the bin page — an
+     expired item should not need you to visit the bin to go.
+     scribble-recycle-bin-firebase.js supplies the delete machinery;
+     its own listeners no-op because this page has no bin markup. -->
+<script type="module" src="js/scribble-recycle-bin-firebase.js"></script>
+<script type="module" src="js/scribble-bin-expiry.js"></script>
+
+<!-- Defines window.openAccessLog for the header button -->
+<script type="module" src="js/scribble-access-log.js"></script>
+<!-- Registers this device and defines window.openScribbleDevices -->
+<script type="module" src="js/scribble-devices.js"></script>
+<!-- PASSAGE, added 2026-09-17 — hands a copy of this session to the
+     homescreen's app names so Poppy stops being turned away by the
+     rules. Also on Scribble-gate.html, where signing in and out
+     happen. Read js/scribble-passage.js for the whole story; remove
+     both tags to switch it off. -->
+<script type="module" src="js/scribble-passage.js"></script>
+<!-- Defines window.runScribbleBackup + SCRIBBLE_BACKUP -->
+<script type="module" src="js/scribble-backup.js"></script>
+<!-- Header menu — must come after whatever it lists -->
+<script src="js/scribble-menu.js"></script>
+<!-- The surface FIRST: scribble-poppy-commands.js bails out on load if
+     LIFEHUB_SURFACE isn't there yet, so the order is load-bearing. -->
+<script src="js/LifeHub-surface.js"></script>
+<!-- Registers what Poppy can do on this page.
+     DUPLICATE REMOVED 2026-09-17 — this was listed twice, once as a
+     module and once as a classic script, so the whole file ran twice
+     and registered every handler twice over. Harmless (the second
+     registration just overwrote the first with the same function) but
+     it also meant the module copy ran AFTER LifeHub-surface.js had
+     already started listening. One classic tag, after the surface. -->
+<script src="js/scribble-poppy-commands.js"></script>
+
+
+
+</body>
+</html>

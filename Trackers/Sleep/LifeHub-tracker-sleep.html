@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>LifeHub | Sleep Tracker</title>
+    
+    <link rel="icon" type="image/png" href="icons/Sleep-tracker.png">
+    <link rel="stylesheet" href="css/lifehub-tracker-sleep.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- defer, not bare: these run in order after the DOM is parsed but
+         before DOMContentLoaded, so tracker-sleep.js can reach #historyModal
+         at load time and still get its DOMContentLoaded callback. -->
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <!-- The surface channel talks to Poppy's own project, which is
+         Firestore. The tracker itself only needs the Realtime Database,
+         so this is here for Poppy alone — and pinned to the same 10.7.1
+         as the two above rather than letting LifeHub-surface.js inject a
+         different version's compat script alongside them. -->
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- What prestige IS (the tiers, and which rows count toward a rank)
+         and what the Sleep Protocol is (Jen's rewards and penalties).
+         Both are pure logic and both must load BEFORE tracker-sleep.js,
+         which settles the protocol every time a night is saved. -->
+    <script defer src="../../JS/lifehub-prestige-ledger.js"></script>
+    <script defer src="../../JS/lifehub-sleep-protocol.js"></script>
+
+    <script defer src="js/tracker-sleep.js"></script>
+    <!-- Styled replacements for the native select / time panels, which
+         the browser draws outside the page where CSS can't reach. -->
+    <script defer src="js/sleep-pickers.js"></script>
+
+    <!-- Tells Poppy this page is open and which screen it's on, then
+         lets her fill the form and open the archive. Saving does NOT
+         come through here — she writes sleep_logs directly, so it works
+         with this page shut. -->
+    <script defer src="../../JS/poppy/LifeHub-surface.js"></script>
+    <script defer src="js/sleep-poppy-commands.js"></script>
+
+    <!-- lifehub-transactions-viewer.js is deliberately NOT loaded here: it
+         renders the prestige ledger into #transaction-list / #daily-total,
+         and this page has neither. It writes transactions via updateBank()
+         in tracker-sleep.js instead. -->
+    <script defer src="../../JS/lifehub-navigation-core.js"></script>
+</head>
+<body>
+
+    <!-- Two ways out: the wallpaper, or the interior. -->
+    <nav class="nav-dock" aria-label="Leave the tracker">
+      <a href="../../LifeHub-HomeScreen.html" class="nav-btn" title="Home Screen" aria-label="Home Screen">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+        <span>Home Screen</span>
+      </a>
+      <a href="../../LifeHub.html" class="nav-btn" title="LifeHub Lobby" aria-label="LifeHub Lobby">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 20V8.2l8-4.2 8 4.2V20"/>
+          <path d="M2.6 20h18.8"/>
+          <path d="M9.9 20v-5.1a2.1 2.1 0 0 1 4.2 0V20"/>
+        </svg>
+        <span>Lobby</span>
+      </a>
+    </nav>
+
+    <main class="main-stage">
+        
+        <div class="unified-glass-panel">
+            
+            <div class="dashboard-grid">
+
+                <div class="panel-section input-zone">
+                    <div class="section-header">
+                        <h2>Rest & Recovery</h2>
+                        <input type="date" id="logDate">
+                    </div>
+
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Bedtime</label>
+                            <input type="time" id="bedtime" class="pill-input">
+                        </div>
+                        <div class="input-group">
+                            <label>Wake Up</label>
+                            <input type="time" id="waketime" class="pill-input">
+                        </div>
+                    </div>
+
+                    <div class="duration-display">
+                        <span id="durationResult">0 hr 0 min</span>
+                        <small>Total Time Asleep</small>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <label>Quality</label>
+                            <input type="range" id="quality" min="1" max="10" value="5" class="slider">
+                            <div class="slider-val"><span id="qualityVal">5</span>/10</div>
+                        </div>
+
+                        <div class="metric-item">
+                            <label>Feeling</label>
+                            <select id="sleepFeeling" class="pill-select">
+                                <option value="Deep & Restored">Deep & Restored</option>
+                                <option value="Adequate">Adequate</option>
+                                <option value="Inadequate">Inadequate</option>
+                            </select>
+                        </div>
+                    </div>
+
+
+                    <div class="factors-section">
+                        <label>Influence Factors</label>
+                        <div class="chips-container" id="factorsList"></div>
+                    </div>
+
+                    <button class="save-btn" onclick="saveSleepLog()">LOG SLEEP</button>
+
+                    <!-- Excusing a day is NOT logging one, so it is
+                         deliberately not a second save button: it writes
+                         no night, pays nothing, and only calls off the
+                         missed-log penalty for the date in the picker
+                         above. Understated on purpose — it should be
+                         there when a week got away from her, not an
+                         invitation to skip tonight. -->
+                    <button class="exempt-btn" id="exemptBtn"
+                            onclick="markExemption()"
+                            title="Mark the date above as excused — no missed-log penalty for it">
+                        Excuse this day
+                    </button>
+                    <p class="exempt-note" id="exemptNote"></p>
+                </div> 
+
+                <div class="vertical-divider"></div>
+
+                <div class="panel-section stats-zone">
+                    <div class="section-header">
+                        <h2>Rhythm & Debt</h2>
+                    </div>
+
+                    <div class="debt-card">
+                        <div class="debt-label">Weekly Sleep Debt</div>
+                        <div class="debt-value" id="sleepDebtDisplay">0 hrs</div>
+                        <div class="debt-sub">Based on 8hr goal</div>
+                    </div>
+
+                    <div class="chart-wrapper">
+                         <div class="stat-summary">
+                            <span id="avgSleep">--</span> <small>Avg/Night</small>
+                        </div>
+                        <div class="chart-container" id="sleepChart"></div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="history-list">
+                        <h3>Recent Logs</h3>
+                        <div id="logHistory"></div>
+<button class="view-all-btn" onclick="openHistoryModal()">View Full History</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        </main>
+
+<div id="historyModal" class="modal-overlay">
+    <div class="modal-glass">
+        <div class="modal-header">
+            <h2>Sleep Archive</h2>
+            <button class="close-modal" onclick="closeHistoryModal()">×</button>
+        </div>
+        <div class="modal-content" id="fullHistoryList">
+            </div>
+    </div>
+</div>
+
+</body>
+</html>

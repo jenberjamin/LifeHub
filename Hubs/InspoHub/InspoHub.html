@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Jen's Inspo | Executive Vault</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/inspohub.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+</head>
+<body>
+
+<a href="../../LifeHub-hubs.html" class="back-nav">← LifeHub</a>
+    <main class="main-stage">
+
+<div class="app-container">
+    
+    <header>
+        <h1>Jen's Inspo</h1>
+        <div class="sub-header">Executive Vault</div>
+    </header>
+
+    <section class="protocol-section">
+        <div class="protocol-layout">
+            <div class="theme-menu">
+                <div class="menu-label">Morning Briefing</div>
+                <button class="theme-btn" onclick="window.playTheme('CEO Energy')">CEO Energy</button>
+                <button class="theme-btn" onclick="window.playTheme('Life')">Life</button>
+                <button class="theme-btn" onclick="window.playTheme('Fitness')">Fitness</button>
+                <button class="theme-btn" onclick="window.playTheme('Friendship')">Friendship</button>
+                <button class="theme-btn" onclick="window.playTheme('Career')">Career</button>
+                <button class="theme-btn" onclick="window.playTheme('Future')">Future</button>
+                <button class="theme-btn" onclick="window.playTheme('Artist Zone')">Artist Zone</button>
+            </div>
+
+            <div class="stage-container">
+                <div id="videoStage" class="video-stage">
+                    <div class="empty-stage"><span>Select a protocol to commence.</span></div>
+                </div>
+                <div id="playerControls" class="player-controls hidden">
+                    <div class="control-left"><span id="nowPlayingLabel">Now Playing</span></div>
+                    <div class="control-right">
+                        <button class="icon-btn" onclick="window.toggleFullScreen()">⛶ Full Screen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <hr class="divider">
+
+    <section class="library-section">
+        <div class="section-header">
+            <h2>Reference Library</h2>
+            <p>Curated Assets & Intelligence</p>
+        </div>
+
+        <div class="router-bar">
+            <input type="text" id="libUrl" placeholder="Paste Reference Link...">
+            
+            <div class="select-wrapper">
+                <select id="libCategory">
+                    </select>
+                <div class="action-buttons">
+                    <button class="btn-mini" onclick="window.openModal('create')" title="New Category">＋</button>
+                    <button class="btn-mini btn-edit" onclick="window.openModal('rename')" title="Rename Selected">✎</button>
+                </div>
+            </div>
+
+            <button class="btn-add" onclick="window.addToLibrary()">Archive</button>
+        </div>
+
+        <div class="tabs" id="categoryTabs"></div>
+
+        <div class="library-grid" id="libraryGrid"></div>
+
+        <!-- The pager belongs to the library, under the grid it pages.
+             It used to sit after </div> of .app-container, next to a
+             SECOND div also carrying id="libraryGrid" — so it rendered
+             full-bleed against the window edge instead of lining up
+             with the 1200px column, and the duplicate id was dead
+             weight (getElementById only ever returned the first). -->
+        <div class="pagination-container" id="paginationControls">
+            <button class="page-btn" id="btnPrev" onclick="window.changePage(-1)">← Prev</button>
+            <span class="page-info" id="pageIndicator">Page 1</span>
+            <button class="page-btn" id="btnNext" onclick="window.changePage(1)">Next →</button>
+        </div>
+    </section>
+
+</div>
+    </main>
+
+<div id="categoryModal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3 id="modalTitle">New Category</h3>
+        
+        <input type="text" id="modalInput" placeholder="Category Name...">
+        
+        <select id="modalSelect" class="hidden"></select>
+        
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="window.closeModal()">Cancel</button>
+            <button class="btn-confirm" onclick="window.confirmModal()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/inspohub.js"></script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

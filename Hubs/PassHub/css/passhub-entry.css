@@ -1,0 +1,657 @@
+/* ═══════════════════════════════════════════════════
+   PASSHUB — ENTRIES
+   passhub-entry.css
+
+   Restyled to match Scribble. Same class names
+   throughout, so no HTML or JS changes are needed —
+   only this file is replaced.
+
+   What changed and why:
+   · gradient canvas  → flat warm neutral (Scribble's --main-bg)
+   · glass / frosted  → flat cards with hairline borders
+   · 12–20px radii    → 8px containers, 4–5px controls
+   · scattered greys  → one token set
+   · big soft shadows → Scribble's --shadow-sm / --shadow-md
+   · lift-on-hover    → background + border shift, no transform
+═══════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;600;700&display=swap');
+
+:root {
+    /* ── Shared with Scribble ── */
+    --text:         #4A4A4A;
+    --sub:          #9A9A9A;
+    --border:       rgba(0, 0, 0, 0.06);
+    --row-hover:    rgba(0, 0, 0, 0.025);
+    --shadow-sm:    0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:    0 4px 20px rgba(0,0,0,0.11);
+    --radius:       8px;
+    --header-h:     44px;
+
+    /* ── Same olive as Scribble ── */
+    --accent:       #5C5C52;
+    --accent-soft:  rgba(92, 92, 82, 0.08);
+    --main-bg:      #F6F5F2;
+    --panel:        #FFFFFF;
+    --danger:       #C0392B;
+
+    /* Legacy names kept so any inline styles in the HTML still resolve */
+    --text-main:    #4A4A4A;
+    --text-sub:     #9A9A9A;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    height: 100vh;
+    background: var(--main-bg);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--text);
+    overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════
+   HEADER
+   Was 80px of empty space; Scribble's is a 44px solid bar.
+═══════════════════════════════════════════════════ */
+header {
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    background: var(--accent);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-link {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, .75);
+    text-decoration: none;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 4px;
+    transition: color .15s, background .15s;
+}
+.nav-link:hover { color: #FFFFFF; background: rgba(255,255,255,.10); }
+
+/* ═══════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════ */
+#view-dashboard {
+    height: calc(100vh - var(--header-h));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn .35s ease;
+}
+
+.action-row {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 52px;
+}
+
+/* Flat cards with hairline borders — the 20px-radius,
+   30px-shadow tiles read as a different product entirely. */
+.big-btn {
+    width: 168px;
+    height: 168px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.big-btn:hover {
+    background: #FCFCFB;
+    border-color: rgba(0,0,0,.10);
+    box-shadow: var(--shadow-md);
+}
+
+.big-icon {
+    font-size: 34px;
+    color: var(--sub);
+    margin-bottom: 16px;
+    font-weight: 300;
+    transition: color .15s;
+}
+.big-btn:hover .big-icon { color: var(--accent); }
+
+.big-label {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    color: var(--text);
+}
+
+/* ═══════════════════════════════════════════════════
+   FOCUS AREAS
+═══════════════════════════════════════════════════ */
+.focus-section { text-align: center; width: 82%; }
+
+.focus-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.focus-title {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--text);
+    margin: 0;
+}
+
+.focus-manage-btn {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--sub);
+    cursor: pointer;
+    padding: 3px 7px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: color .15s, background .15s, border-color .15s;
+}
+.focus-manage-btn:hover {
+    color: var(--text);
+    background: var(--row-hover);
+    border-color: rgba(0,0,0,.10);
+}
+
+.focus-grid {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.focus-card {
+    width: 84px;
+    height: 84px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+.focus-card:hover {
+    background: #FCFCFB;
+    border-color: rgba(92, 92, 82, .28);
+}
+
+.focus-icon {
+    font-size: 22px;
+    color: var(--sub);
+    margin-bottom: 8px;
+    transition: color .15s;
+}
+.focus-card:hover .focus-icon { color: var(--accent); }
+
+.focus-name {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--sub);
+}
+
+/* ═══════════════════════════════════════════════════
+   EDITOR
+═══════════════════════════════════════════════════ */
+.hidden-view {
+    display: none;
+    height: calc(100vh - var(--header-h));
+    padding: 24px 22px;
+}
+
+.editor-container {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 28px 30px;
+    height: 88%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.editor-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 100%;
+    font-family: inherit;
+    color: var(--text);
+}
+
+.title-input {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+.title-input::placeholder { color: #D2D0CC; }
+
+.subtitle-input {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--sub);
+}
+.subtitle-input::placeholder { color: #D2D0CC; }
+
+.body-input {
+    flex-grow: 1;
+    font-size: 12px;
+    line-height: 1.75;
+    color: var(--text);
+    resize: none;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+.body-input::placeholder { color: #D2D0CC; }
+
+.editor-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.editor-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.lock-trigger,
+.mood-trigger {
+    font-size: 17px;
+    color: #C8C6C2;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 5px;
+    transition: color .15s, background .15s;
+}
+.lock-trigger:hover,
+.mood-trigger:hover { color: var(--text); background: var(--row-hover); }
+
+/* Locked / mood-set states read as MEANING, which is the one
+   place Scribble allows colour to appear. */
+.lock-trigger.active   { color: var(--accent); background: var(--accent-soft); }
+.mood-trigger.has-mood { color: var(--text); }
+
+/* ═══════════════════════════════════════════════════
+   ENTRY LIST
+═══════════════════════════════════════════════════ */
+.list-container {
+    max-width: 1120px;
+    margin: 0 auto;
+    overflow-y: auto;
+    height: 100%;
+    padding: 22px 6px 48px;
+    /* Grid rather than wrapping flex: a fixed four columns keeps
+       every card the same width, and the last row no longer
+       stretches or strands a single card on its own. */
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+    align-content: start;
+}
+.list-container::-webkit-scrollbar             { width: 4px; }
+.list-container::-webkit-scrollbar-track       { background: transparent; }
+.list-container::-webkit-scrollbar-thumb       { background: rgba(0,0,0,.08); border-radius: 4px; }
+.list-container::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.15); }
+
+.paper-card {
+    /* Width comes from the grid now. Height is capped rather than
+       fixed, so a locked card isn't 200px of white nothing. */
+    width: auto;
+    height: 248px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 16px 14px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: background .15s, border-color .15s, box-shadow .15s, transform .15s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.paper-card:hover {
+    background: #FCFCFB;
+    border-color: rgba(92, 92, 82, .26);
+    box-shadow: var(--shadow-md);
+}
+
+/* A hairline of accent along the top edge, revealed on hover.
+   Cheap, and it makes the grid feel responsive without the
+   card physically moving. */
+.paper-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity .15s;
+}
+.paper-card:hover::before { opacity: .55; }
+
+.paper-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 11px;
+    flex-shrink: 0;
+}
+
+.paper-date {
+    font-size: 7.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    color: #B4B1AC;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.paper-mood { font-size: 13px; }
+
+.paper-title {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    color: var(--text);
+    margin-bottom: 3px;
+    line-height: 1.38;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Sits directly under the title, so it needs to read as a
+   caption rather than competing with it. */
+.paper-subtitle {
+    font-size: 8px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    color: #B4B1AC;
+    margin-bottom: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+}
+
+.paper-body {
+    font-size: 9.5px;
+    color: var(--sub);
+    line-height: 1.7;
+    flex-grow: 1;
+    min-height: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Fades into the tag row instead of clipping mid-letter. */
+    -webkit-mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
+            mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
+}
+
+/* Was italic and 50% opacity — now a proper tag chip, matching
+   Scribble's kind badges. */
+.paper-tag {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 3px;
+    padding: 3px 6px;
+    margin-top: auto;
+    align-self: flex-start;
+    flex-shrink: 0;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Locked entries used to be a small icon adrift in an empty card.
+   Now it's a deliberate, centred state with a label, so the card
+   reads as "sealed" rather than "failed to load". */
+.locked-icon {
+    font-size: 30px;
+    color: #CFCDC8;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: color .15s;
+}
+.paper-card:hover .locked-icon { color: var(--accent); opacity: .55; }
+
+.locked-icon::after {
+    content: 'Locked';
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--sub);
+}
+
+/* ═══════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.32);
+    z-index: 100;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-card {
+    background: var(--panel);
+    width: 100%;
+    max-width: 380px;
+    padding: 26px 24px 22px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    animation: fadeIn .22s ease;
+    text-align: center;
+}
+
+.modal-card h2,
+.modal-card h3 {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 16px;
+}
+
+/* ── Mood grid ── */
+.mood-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.mood-btn {
+    font-size: 17px;
+    cursor: pointer;
+    padding: 6px 2px;
+    border-radius: 5px;
+    transition: background .12s;
+}
+.mood-btn:hover { background: var(--row-hover); }
+
+/* ── Inputs ── */
+.lock-input,
+.manage-input {
+    width: 100%;
+    padding: 9px 12px;
+    background: #FAFAF9;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    margin-bottom: 8px;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s, background .15s;
+}
+.lock-input { text-align: center; letter-spacing: 3px; }
+.lock-input:focus,
+.manage-input:focus { border-color: rgba(92, 92, 82, .32); background: #FFFFFF; }
+.lock-input::placeholder   { color: #C8C6C2; letter-spacing: 1px; font-style: normal; }
+.manage-input::placeholder { color: #C8C6C2; }
+
+/* ── Manage rows ── */
+.manage-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+.manage-row:last-child { border-bottom: none; }
+.manage-row .manage-input { margin-bottom: 0; }
+
+.icon-preview {
+    font-size: 17px;
+    color: var(--accent);
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════ */
+.modal-card button {
+    height: 32px;
+    padding: 0 16px;
+    background: var(--accent);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .15s;
+}
+.modal-card button:hover { background: #4A4A42; }
+
+.modal-card button.ghost {
+    background: transparent;
+    color: var(--sub);
+    border: 1px solid var(--border);
+}
+.modal-card button.ghost:hover { background: var(--row-hover); color: var(--text); }
+
+.modal-card button.danger { background: var(--danger); }
+.modal-card button.danger:hover { background: #A53124; }
+
+/* ═══════════════════════════════════════════════════
+   MOTION
+═══════════════════════════════════════════════════ */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.shake { animation: shake .4s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════
+   SMALL SCREENS
+═══════════════════════════════════════════════════ */
+@media (max-width: 1080px) {
+    .list-container { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 820px) {
+    .list-container { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+    .action-row     { gap: 12px; }
+    .big-btn        { width: 132px; height: 132px; }
+    .big-icon       { font-size: 28px; margin-bottom: 12px; }
+    .focus-card     { width: 74px; height: 74px; }
+    .list-container { grid-template-columns: 1fr; padding: 16px 4px 40px; }
+    .paper-card     { height: auto; min-height: 190px; }
+}

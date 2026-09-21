@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>LibraryHub</title>
+
+    <!-- ═══════════════════════════════════════════════════
+         LIBRARYHUB — DOORWAY
+         index.html
+         Created 2026-09-17
+
+         The front door, nothing more. Vercel and GitHub Pages
+         both serve index.html when someone opens the folder
+         with no filename, so without this a bare URL 404s.
+
+         It does NOT duplicate the hub — it forwards to
+         LibraryHub.html, which stays the one real hub page.
+         Three ways, because they fail differently:
+
+           1. The <link rel="canonical"> tells search engines
+              and share cards which page is the real one.
+           2. The <meta http-equiv="refresh"> works even with
+              JavaScript switched off.
+           3. The script below runs first in practice, and uses
+              location.replace so the doorway doesn't land in
+              your history — pressing Back from the hub takes
+              you where you actually came from, not into a
+              redirect loop.
+
+         The visible card is only what you'd see if all three
+         somehow failed. Normally it's gone in a blink.
+    ═══════════════════════════════════════════════════ -->
+
+    <link rel="canonical" href="./LibraryHub.html">
+    <meta http-equiv="refresh" content="0; url=./LibraryHub.html">
+
+    <link rel="icon" type="image/png" href="css/files/LibraryHub.png">
+    <link rel="manifest" href="manifest-libraryhub.json">
+    <meta name="theme-color" content="#050505">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Red+Hat+Display:wght@300;400&display=swap" rel="stylesheet">
+
+    <style>
+        /* Self-contained on purpose: the doorway shouldn't wait
+           on a stylesheet it only needs for half a blink. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: #050505;
+            color: #e8e2d4;
+            font-family: 'Red Hat Display', system-ui, sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .doorway {
+            max-width: 420px;
+            animation: settle 1.2s ease both;
+        }
+
+        .crest {
+            width: 84px;
+            height: 84px;
+            object-fit: contain;
+            opacity: 0.9;
+            margin-bottom: 22px;
+        }
+
+        .wordmark {
+            font-family: 'Cinzel', Georgia, serif;
+            font-size: clamp(26px, 6vw, 36px);
+            letter-spacing: 2px;
+            margin: 0 0 14px;
+            font-weight: 700;
+        }
+
+        .wordmark span { color: #c8a24a; }
+
+        .line {
+            font-size: 13px;
+            letter-spacing: 1px;
+            opacity: 0.65;
+            margin: 0 0 26px;
+            font-weight: 300;
+        }
+
+        .enter {
+            display: inline-block;
+            padding: 12px 30px;
+            border: 1px solid rgba(200, 162, 74, 0.5);
+            border-radius: 999px;
+            color: #c8a24a;
+            text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            transition: background 0.25s ease, border-color 0.25s ease;
+        }
+
+        .enter:hover {
+            background: rgba(200, 162, 74, 0.12);
+            border-color: #c8a24a;
+        }
+
+        @keyframes settle {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .doorway { animation: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="doorway">
+        <img class="crest" src="css/files/LibraryHub.png" alt="">
+        <h1 class="wordmark">Library<span>Hub</span></h1>
+        <p class="line">Opening the library&hellip;</p>
+        <a class="enter" href="./LibraryHub.html">Enter</a>
+    </main>
+
+    <script>
+        /* replace(), not assign() — keeps the doorway out of your
+           back button. Wrapped because a blocked navigation here
+           should leave the Enter button usable, not throw. */
+        try {
+            window.location.replace('./LibraryHub.html');
+        } catch (e) {
+            console.warn('[LibraryHub] Doorway redirect blocked:', e.message);
+        }
+    </script>
+
+</body>
+</html>

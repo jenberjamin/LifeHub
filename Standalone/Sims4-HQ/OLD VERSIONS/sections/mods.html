@@ -1,0 +1,1631 @@
+===== ! READ THIS ! =====
+
+Hi! Since my file is one big <script type="module"> block where everything shares the same variables (db, localSims, showView, etc.). This means I cannot run the section files in a browser independently. 
+
+My main-sims4-hq.html stays the working file that I open in the browser.
+This section files are just for editing conversations.
+Sections I have:
+    ├── Create-A-Sim (CAS) or cas.html
+    ├── Modifications or mods.html <- We're here
+    ├── Custom Content or cc.html
+    ├── Lot Gallerires or lot.html 
+    └── Gameplay or gameplay.html 
+
+
+GUIDELINES for patching.
+You are **NOT** to **rewrite** the **whole code blocks**! This is to save input and output generational contexts and to not overcrowd the context window.
+
+I want specific instructions on what to cut and where to put it.
+Example:
+Find this code block `function renderSimPills(field) {` until `container.appendChild(pill);
+            });
+        } ` // Be specific with the symbols/include the symbols
+
+Replace this code block with:
+	` code_block 
+            });
+        } `
+
+P.S
+I have included the head, css, html, logic, script modules and firebase auth for your reference.
+
+This is **NOT** in the **right order from the original file**.
+
+===== / END OF NOTE / =====
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sims 4 HQ </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Icons">
+    
+<style>
+@import url('https://fonts.cdnfonts.com/css/century-gothic');
+
+body, html {
+            font-family: 'Century Gothic', sans-serif;
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling on the main body */
+        }
+        
+        /* --- Helper Classes --- */
+        .view {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+/* --- View 1: Gallery (Home) Styles --- */
+        #gallery-view {
+            background-image: url('https://i.imgur.com/SyuVLuZ.jpeg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            transition: background-image 0.5s ease; /* Smooth bg transition */
+        }
+
+        .text-glow {
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 255, 255, 0.7);
+        }
+
+        .button-glow {
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.7), 0 0 12px rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .button-glow:hover {
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 16px rgba(255, 255, 255, 0.8);
+            transform: scale(1.02);
+        }
+
+
+ /* --- View 5 & 6: MODS Styles --- */
+        #mods-category-view {
+            background-image: url('https://i.imgur.com/TPpxQjA.jpeg'); 
+            background-size: cover;
+            background-position: center center;
+        }
+
+        #mods-item-view {
+            background-image: url('https://i.imgur.com/TPpxQjA.jpeg'); 
+            background-size: cover;
+            background-position: center center;
+            transition: background-image 0.5s ease; /* Smooth bg transition */
+        }
+
+        /* MODS Category Button */
+        .mods-cat-button-container {
+            position: relative;
+        }
+        .mods-cat-button {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #333;
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .mods-cat-button:hover {
+            background-color: white;
+            transform: scale(1.03);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .mods-cat-edit-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: black;
+            border-radius: 99px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .mods-cat-edit-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+        .mods-cat-edit-btn .material-icons {
+            font-size: 16px;
+        }
+
+        /* MODS Item List Row */
+        .mods-item-row {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .mods-item-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .mods-item-row .icon-btn-col span {
+            color: #555;
+            transition: all 0.2s;
+        }
+        .mods-item-row .icon-btn-col:hover span {
+            color: #000;
+            transform: scale(1.1);
+        }
+
+        /* MODS Filters */
+        .mods-filter {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #d0d0d0;
+            border-radius: 8px;
+            padding: 10px 15px 10px 40px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            color: black;
+            outline: none;
+        }
+        .mods-filter.filter-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            padding-right: 40px;
+        }
+
+
+
+
+/* --- Modal Styles (Universal) --- */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal {
+            background: #f8f1e7;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: #757575;
+            color: white;
+            padding: 18px 25px;
+            font-size: 22px;
+        }
+        
+        /* Confirmation Modal */
+        .confirm-modal {
+            background: #333;
+            color: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        /* Form Styles (Universal) */
+        .form-label {
+            font-size: 15px;
+            color: #b8866f;
+            margin-bottom: 6px;
+            display: block;
+            font-weight: bold;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 15px;
+            color: black;
+            outline: none;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+         }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            padding-right: 40px;
+        }
+
+        .icon-btn {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            opacity: 0.7;
+        }
+
+        .delete-icon {
+            color: #ff6b6b;
+        }
+
+        .delete-icon:hover {
+            color: #ff5252;
+        }
+
+        /* Custom Scrollbar */
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+
+        /* Download Button Theme */
+        .download-btn-theme {
+            background-color: #A98F78;
+            color: white;
+            transition: all 0.2s ease-in-out;
+        }
+        .download-btn-theme:hover {
+            background-color: #8C7662;
+        }
+
+</style>
+
+
+
+
+
+ <!-- ======================== -->
+    <!-- VIEW 1: GALLERY (HOME)   -->
+    <!-- ======================== -->
+    <div id="gallery-view" class="view">
+        <nav class="bg-black text-white h-16 flex justify-between items-center px-6 md:px-10 flex-shrink-0">
+            <!-- [MODIFIED] Added Lot Gallery link -->
+            <div class="flex items-baseline space-x-6">
+                <a href="#" class="text-xl font-bold tracking-wide hover:opacity-80 transition-opacity">HOME</a>
+                <div class="relative group z-50">
+    <a href="#" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity flex items-center gap-1 pb-2">
+        GAMEPLAY
+        <span class="material-icons" style="font-size: 14px;">expand_more</span>
+    </a>
+    
+    <div class="absolute left-0 mt-0 w-48 bg-gray-900/80 backdrop-blur-md border border-gray-600/50 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 overflow-hidden flex flex-col">
+        <a href="#" class="px-4 py-3 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors border-b border-gray-600/30">Generation</a>
+        <a href="#" class="px-4 py-3 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors border-b border-gray-600/30">Geneology</a>
+        <a href="#" class="px-4 py-3 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors border-b border-gray-600/30">Sims Profile</a>
+        <a href="#" class="px-4 py-3 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors border-b border-gray-600/30">Sims Roles</a>
+        <a href="#" class="px-4 py-3 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors border-b border-gray-600/30">Employment Details</a>
+        <a href="#" class="px-4 py-3 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors border-b border-gray-600/30">Lifestyle Details</a>
+        <a href="#" class="px-4 py-3 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors">Residency Details</a>
+    </div>
+</div>
+                <a href="#" id="goto-mods-btn" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">MODS</a>
+                <a href="#" id="goto-cc-btn" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">CUSTOM CONTENTS</a>
+                <a href="#" id="goto-lot-btn" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">LOT GALLERY</a>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button id="goto-cas-btn" class="text-2xl font-bold text-glow tracking-wider cursor-pointer hover:opacity-80 transition-opacity">
+                    Create-a-Sim
+                </button>
+                <button id="edit-gallery-bg-btn" class="text-white hover:opacity-70 transition-opacity" title="Change Background">
+                    <span class="material-icons">wallpaper</span>
+                </button>
+            </div>
+        </nav>
+
+        <main class="flex-grow relative">
+            <img src="https://i.imgur.com/QdFZp1V.png" 
+                 alt="The Sims 4 Logo" 
+                 class="absolute top-2 left-6 md:left-10 w-36 md:w-48"
+                 onerror="this.style.display='none'"> 
+
+            </main>
+    </div>
+
+
+
+
+
+<!-- ========================== -->
+    <!-- VIEW 5: MODS CATEGORIES    -->
+    <!-- ========================== -->
+    <div id="mods-category-view" class="view hidden">
+        <nav class="bg-black text-white h-16 flex justify-between items-center px-6 md:px-10 flex-shrink-0">
+            <div class="flex items-center space-x-6">
+                <button id="goto-gallery-btn-from-mods" class="text-white hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                </button>
+                <span class="text-2xl font-bold tracking-wider">MODIFICATIONS</span>
+            </div>
+        </nav>
+        <main class="flex-grow flex flex-col items-center p-6 md:p-10 relative">
+            <img src="https://i.imgur.com/yJqfSdj.png" 
+                alt="Sims 4 Logo" 
+                class="h-14 absolute top-4 left-6" 
+                onerror="this.style.display='none'">
+            
+            <!-- [MODIFIED] Added Tag Search -->
+            <div class="relative w-full max-w-lg mb-4">
+                <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none z-10">search</span>
+                <input type="text" id="mods-category-search" class="bg-white text-black rounded-full h-14 w-full pl-12 pr-6 text-lg" placeholder="Search by name...">
+            </div>
+            <div class="relative w-full max-w-lg mb-6">
+                <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none z-10">tag</span>
+                <input type="text" id="mods-category-tag-search" class="bg-white text-black rounded-full h-14 w-full pl-12 pr-6 text-lg" placeholder="Search by #tag...">
+            </div>
+
+            <div id="mods-category-buttons" class="flex flex-wrap gap-4 justify-center">
+                </div>
+            <button id="add-new-mods-category-btn" class="mods-cat-button px-6 py-3 rounded-full font-bold text-lg w-fit mt-4">
+                + Add New
+            </button>
+            <div id="new-mods-category-input-container" class="hidden flex gap-2 mt-4">
+                <input type="text" id="new-mods-category-name" class="bg-white text-black px-4 py-2 rounded-full flex-grow" placeholder="Category Name...">
+                <button id="save-mods-category-btn" class="bg-green-500 text-white px-4 py-2 rounded-full font-bold">Save</button>
+                <button id="cancel-mods-category-btn" class="bg-gray-500 text-white px-4 py-2 rounded-full font-bold">Cancel</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== -->
+    <!-- VIEW 6: MODS ITEMS   -->
+    <!-- ==================== -->
+    <div id="mods-item-view" class="view hidden">
+        <div class="p-6 scrollbar-custom relative" style="height: 100vh; overflow-y: auto;">
+            <img src="https://i.imgur.com/yJqfSdj.png" 
+                alt="Sims 4 Logo" 
+                class="h-14 absolute top-10 left-20" onerror="this.style.display='none'">
+
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-4">
+                    <button id="goto-mods-category-btn" class="text-white hover:opacity-70 transition-opacity">
+                        <span class="material-icons text-4xl">arrow_back</span>
+                    </button>
+                    </div>
+                <div class="flex items-center gap-4">
+                    <div class="bg-black bg-opacity-70 border border-gray-600 rounded-full px-6 py-3">
+                        <span id="mods-item-view-title" class="text-white text-2xl font-bold tracking-wider">CATEGORY</span>
+                    </div>
+                    <button id="delete-mods-category-btn" class="text-white hover:text-red-500 transition-colors">
+                        <span class="material-icons text-4xl">remove_circle_outline</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                <div class="relative">
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none z-10">search</span>
+                    <input type="text" id="modsNameSearch" class="mods-filter w-full" placeholder="Search...">
+                </div>
+                <div class="relative">
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none">person</span>
+                    <select id="modsCreatorFilter" class="mods-filter filter-select w-full">
+                        <option value="">All Creators</option>
+                    </select>
+                </div>
+                <div class="relative">
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none">build</span>
+                    <select id="modsFunctionalityFilter" class="mods-filter filter-select w-full">
+                        <option value="">All Functionality</option>
+                    </select>
+                </div>
+                <div class="relative">
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none">palette</span>
+                    <select id="modsThemeFilter" class="mods-filter filter-select w-full">
+                        <option value="">All Themes</option>
+                    </select>
+                </div>
+                <div class="relative">
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none z-10">tag</span>
+                    <input type="text" id="modsTagsFilter" class="mods-filter w-full" placeholder="#tags">
+                </div>
+            </div>
+
+            <div id="modsItemsList" class="space-y-4">
+                </div>
+            
+            <div id="mods-pagination-container" class="flex justify-between items-center mt-6 pb-24">
+                <div class="text-white text-lg font-bold bg-black bg-opacity-60 px-4 py-2 rounded-lg">
+                    <span id="modsItemCountDisplay">Showing 0 of 0</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="modsPrevPageBtn" class="px-4 py-2 bg-white text-black rounded-lg font-bold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        &lt; Prev
+                    </button>
+                    <span id="modsPageIndicator" class="px-4 py-2 text-white text-lg font-bold bg-black bg-opacity-60 rounded-lg">
+                        Page 1 / 1
+                    </span>
+                    <button id="modsNextPageBtn" class="px-4 py-2 bg-white text-black rounded-lg font-bold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        Next &gt;
+                    </button>
+                </div>
+            </div>
+
+            <button id="addModsItemBtn" class="fixed bottom-8 right-8 w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center hover:shadow-xl hover:-translate-y-1 transition-all z-50">
+                <span class="material-icons text-4xl text-gray-800">add</span>
+            </button>
+        </div>
+    </div>
+
+
+<!-- ================== -->
+    <!-- MODS ITEM MODAL    -->
+    <!-- ================== -->
+    <div id="modsItemModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="modal scrollbar-custom">
+            <div class="modal-header flex items-center justify-between">
+                <span id="modsModalTitle">+ Add New</span>
+                <button id="closeModsModalBtn" class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                    <span class="material-icons text-gray-700">close</span>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="form-label">Mod Name</label>
+                    <input type="text" id="modsItemName" class="form-input" placeholder="Enter mod name">
+                </div>
+                <div>
+                    <label class="form-label">Creator</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="modsItemCreatorInput" class="form-input flex-1" list="modsItemCreatorList" placeholder="Type or select creator...">
+                        <datalist id="modsItemCreatorList"></datalist>
+                        <button id="deleteModsCreatorBtn" class="px-3 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors" title="Delete this creator from list">
+                            <span class="material-icons text-red-500">remove_circle_outline</span>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Functionality</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="modsItemFunctionalityInput" class="form-input flex-1" list="modsItemFunctionalityList" placeholder="Type or select functionality...">
+                        <datalist id="modsItemFunctionalityList"></datalist>
+                        <button id="deleteModsFunctionalityBtn" class="px-3 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors" title="Delete this functionality from list">
+                            <span class="material-icons text-red-500">remove_circle_outline</span>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Theme</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="modsItemThemeInput" class="form-input flex-1" list="modsItemThemeList" placeholder="Type or select theme...">
+                        <datalist id="modsItemThemeList"></datalist>
+                        <button id="deleteModsThemeBtn" class="px-3 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors" title="Delete this theme from list">
+                            <span class="material-icons text-red-500">remove_circle_outline</span>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Tags</label>
+                    <input type="text" id="modsItemTags" class="form-input" placeholder="#gameplay #realism">
+                </div>
+                <div>
+                    <label class="form-label">Short Description</label>
+                    <textarea id="modsItemShortDesc" class="form-textarea" maxlength="200" placeholder="Max 200 characters..."></textarea>
+                </div>
+                <div>
+                    <label class="form-label">Page Link</label>
+                    <input type="text" id="modsItemPageLink" class="form-input" placeholder="https://...">
+                </div>
+                <div>
+                    <label class="form-label">Download Link</label>
+                    <input type="text" id="modsItemDownloadLink" class="form-input" placeholder="https://...">
+                </div>
+                <div>
+                    <label class="form-label">Path (Optional)</label>
+                    <input type="text" id="modsItemPath" class="form-input" placeholder="e.g., /Mods/Core...">
+                </div>
+            </div>
+            <div class="p-6 pt-0 flex justify-between items-center">
+                <button id="deleteModsItemBtn" class="hidden px-4 py-2 bg-white border-2 border-red-500 text-red-500 rounded-lg font-bold hover:bg-red-50 transition-colors">
+                    DELETE
+                </button>
+                <div class="flex gap-3 ml-auto">
+                    <button id="cancelModsItemBtn" class="px-6 py-2 bg-gray-400 text-white rounded-lg font-bold hover:bg-gray-500 transition-colors">
+                        CANCEL
+                    </button>
+                    <button id="saveModsItemBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors">
+                        SAVE
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================== -->
+    <!-- CONFIRMATION MODAL -->
+    <!-- ================== -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="confirm-modal">
+            <p id="confirmText" class="text-lg mb-6">Are you sure?</p>
+            <div class="flex gap-4 justify-center">
+                <button id="confirmYes" class="px-8 py-2 bg-white text-gray-800 rounded-lg font-bold hover:bg-gray-100 transition-colors">
+                    YES
+                </button>
+                <button id="confirmNo" class="px-8 py-2 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-700 transition-colors">
+                    NO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    
+ // 
+        // --- ================================================= ---
+        // --- SCRIPT SECTION 2: MODS LOGIC                    ---
+        // --- ================================================= ---
+        // 
+        
+        // --- [NEW] Mods Tag Search Helper ---
+        function getModsCatsWithTag(categories, tag) {
+            if (!tag) return new Set(categories.map(cat => cat.id)); // No filter, return all
+            
+            const itemMap = new Map(); // Map<catId, hasItemWithTag>
+            localModsItems.forEach(item => {
+                const itemHasTag = (item.tags || []).some(t => t.toLowerCase().replace('#', '').includes(tag));
+                if (itemHasTag) {
+                    itemMap.set(item.categoryId, true);
+                }
+            });
+            return new Set(
+                categories.filter(cat => itemMap.has(cat.id)).map(cat => cat.id)
+            );
+        }
+
+        // --- MODS Render Functions ---
+        function renderModsCategoryButtons() {
+            modsCategoryButtonsContainer.innerHTML = '';
+            const nameFilter = modsCategorySearch.value.toLowerCase();
+            const tagFilter = getCleanTag(modsCategoryTagSearch.value);
+
+            // Filter by tag first
+            let catIdsWithTag = getModsCatsWithTag(localModsCategories, tagFilter);
+
+            const filteredCategories = localModsCategories.filter(cat => {
+                const nameMatch = cat.name.toLowerCase().includes(nameFilter);
+                const tagMatch = !tagFilter || catIdsWithTag.has(cat.id);
+                return nameMatch && tagMatch;
+            });
+
+            filteredCategories.forEach(category => {
+                const container = document.createElement('div');
+                container.className = 'relative mods-cat-button-container';
+                
+                const button = document.createElement('button');
+                button.className = 'mods-cat-button px-6 py-3 rounded-full font-bold text-lg';
+                button.textContent = category.name;
+                button.addEventListener('click', () => {
+                    currentModsCategory = category;
+                    showView('mods-item-view');
+                });
+                container.appendChild(button);
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'mods-cat-edit-btn';
+                editBtn.innerHTML = `<span class="material-icons">edit</span>`;
+                editBtn.title = "Edit category";
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    editModsCategory(category);
+                };
+                container.appendChild(editBtn);
+                modsCategoryButtonsContainer.appendChild(container);
+            });
+        }
+        
+        function renderModsItems() {
+            if (!currentModsCategory) return;
+            const filters = {
+                name: modsNameSearch.value.toLowerCase(),
+                creator: modsCreatorFilter.value,
+                functionality: modsFunctionalityFilter.value,
+                theme: modsThemeFilter.value,
+                tags: modsTagsFilter.value.toLowerCase().split('#').filter(t => t.trim()).map(t => t.trim())
+            };
+            let filteredItems = localModsItems.filter(item => {
+                if (item.categoryId !== currentModsCategory.id) return false;
+                if (filters.name && !item.name.toLowerCase().includes(filters.name)) return false; 
+                if (filters.creator && item.creator !== filters.creator) return false;
+                if (filters.functionality && item.functionality !== filters.functionality) return false;
+                if (filters.theme && item.theme !== filters.theme) return false;
+                if (filters.tags.length > 0) {
+                    const itemTags = (item.tags || []).map(t => t.replace('#', '').toLowerCase());
+                    if (!filters.tags.every(t => itemTags.includes(t))) return false;
+                }
+                return true;
+            });
+
+            filteredItems.sort((a, b) => a.name.localeCompare(b.name)); 
+
+            const totalItems = filteredItems.length;
+            const totalPages = Math.ceil(totalItems / modsItemsPerPage) || 1;
+            if (modsCurrentPage > totalPages) modsCurrentPage = totalPages;
+            const startIndex = (modsCurrentPage - 1) * modsItemsPerPage;
+            const endIndex = startIndex + modsItemsPerPage;
+            const paginatedItems = filteredItems.slice(startIndex, endIndex);
+            const startNum = totalItems > 0 ? startIndex + 1 : 0;
+            const endNum = Math.min(endIndex, totalItems);
+            modsItemCountDisplay.textContent = `Showing ${startNum}-${endNum} of ${totalItems}`;
+            modsPageIndicator.textContent = `Page ${modsCurrentPage} / ${totalPages}`;
+            modsPrevPageBtn.disabled = modsCurrentPage === 1;
+            modsNextPageBtn.disabled = modsCurrentPage === totalPages;
+            if (filteredItems.length === 0) {
+                const isFiltered = (filters.name || filters.creator || filters.functionality || filters.theme || filters.tags.length > 0);
+                modsItemsList.innerHTML = `<div class="text-center text-white text-xl py-20 bg-black bg-opacity-50 rounded-lg">
+                    ${isFiltered ? 'No items match the current filters.' : 'No items in this category yet. Click "+" to add one!'}
+                </div>`;
+                return;
+            }
+            modsItemsList.innerHTML = paginatedItems.map(item => {
+                return `
+                <div class="mods-item-row grid grid-cols-12 gap-4 p-4" data-id="${item.id}">
+                    <div class="col-span-12 md:col-span-4 flex gap-3">
+                        <div class="w-5 flex-shrink-0">
+                            ${item.path ? `<span class="material-icons text-green-600" style="font-size: 28px;" title="Path exists: ${item.path}">folder</span>` : ''}
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg">${item.name || 'N/A'}</h3>
+                            <p class="text-sm text-gray-700">${item.creator || 'N/A'}</p>
+                            <p class="text-xs text-gray-500 mt-2">Downloaded: ${item.dateDownloaded || 'N/A'}</p>
+                            <p class="text-xs text-gray-500">Updated: ${item.dateLinkUpdated || 'N/A'}</p>
+                        </div>
+                    </div>
+                    <div class="col-span-12 md:col-span-3">
+                        <p class="font-bold">${item.functionality || 'N/A'}</p>
+                        <p class="text-sm text-gray-600 break-words">${item.shortDescription || 'No description.'}</p>
+                    </div>
+                    <div class="col-span-6 md:col-span-2">
+                        <p class="font-bold">${item.theme || 'N/A'}</p>
+                    </div>
+                    <div class="col-span-6 md:col-span-2">
+                        <p class="text-sm text-gray-700 italic">${(item.tags || []).join(' ')}</p>
+                    </div>
+                    <div class="col-span-12 md:col-span-1 flex flex-row md:flex-col items-center justify-end md:justify-center gap-4">
+                        <a href="${item.pageLink || '#'}" target="_blank" class="icon-btn-col" onclick="event.stopPropagation()">
+                            <span class="material-icons" title="Page Link">public</span>
+                        </a>
+                        <a href="${item.downloadLink || '#'}" target="_blank" class="icon-btn-col download-mods-item" data-id="${item.id}" onclick="event.stopPropagation()">
+                            <span class="material-icons" title="Download Link">download</span>
+                        </a>
+                        <button class="icon-btn-col delete-mods-item" data-id="${item.id}" onclick="event.stopPropagation()">
+                            <span class="material-icons text-red-500" title="Delete">delete</span>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            document.querySelectorAll('.mods-item-row').forEach(row => {
+                row.addEventListener('click', (e) => { openEditModsModal(row.dataset.id); });
+            });
+            document.querySelectorAll('.download-mods-item').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if (link.href && link.href.includes('http')) {
+                        handleModsDownloadClick(link.dataset.id);
+                    } else { e.preventDefault(); }
+                });
+            });
+            document.querySelectorAll('.delete-mods-item').forEach(btn => {
+                btn.addEventListener('click', (e) => { handleDeleteModsItem(btn.dataset.id); });
+            });
+        }
+        
+        function populateModsFilters() {
+            if (!currentModsCategory) return;
+            const catData = currentModsCategory;
+
+            const populateSelect = (selectEl, data) => {
+                let firstOpt = selectEl.firstElementChild.outerHTML;
+                selectEl.innerHTML = firstOpt;
+                (data || []).sort().forEach(val => { selectEl.innerHTML += `<option value="${val}">${val}</option>`; });
+            };
+
+            const populateDatalist = (datalistEl, data) => {
+                datalistEl.innerHTML = '';
+                (data || []).sort().forEach(val => { datalistEl.innerHTML += `<option value="${val}"></option>`; });
+            };
+
+            populateSelect(modsCreatorFilter, catData.creators);
+            populateSelect(modsFunctionalityFilter, catData.functionalities);
+            populateSelect(modsThemeFilter, catData.themes);
+
+            populateDatalist(modsItemCreatorList, catData.creators);
+            populateDatalist(modsItemFunctionalityList, catData.functionalities);
+            populateDatalist(modsItemThemeList, catData.themes);
+        }
+
+        // --- MODS Navigation Event Listeners ---
+        gotoModsBtn.addEventListener('click', () => showView('mods-category-view'));
+        gotoGalleryBtnFromMods.addEventListener('click', () => showView('gallery-view'));
+        gotoModsCategoryBtn.addEventListener('click', () => showView('mods-category-view'));
+
+        editGalleryBgBtn.addEventListener('click', async () => {
+            const newBgUrl = prompt("Enter new background image URL:", localSettings.galleryBgUrl || '');
+            if (newBgUrl === null) return; 
+            
+            try {
+                await setDoc(settingsDoc, { galleryBgUrl: newBgUrl.trim() }, { merge: true });
+            } catch (e) { console.error("Error saving gallery background: ", e); }
+        });
+
+        // --- MODS Layer 1: Category CRUD ---
+        modsCategorySearch.addEventListener('input', renderModsCategoryButtons);
+        modsCategoryTagSearch.addEventListener('input', renderModsCategoryButtons); // [NEW]
+        addNewModsCategoryBtn.addEventListener('click', () => {
+            newModsCategoryInputContainer.classList.remove('hidden');
+            addNewModsCategoryBtn.classList.add('hidden');
+            newModsCategoryNameInput.focus();
+        });
+        cancelModsCategoryBtn.addEventListener('click', () => {
+             newModsCategoryInputContainer.classList.add('hidden');
+             addNewModsCategoryBtn.classList.remove('hidden');
+             newModsCategoryNameInput.value = '';
+        });
+        saveModsCategoryBtn.addEventListener('click', async () => {
+            const categoryName = newModsCategoryNameInput.value.trim();
+            if (categoryName) {
+                try {
+                    await addDoc(modsCategoriesCol, { 
+                        name: categoryName, creators: [], functionalities: [], themes: [], bgUrl: ''
+                    });
+                    newModsCategoryNameInput.value = '';
+                    newModsCategoryInputContainer.classList.add('hidden');
+                    addNewModsCategoryBtn.classList.remove('hidden');
+                } catch (e) { console.error("Error adding MODS category: ", e); }
+            }
+        });
+        
+        async function editModsCategory(category) {
+            const newName = prompt("Enter new category name:", category.name);
+            if (newName === null) return; 
+
+            const newBgUrl = prompt("Enter new background URL (leave empty for default):", category.bgUrl || '');
+            if (newBgUrl === null) return; 
+
+            try {
+                const catRef = doc(modsCategoriesCol, category.id);
+                await updateDoc(catRef, {
+                    name: newName.trim(),
+                    bgUrl: newBgUrl.trim()
+                });
+            } catch (e) { console.error("Error updating category: ", e); }
+        }
+        
+        deleteModsCategoryBtn.addEventListener('click', () => {
+            if (currentModsCategory) {
+                showConfirm(`Delete category "${currentModsCategory.name}"? This will delete ALL items inside it.`, handleDeleteModsCategory);
+            }
+        });
+        async function handleDeleteModsCategory() {
+            if (!currentModsCategory) return;
+            const categoryToDeleteId = currentModsCategory.id;
+            const batch = writeBatch(db);
+            const itemQuery = query(modsItemsCol, where("categoryId", "==", categoryToDeleteId));
+            const itemSnapshot = await getDocs(itemQuery);
+            itemSnapshot.docs.forEach(itemDoc => batch.delete(itemDoc.ref));
+            batch.delete(doc(modsCategoriesCol, categoryToDeleteId));
+            await batch.commit();
+            showView('mods-category-view');
+        }
+
+        // --- MODS Layer 2: Item CRUD ---
+        async function handleModsDownloadClick(id) {
+            const item = localModsItems.find(i => i.id === id);
+            if (!item) return;
+            const newCount = (item.downloadCount || 0) + 1;
+            try {
+                await updateDoc(doc(modsItemsCol, id), { downloadCount: newCount });
+            } catch (e) { console.error("Error updating MODS download count: ", e); }
+        }
+        addModsItemBtn.addEventListener('click', () => {
+            editingModsItemId = null;
+            modsModalTitle.textContent = '+ Add New';
+            [modsItemName, modsItemCreatorInput, modsItemFunctionalityInput, modsItemThemeInput, modsItemTags, modsItemShortDesc, modsItemPageLink, modsItemDownloadLink, modsItemPath].forEach(el => el.value = '');
+            deleteModsItemBtn.classList.add('hidden');
+            modsItemModal.classList.remove('hidden');
+        });
+        function openEditModsModal(id) {
+            const item = localModsItems.find(i => i.id === id);
+            if (!item) return;
+            editingModsItemId = id;
+            modsModalTitle.textContent = 'Edit Item';
+            modsItemName.value = item.name || '';
+            modsItemCreatorInput.value = item.creator || '';
+            modsItemFunctionalityInput.value = item.functionality || '';
+            modsItemThemeInput.value = item.theme || '';
+            modsItemTags.value = (item.tags || []).join(' ');
+            modsItemShortDesc.value = item.shortDescription || '';
+            modsItemPageLink.value = item.pageLink || '';
+            modsItemDownloadLink.value = item.downloadLink || '';
+            modsItemPath.value = item.path || '';
+            deleteModsItemBtn.classList.remove('hidden');
+            modsItemModal.classList.remove('hidden');
+        }
+        function closeModsItemModal() {
+            modsItemModal.classList.add('hidden');
+            editingModsItemId = null;
+        }
+        closeModsModalBtn.addEventListener('click', closeModsItemModal);
+        cancelModsItemBtn.addEventListener('click', closeModsItemModal);
+        
+        saveModsItemBtn.addEventListener('click', async () => {
+            if (!currentModsCategory) return;
+            
+            const creator = modsItemCreatorInput.value.trim();
+            const functionality = modsItemFunctionalityInput.value.trim();
+            const theme = modsItemThemeInput.value.trim();
+
+            const itemData = {
+                name: modsItemName.value.trim(),
+                creator: creator,
+                functionality: functionality,
+                theme: theme,
+                tags: modsItemTags.value.split('#').filter(t => t.trim()).map(t => '#' + t.trim()),
+                shortDescription: modsItemShortDesc.value.trim(),
+                pageLink: modsItemPageLink.value.trim(),
+                downloadLink: modsItemDownloadLink.value.trim(),
+                path: modsItemPath.value.trim(),
+                categoryId: currentModsCategory.id,
+                dateLinkUpdated: new Date().toLocaleDateString('en-CA'),
+            };
+            if (!itemData.name) {
+                showConfirm("Please fill in Mod Name.", () => confirmModal.classList.add('hidden'));
+                return;
+            }
+
+            try {
+                const catRef = doc(modsCategoriesCol, currentModsCategory.id);
+                const updates = {};
+                if (creator && !(currentModsCategory.creators || []).includes(creator)) {
+                    updates.creators = arrayUnion(creator);
+                }
+                if (functionality && !(currentModsCategory.functionalities || []).includes(functionality)) {
+                    updates.functionalities = arrayUnion(functionality);
+                }
+                if (theme && !(currentModsCategory.themes || []).includes(theme)) {
+                    updates.themes = arrayUnion(theme);
+                }
+                if (Object.keys(updates).length > 0) {
+                    await updateDoc(catRef, updates);
+                }
+
+                if (editingModsItemId) {
+                    await setDoc(doc(modsItemsCol, editingModsItemId), itemData, { merge: true });
+                } else {
+                    itemData.downloadCount = 0;
+                    itemData.dateDownloaded = new Date().toLocaleDateString('en-CA');
+                    await addDoc(modsItemsCol, itemData);
+                }
+                closeModsItemModal();
+            } catch (e) { console.error("Error saving MODS item: ", e); }
+        });
+        deleteModsItemBtn.addEventListener('click', () => {
+            if (editingModsItemId) {
+                handleDeleteModsItem(editingModsItemId);
+                closeModsItemModal();
+            }
+        });
+        function handleDeleteModsItem(id) {
+            if (!id) return;
+            showConfirm('Are you sure you want to delete this item?', async () => {
+                try { await deleteDoc(doc(modsItemsCol, id)); } 
+                catch (e) { console.error("Error deleting MODS item: ", e); }
+            });
+        }
+        
+        async function deleteModsMetadata(field, inputEl) {
+            const value = inputEl.value.trim();
+            if (!value) {
+                showConfirm(`Please type or select a ${field} to delete.`, () => confirmModal.classList.add('hidden'));
+                return;
+            }
+            showConfirm(`Delete "${value}" from this category's filter list? This won't delete items.`, async () => {
+                try {
+                    let firestoreField = field + 's';
+                    if (field === 'functionality') firestoreField = 'functionalities';
+                    await updateDoc(doc(modsCategoriesCol, currentModsCategory.id), { [firestoreField]: arrayRemove(value) });
+                    inputEl.value = '';
+                } catch (e) { console.error(`Error deleting ${field}: `, e); }
+            });
+        }
+        deleteModsCreatorBtn.addEventListener('click', () => deleteModsMetadata('creator', modsItemCreatorInput));
+        deleteModsFunctionalityBtn.addEventListener('click', () => deleteModsMetadata('functionality', modsItemFunctionalityInput));
+        deleteModsThemeBtn.addEventListener('click', () => deleteModsMetadata('theme', modsItemThemeInput));
+
+        [modsNameSearch, modsCreatorFilter, modsFunctionalityFilter, modsThemeFilter, modsTagsFilter].forEach(el => {
+            el.addEventListener('change', () => { modsCurrentPage = 1; renderModsItems(); }); 
+            el.addEventListener('input', () => { modsCurrentPage = 1; renderModsItems(); }); 
+        });
+        modsPrevPageBtn.addEventListener('click', () => {
+            if (modsCurrentPage > 1) { modsCurrentPage--; renderModsItems(); modsItemView.firstElementChild.scrollTop = 0; }
+        });
+        modsNextPageBtn.addEventListener('click', () => {
+            modsCurrentPage++; renderModsItems(); modsItemView.firstElementChild.scrollTop = 0;
+        });
+
+
+
+
+====== SCRIPT MODULES & FIREBASE AUTH ======
+
+
+<script type="module">
+        // --- Firebase SDK Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc,
+            getDocs, 
+            addDoc, 
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            collection, 
+            query, 
+            where, 
+            writeBatch,
+            arrayUnion,
+            arrayRemove,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase & App Initialization ---
+        let app, db, auth;
+        let userId = null;
+        let appId = 'default-app-id';
+        let basePath; 
+        let settingsDoc; 
+
+        // --- Collections ---
+        let categoriesCol, subCategoriesCol, itemsCol;
+        let modsCategoriesCol, modsItemsCol;
+        let ccCategoriesCol, ccSubCategoriesCol, ccItemsCol; 
+        let lotCategoriesCol, lotSubCategoriesCol, lotItemsCol; // [NEW] Lot Collections
+
+        // --- Local data cache ---
+        let localCategories = [], localSubCategories = [], localItems = [];
+        let localModsCategories = [], localModsItems = [];
+        let localCCCategories = [], localCCSubCategories = [], localCCItems = []; 
+        let localLotCategories = [], localLotSubCategories = [], localLotItems = []; // [NEW] Lot Caches
+        let localSettings = {}; 
+        
+        // --- Unsubscribe functions ---
+        let unsubCategories = () => {}, unsubSubCategories = () => {}, unsubItems = () => {};
+        let unsubModsCategories = () => {}, unsubModsItems = () => {};
+        let unsubCCCategories = () => {}, unsubCCSubCategories = () => {}, unsubCCItems = () => {}; 
+        let unsubLotCategories = () => {}, unsubLotSubCategories = () => {}, unsubLotItems = () => {}; // [NEW] Lot Unsubs
+        let unsubSettings = () => {}; 
+
+        // --- Application State ---
+        let currentView = 'gallery-view';
+        let confirmCallback = null;
+
+        // CAS State
+        let currentCategory = null, currentSubCategory = null, editingItemId = null;
+        let currentPage = 1; 
+        const itemsPerPage = 20; 
+
+        // MODS State
+        let currentModsCategory = null, editingModsItemId = null;
+        let modsCurrentPage = 1;
+        const modsItemsPerPage = 20;
+
+        // CC State
+        let currentCCCat = null, currentCCSubCat = null, editingCCItemId = null;
+        let ccCurrentPage = 1;
+        const ccItemsPerPage = 20;
+
+        // [NEW] Lot State
+        let currentLotCat = null, currentLotSubCat = null, editingLotItemId = null;
+        let lotCurrentPage = 1;
+        const lotItemsPerPage = 20;
+
+        // --- Gameplay / Sims Collections ---
+        let simsCol;
+        let localSims = [];
+        let unsubSims = () => {};
+        let editingSimId = null;
+
+        // Gameplay sim tag state (in-memory while modal is open)
+        const simTagFields = [
+            'sexualOrientation','traits','skills','aspiration','lifestyles',
+            'likes','dislikes','turnons','turnoffs','relprefs',
+            'degrees','career','business',
+            'houseType','ownedBiz','resBizVenue','club'
+        ];
+        let simTagData = {};
+ 
+        // Gameplay link-select fields (multi-sim selects)
+        let simBestFriends = [];
+        let simFriends = [];
+ 
+        // Milestone / Life Event arrays
+        let simMilestones = [];
+        let simLifeEvents = [];
+
+        // --- DOM Elements ---
+        
+        // Views
+        const galleryView = document.getElementById('gallery-view');
+        const casView = document.getElementById('cas-view');
+        const subCategoryView = document.getElementById('sub-category-view');
+        const itemView = document.getElementById('item-view');
+        const modsCategoryView = document.getElementById('mods-category-view');
+        const modsItemView = document.getElementById('mods-item-view');
+        const ccView = document.getElementById('cc-view'); 
+        const ccSubCategoryView = document.getElementById('cc-sub-category-view'); 
+        const ccItemView = document.getElementById('cc-item-view'); 
+        const lotView = document.getElementById('lot-view'); // [NEW]
+        const lotSubCategoryView = document.getElementById('lot-sub-category-view'); // [NEW]
+        const lotItemView = document.getElementById('lot-item-view'); // [NEW]
+        
+        // View 1 (Gallery)
+        const gotoCasBtn = document.getElementById('goto-cas-btn');
+        const gotoModsBtn = document.getElementById('goto-mods-btn');
+        const gotoCCBtn = document.getElementById('goto-cc-btn'); 
+        const gotoLotBtn = document.getElementById('goto-lot-btn'); // [NEW]
+        const editGalleryBgBtn = document.getElementById('edit-gallery-bg-btn'); 
+
+        // View 2 (CAS)
+        const gotoGalleryBtn = document.getElementById('goto-gallery-btn');
+        const categorySearch = document.getElementById('category-search');
+        const categoryTagSearch = document.getElementById('category-tag-search'); // [NEW]
+        const categoryButtonsContainer = document.getElementById('category-buttons');
+        const addNewCategoryBtn = document.getElementById('add-new-category-btn');
+        const newCategoryInputContainer = document.getElementById('new-category-input-container');
+        const newCategoryNameInput = document.getElementById('new-category-name');
+        const saveCategoryBtn = document.getElementById('save-category-btn');
+        const cancelCategoryBtn = document.getElementById('cancel-category-btn');
+
+        // View 3 (Sub-Category)
+        const gotoCasViewBtn = document.getElementById('goto-cas-view-btn');
+        const subCategoryTitle = document.getElementById('sub-category-title');
+        const deleteCategoryBtn = document.getElementById('delete-category-btn');
+        const subCategoryTagSearch = document.getElementById('sub-category-tag-search'); // [NEW]
+        const subCategoryButtonsContainer = document.getElementById('sub-category-buttons');
+        const addNewSubCategoryBtn = document.getElementById('add-new-sub-category-btn');
+        const newSubCategoryInputContainer = document.getElementById('new-sub-category-input-container');
+        const newSubCategoryNameInput = document.getElementById('new-sub-category-name');
+        const saveSubCategoryBtn = document.getElementById('save-sub-category-btn');
+        const cancelSubCategoryBtn = document.getElementById('cancel-sub-category-btn');
+        const renameSubCategoryBtn = document.getElementById('rename-sub-category-btn');
+        
+        // View 4 (Item View)
+        const gotoSubCategoryBtn = document.getElementById('goto-sub-category-btn');
+        const itemViewTitle = document.getElementById('item-view-title');
+        const deleteSubCategoryBtn = document.getElementById('delete-sub-category-btn');
+        const creatorFilter = document.getElementById('creatorFilter');
+        const ageGroupFilter = document.getElementById('ageGroupFilter');
+        const genderFilter = document.getElementById('genderFilter');
+        const tagsFilter = document.getElementById('tagsFilter');
+        const nameSearchFilter = document.getElementById('nameSearchFilter');
+        const itemsGrid = document.getElementById('itemsGrid');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const itemCountDisplay = document.getElementById('itemCountDisplay');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const pageIndicator = document.getElementById('pageIndicator');
+
+        // View 5 (MODS Category)
+        const gotoGalleryBtnFromMods = document.getElementById('goto-gallery-btn-from-mods');
+        const modsCategorySearch = document.getElementById('mods-category-search');
+        const modsCategoryTagSearch = document.getElementById('mods-category-tag-search'); // [NEW]
+        const modsCategoryButtonsContainer = document.getElementById('mods-category-buttons');
+        const addNewModsCategoryBtn = document.getElementById('add-new-mods-category-btn');
+        const newModsCategoryInputContainer = document.getElementById('new-mods-category-input-container');
+        const newModsCategoryNameInput = document.getElementById('new-mods-category-name');
+        const saveModsCategoryBtn = document.getElementById('save-mods-category-btn');
+        const cancelModsCategoryBtn = document.getElementById('cancel-mods-category-btn');
+
+        // View 6 (MODS Item List)
+        const gotoModsCategoryBtn = document.getElementById('goto-mods-category-btn');
+        const modsItemViewTitle = document.getElementById('mods-item-view-title');
+        const deleteModsCategoryBtn = document.getElementById('delete-mods-category-btn');
+        const modsNameSearch = document.getElementById('modsNameSearch');
+        const modsCreatorFilter = document.getElementById('modsCreatorFilter');
+        const modsFunctionalityFilter = document.getElementById('modsFunctionalityFilter');
+        const modsThemeFilter = document.getElementById('modsThemeFilter');
+        const modsTagsFilter = document.getElementById('modsTagsFilter');
+        const modsItemsList = document.getElementById('modsItemsList');
+        const addModsItemBtn = document.getElementById('addModsItemBtn');
+        const modsItemCountDisplay = document.getElementById('modsItemCountDisplay');
+        const modsPrevPageBtn = document.getElementById('modsPrevPageBtn');
+        const modsNextPageBtn = document.getElementById('modsNextPageBtn');
+        const modsPageIndicator = document.getElementById('modsPageIndicator');
+
+        // View 7 (CC Category)
+        const gotoGalleryFromCCBtn = document.getElementById('goto-gallery-from-cc-btn');
+        const ccCategorySearch = document.getElementById('cc-category-search');
+        const ccCategoryTagSearch = document.getElementById('cc-category-tag-search'); // [NEW]
+        const ccCategoryButtonsContainer = document.getElementById('cc-category-buttons');
+        const addNewCCCatBtn = document.getElementById('add-new-cc-category-btn');
+        const newCCCatInputContainer = document.getElementById('new-cc-category-input-container');
+        const newCCCatNameInput = document.getElementById('new-cc-category-name');
+        const saveCCCatBtn = document.getElementById('save-cc-category-btn');
+        const cancelCCCatBtn = document.getElementById('cancel-cc-category-btn');
+
+        // View 8 (CC Sub-Category)
+        const gotoCCViewBtn = document.getElementById('goto-cc-view-btn');
+        const ccSubCategoryTitle = document.getElementById('cc-sub-category-title');
+        const deleteCCCatBtn = document.getElementById('delete-cc-category-btn');
+        const ccSubCategoryTagSearch = document.getElementById('cc-sub-category-tag-search'); // [NEW]
+        const ccSubCategoryButtonsContainer = document.getElementById('cc-sub-category-buttons');
+        const addNewCCSubCatBtn = document.getElementById('add-new-cc-sub-category-btn');
+        const newCCSubCatInputContainer = document.getElementById('new-cc-sub-category-input-container');
+        const newCCSubCatNameInput = document.getElementById('new-cc-sub-category-name');
+        const saveCCSubCatBtn = document.getElementById('save-cc-sub-category-btn');
+        const cancelCCSubCatBtn = document.getElementById('cancel-cc-sub-category-btn');
+        const renameCCSubCatBtn = document.getElementById('rename-cc-sub-category-btn');
+
+        // View 9 (CC Item View)
+        const gotoCCSubCatBtn = document.getElementById('goto-cc-sub-category-btn');
+        const ccItemViewTitle = document.getElementById('cc-item-view-title');
+        const deleteCCSubCatBtn = document.getElementById('delete-cc-sub-category-btn');
+        const ccCreatorFilter = document.getElementById('ccCreatorFilter');
+        const ccFunctionalityFilter = document.getElementById('ccFunctionalityFilter');
+        const ccThemeFilter = document.getElementById('ccThemeFilter');
+        const ccTagsFilter = document.getElementById('ccTagsFilter');
+        const ccNameSearchFilter = document.getElementById('ccNameSearchFilter');
+        const ccItemsGrid = document.getElementById('ccItemsGrid');
+        const addCCItemBtn = document.getElementById('addCCItemBtn');
+        const ccItemCountDisplay = document.getElementById('ccItemCountDisplay');
+        const ccPrevPageBtn = document.getElementById('ccPrevPageBtn');
+        const ccNextPageBtn = document.getElementById('ccNextPageBtn');
+        const ccPageIndicator = document.getElementById('ccPageIndicator');
+
+        // [NEW] View 10 (Lot Category)
+        const gotoGalleryFromLotBtn = document.getElementById('goto-gallery-from-lot-btn');
+        const lotCategorySearch = document.getElementById('lot-category-search');
+        const lotCategoryTagSearch = document.getElementById('lot-category-tag-search');
+        const lotCategoryButtonsContainer = document.getElementById('lot-category-buttons');
+        const addNewLotCatBtn = document.getElementById('add-new-lot-category-btn');
+        const newLotCatInputContainer = document.getElementById('new-lot-category-input-container');
+        const newLotCatNameInput = document.getElementById('new-lot-category-name');
+        const saveLotCatBtn = document.getElementById('save-lot-category-btn');
+        const cancelLotCatBtn = document.getElementById('cancel-lot-category-btn');
+
+        // [NEW] View 11 (Lot Sub-Category)
+        const gotoLotViewBtn = document.getElementById('goto-lot-view-btn');
+        const lotSubCategoryTitle = document.getElementById('lot-sub-category-title');
+        const deleteLotCatBtn = document.getElementById('delete-lot-category-btn');
+        const lotSubCategoryTagSearch = document.getElementById('lot-sub-category-tag-search');
+        const lotSubCategoryButtonsContainer = document.getElementById('lot-sub-category-buttons');
+        const addNewLotSubCatBtn = document.getElementById('add-new-lot-sub-category-btn');
+        const newLotSubCatInputContainer = document.getElementById('new-lot-sub-category-input-container');
+        const newLotSubCatNameInput = document.getElementById('new-lot-sub-category-name');
+        const saveLotSubCatBtn = document.getElementById('save-lot-sub-category-btn');
+        const cancelLotSubCatBtn = document.getElementById('cancel-lot-sub-category-btn');
+        const renameLotSubCatBtn = document.getElementById('rename-lot-sub-category-btn');
+
+        // [NEW] View 12 (Lot Item View)
+        const gotoLotSubCatBtn = document.getElementById('goto-lot-sub-category-btn');
+        const lotItemViewTitle = document.getElementById('lot-item-view-title');
+        const deleteLotSubCatBtn = document.getElementById('delete-lot-sub-category-btn');
+        const lotCreatorFilter = document.getElementById('lotCreatorFilter');
+        const lotFunctionalityFilter = document.getElementById('lotFunctionalityFilter');
+        const lotThemeFilter = document.getElementById('lotThemeFilter');
+        const lotTagsFilter = document.getElementById('lotTagsFilter');
+        const lotNameSearchFilter = document.getElementById('lotNameSearchFilter');
+        const lotItemsGrid = document.getElementById('lotItemsGrid');
+        const addLotItemBtn = document.getElementById('addLotItemBtn');
+        const lotItemCountDisplay = document.getElementById('lotItemCountDisplay');
+        const lotPrevPageBtn = document.getElementById('lotPrevPageBtn');
+        const lotNextPageBtn = document.getElementById('lotNextPageBtn');
+        const lotPageIndicator = document.getElementById('lotPageIndicator');
+
+
+        // Item Modal (CAS)
+        const itemModal = document.getElementById('itemModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const itemName = document.getElementById('itemName');
+        const itemCreatorInput = document.getElementById('itemCreatorInput'); 
+        const itemCreatorList = document.getElementById('itemCreatorList'); 
+        const deleteCreatorBtn = document.getElementById('deleteCreatorBtn');
+        const itemAgeGroupInput = document.getElementById('itemAgeGroupInput'); 
+        const itemAgeGroupList = document.getElementById('itemAgeGroupList'); 
+        const deleteAgeGroupBtn = document.getElementById('deleteAgeGroupBtn'); 
+        const itemGenderInput = document.getElementById('itemGenderInput'); 
+        const itemGenderList = document.getElementById('itemGenderList'); 
+        const deleteGenderBtn = document.getElementById('deleteGenderBtn'); 
+        const itemTags = document.getElementById('itemTags');
+        const itemImageUrl = document.getElementById('itemImageUrl');
+        const itemDownloadLink = document.getElementById('itemDownloadLink');
+        const itemPath = document.getElementById('itemPath');
+        const deleteItemBtn = document.getElementById('deleteItemBtn');
+        const cancelItemBtn = document.getElementById('cancelItemBtn');
+        const saveItemBtn = document.getElementById('saveItemBtn');
+
+        // Item Modal (MODS)
+        const modsItemModal = document.getElementById('modsItemModal');
+        const modsModalTitle = document.getElementById('modsModalTitle');
+        const closeModsModalBtn = document.getElementById('closeModsModalBtn');
+        const modsItemName = document.getElementById('modsItemName');
+        const modsItemCreatorInput = document.getElementById('modsItemCreatorInput'); 
+        const modsItemCreatorList = document.getElementById('modsItemCreatorList'); 
+        const deleteModsCreatorBtn = document.getElementById('deleteModsCreatorBtn');
+        const modsItemFunctionalityInput = document.getElementById('modsItemFunctionalityInput'); 
+        const modsItemFunctionalityList = document.getElementById('modsItemFunctionalityList'); 
+        const deleteModsFunctionalityBtn = document.getElementById('deleteModsFunctionalityBtn');
+        const modsItemThemeInput = document.getElementById('modsItemThemeInput'); 
+        const modsItemThemeList = document.getElementById('modsItemThemeList'); 
+        const deleteModsThemeBtn = document.getElementById('deleteModsThemeBtn');
+        const modsItemTags = document.getElementById('modsItemTags');
+        const modsItemShortDesc = document.getElementById('modsItemShortDesc');
+        const modsItemPageLink = document.getElementById('modsItemPageLink');
+        const modsItemDownloadLink = document.getElementById('modsItemDownloadLink');
+        const modsItemPath = document.getElementById('modsItemPath');
+        const deleteModsItemBtn = document.getElementById('deleteModsItemBtn');
+        const cancelModsItemBtn = document.getElementById('cancelModsItemBtn');
+        const saveModsItemBtn = document.getElementById('saveModsItemBtn');
+        
+        // Item Modal (CC)
+        const ccItemModal = document.getElementById('ccItemModal');
+        const ccModalTitle = document.getElementById('ccModalTitle');
+        const closeCCModalBtn = document.getElementById('closeCCModalBtn');
+        const ccItemName = document.getElementById('ccItemName');
+        const ccItemCreatorInput = document.getElementById('ccItemCreatorInput');
+        const ccItemCreatorList = document.getElementById('ccItemCreatorList');
+        const deleteCCCreatorBtn = document.getElementById('deleteCCCreatorBtn');
+        const ccItemFunctionalityInput = document.getElementById('ccItemFunctionalityInput');
+        const ccItemFunctionalityList = document.getElementById('ccItemFunctionalityList');
+        const deleteCCFunctionalityBtn = document.getElementById('deleteCCFunctionalityBtn');
+        const ccItemThemeInput = document.getElementById('ccItemThemeInput');
+        const ccItemThemeList = document.getElementById('ccItemThemeList');
+        const deleteCCThemeBtn = document.getElementById('deleteCCThemeBtn');
+        const ccItemTags = document.getElementById('ccItemTags');
+        const ccItemImageUrl = document.getElementById('ccItemImageUrl');
+        const ccItemDownloadLink = document.getElementById('ccItemDownloadLink');
+        const ccItemPath = document.getElementById('ccItemPath');
+        const deleteCCItemBtn = document.getElementById('deleteCCItemBtn');
+        const cancelCCItemBtn = document.getElementById('cancelCCItemBtn');
+        const saveCCItemBtn = document.getElementById('saveCCItemBtn');
+        
+        // [NEW] Item Modal (Lot)
+        const lotItemModal = document.getElementById('lotItemModal');
+        const lotModalTitle = document.getElementById('lotModalTitle');
+        const closeLotModalBtn = document.getElementById('closeLotModalBtn');
+        const lotItemName = document.getElementById('lotItemName');
+        const lotItemCreatorInput = document.getElementById('lotItemCreatorInput');
+        const lotItemCreatorList = document.getElementById('lotItemCreatorList');
+        const deleteLotCreatorBtn = document.getElementById('deleteLotCreatorBtn');
+        const lotItemFunctionalityInput = document.getElementById('lotItemFunctionalityInput');
+        const lotItemFunctionalityList = document.getElementById('lotItemFunctionalityList');
+        const deleteLotFunctionalityBtn = document.getElementById('deleteLotFunctionalityBtn');
+        const lotItemThemeInput = document.getElementById('lotItemThemeInput');
+        const lotItemThemeList = document.getElementById('lotItemThemeList');
+        const deleteLotThemeBtn = document.getElementById('deleteLotThemeBtn');
+        const lotItemTags = document.getElementById('lotItemTags');
+        const lotItemImageUrl = document.getElementById('lotItemImageUrl');
+        const lotItemDownloadLink = document.getElementById('lotItemDownloadLink');
+        const lotItemPath = document.getElementById('lotItemPath');
+        const deleteLotItemBtn = document.getElementById('deleteLotItemBtn');
+        const cancelLotItemBtn = document.getElementById('cancelLotItemBtn');
+        const saveLotItemBtn = document.getElementById('saveLotItemBtn');
+
+        // Confirmation Modal (Universal)
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmText = document.getElementById('confirmText');
+        const confirmYes = document.getElementById('confirmYes');
+        const confirmNo = document.getElementById('confirmNo');
+
+        // --- View Switching Logic ---
+        function showView(viewId) {
+            currentView = viewId;
+            [galleryView, casView, subCategoryView, itemView, 
+             modsCategoryView, modsItemView, 
+             ccView, ccSubCategoryView, ccItemView,
+             lotView, lotSubCategoryView, lotItemView // [NEW] Add lot views
+            ].forEach(v => v.classList.add('hidden'));
+
+            if (viewId === 'gallery-view') {
+                applyGalleryBackground(); 
+                galleryView.classList.remove('hidden');
+            } else if (viewId === 'cas-view') {
+                casView.classList.remove('hidden');
+                currentCategory = null;
+                renderCategoryButtons();
+            } else if (viewId === 'sub-category-view') {
+                if (!currentCategory) { showView('cas-view'); return; }
+                subCategoryTitle.textContent = currentCategory.name.toUpperCase();
+                subCategoryView.classList.remove('hidden');
+                renderSubCategoryButtons();
+            } else if (viewId === 'item-view') {
+                 if (!currentSubCategory) { showView('sub-category-view'); return; }
+                itemViewTitle.textContent = currentSubCategory.name.toUpperCase();
+                itemView.classList.remove('hidden');
+                currentPage = 1;
+                populateFilters();
+                renderItems();
+            } else if (viewId === 'mods-category-view') { 
+                modsCategoryView.classList.remove('hidden');
+                currentModsCategory = null;
+                renderModsCategoryButtons();
+            } else if (viewId === 'mods-item-view') { 
+                 if (!currentModsCategory) { showView('mods-category-view'); return; }
+                
+                if (currentModsCategory.bgUrl) {
+                    modsItemView.style.backgroundImage = `url('${currentModsCategory.bgUrl}')`;
+                } else {
+                    modsItemView.style.backgroundImage = `url('https://i.imgur.com/TPpxQjA.jpeg')`;
+                }
+                
+                modsItemViewTitle.textContent = currentModsCategory.name.toUpperCase();
+                modsItemView.classList.remove('hidden');
+                modsCurrentPage = 1; 
+                populateModsFilters();
+                renderModsItems();
+            }
+            else if (viewId === 'cc-view') {
+                ccView.classList.remove('hidden');
+                currentCCCat = null;
+                renderCCCategories();
+            } else if (viewId === 'cc-sub-category-view') {
+                if (!currentCCCat) { showView('cc-view'); return; }
+                ccSubCategoryTitle.textContent = currentCCCat.name.toUpperCase();
+                ccSubCategoryView.classList.remove('hidden');
+                renderCCSubCategories();
+            } else if (viewId === 'cc-item-view') {
+                if (!currentCCSubCat) { showView('cc-sub-category-view'); return; }
+                ccItemViewTitle.textContent = currentCCSubCat.name.toUpperCase();
+                ccItemView.classList.remove('hidden');
+                ccCurrentPage = 1;
+                populateCCFilters();
+                renderCCItems();
+            }
+            // [NEW] Lot View Logic
+            else if (viewId === 'lot-view') {
+                lotView.classList.remove('hidden');
+                currentLotCat = null;
+                renderLotCategories();
+            } else if (viewId === 'lot-sub-category-view') {
+                if (!currentLotCat) { showView('lot-view'); return; }
+                lotSubCategoryTitle.textContent = currentLotCat.name.toUpperCase();
+                lotSubCategoryView.classList.remove('hidden');
+                renderLotSubCategories();
+            } else if (viewId === 'lot-item-view') {
+                if (!currentLotSubCat) { showView('lot-sub-category-view'); return; }
+                lotItemViewTitle.textContent = currentLotSubCat.name.toUpperCase();
+                lotItemView.classList.remove('hidden');
+                lotCurrentPage = 1;
+                populateLotFilters();
+                renderLotItems();
+            }
+        }
+
+        // Apply gallery background
+        function applyGalleryBackground() {
+            if (localSettings.galleryBgUrl) {
+                galleryView.style.backgroundImage = `url('${localSettings.galleryBgUrl}')`;
+            } else {
+                galleryView.style.backgroundImage = `url('https://i.imgur.com/SyuVLuZ.jpeg')`;
+            }
+        }
+        
+        // --- Confirmation Modal Logic (Generic) ---
+        function showConfirm(text, onConfirm) {
+            confirmText.textContent = text;
+            confirmCallback = onConfirm;
+            confirmModal.classList.remove('hidden');
+        }
+        confirmYes.addEventListener('click', () => {
+            if (confirmCallback) { confirmCallback(); }
+            confirmModal.classList.add('hidden');
+            confirmCallback = null;
+        });
+        confirmNo.addEventListener('click', () => {
+            confirmModal.classList.add('hidden');
+            confirmCallback = null;
+        });
+
+
+
+
+// 
+        // --- ================================================= ---
+        // --- SCRIPT SECTION 5: FIREBASE AUTH & INIT          ---
+        // --- ================================================= ---
+        // 
+
+        function initApp(uid) {
+            userId = uid;
+            basePath = `/artifacts/${appId}/users/${userId}`;
+            
+            // Init CAS collections
+            categoriesCol = collection(db, `${basePath}/casCategories`);
+            subCategoriesCol = collection(db, `${basePath}/casSubCategories`);
+            itemsCol = collection(db, `${basePath}/casItems`);
+            
+            // Init MODS collections
+            modsCategoriesCol = collection(db, `${basePath}/modsCategories`);
+            modsItemsCol = collection(db, `${basePath}/modsItems`);
+            
+            // Init CC collections
+            ccCategoriesCol = collection(db, `${basePath}/ccCategories`);
+            ccSubCategoriesCol = collection(db, `${basePath}/ccSubCategories`);
+            ccItemsCol = collection(db, `${basePath}/ccItems`);
+
+            // [NEW] Init Lot collections
+            lotCategoriesCol = collection(db, `${basePath}/lotCategories`);
+            lotSubCategoriesCol = collection(db, `${basePath}/lotSubCategories`);
+            lotItemsCol = collection(db, `${basePath}/lotItems`);
+
+            // Init Sims collection
+            simsCol = collection(db, `${basePath}/sims`);
+
+            // Init Settings doc
+            settingsDoc = doc(db, `${basePath}/settings/main`);
+
+            [unsubCategories, unsubSubCategories, unsubItems, 
+             unsubModsCategories, unsubModsItems, unsubSettings,
+             unsubCCCategories, unsubCCSubCategories, unsubCCItems,
+             unsubLotCategories, unsubLotSubCategories, unsubLotItems, unsubSims
+            ].forEach(unsub => unsub());
+
+            // --- Attach CAS listeners ---
+            unsubCategories = onSnapshot(query(categoriesCol), (snapshot) => {
+                localCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
+                if (currentView === 'cas-view') renderCategoryButtons();
+            });
+            unsubSubCategories = onSnapshot(query(subCategoriesCol), (snapshot) => {
+                localSubCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
+                if (currentView === 'sub-category-view') renderSubCategoryButtons();
+                if (currentView === 'item-view' && currentSubCategory) {
+                    currentSubCategory = localSubCategories.find(s => s.id === currentSubCategory.id);
+                    if(currentSubCategory) populateFilters();
+                }
+            });
+            unsubItems = onSnapshot(query(itemsCol), (snapshot) => {
+                localItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentView === 'item-view') renderItems();
+                if (currentView === 'cas-view') renderCategoryButtons(); // For tag search
+                if (currentView === 'sub-category-view') renderSubCategoryButtons(); // For tag search
+            });
+            
+            // --- Attach MODS listeners ---
+            unsubModsCategories = onSnapshot(query(modsCategoriesCol), (snapshot) => {
+                localModsCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
+                if (currentView === 'mods-category-view') renderModsCategoryButtons();
+                if (currentView === 'mods-item-view' && currentModsCategory) {
+                    currentModsCategory = localModsCategories.find(c => c.id === currentModsCategory.id);
+                    if(currentModsCategory) populateModsFilters();
+                }
+            });
+            unsubModsItems = onSnapshot(query(modsItemsCol), (snapshot) => {
+                localModsItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentView === 'mods-item-view') renderModsItems();
+                if (currentView === 'mods-category-view') renderModsCategoryButtons(); // For tag search
+            });
+
+            // --- Attach CC listeners ---
+            unsubCCCategories = onSnapshot(query(ccCategoriesCol), (snapshot) => {
+                localCCCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
+                if (currentView === 'cc-view') renderCCCategories();
+            });
+            unsubCCSubCategories = onSnapshot(query(ccSubCategoriesCol), (snapshot) => {
+                localCCSubCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
+                if (currentView === 'cc-sub-category-view') renderCCSubCategories();
+                if (currentView === 'cc-item-view' && currentCCSubCat) {
+                    currentCCSubCat = localCCSubCategories.find(s => s.id === currentCCSubCat.id);
+                    if(currentCCSubCat) populateCCFilters();
+                }
+            });
+            unsubCCItems = onSnapshot(query(ccItemsCol), (snapshot) => {
+                localCCItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentView === 'cc-item-view') renderCCItems();
+                if (currentView === 'cc-view') renderCCCategories(); // For tag search
+                if (currentView === 'cc-sub-category-view') renderCCSubCategories(); // For tag search
+            });
+
+            // --- [NEW] Attach Lot listeners ---
+            unsubLotCategories = onSnapshot(query(lotCategoriesCol), (snapshot) => {
+                localLotCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
+                if (currentView === 'lot-view') renderLotCategories();
+            });
+            unsubLotSubCategories = onSnapshot(query(lotSubCategoriesCol), (snapshot) => {
+                localLotSubCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
+                if (currentView === 'lot-sub-category-view') renderLotSubCategories();
+                if (currentView === 'lot-item-view' && currentLotSubCat) {
+                    currentLotSubCat = localLotSubCategories.find(s => s.id === currentLotSubCat.id);
+                    if(currentLotSubCat) populateLotFilters();
+                }
+            });
+            unsubLotItems = onSnapshot(query(lotItemsCol), (snapshot) => {
+                localLotItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentView === 'lot-item-view') renderLotItems();
+                if (currentView === 'lot-view') renderLotCategories(); // For tag search
+                if (currentView === 'lot-sub-category-view') renderLotSubCategories(); // For tag search
+            });
+
+
+            // --- Attach Settings listener ---
+            unsubSettings = onSnapshot(settingsDoc, (doc) => {
+                if (doc.exists()) {
+                    localSettings = doc.data();
+                } else {
+                    localSettings = {}; 
+                }
+                if (currentView === 'gallery-view') {
+                    applyGalleryBackground();
+                }
+            });
+
+                        // --- Attach Sims listener ---
+            unsubSims = onSnapshot(query(simsCol), (snapshot) => {
+                localSims = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const gv = currentView;
+                if (gv === 'generation-view') renderGenerationView();
+                else if (gv === 'genealogy-view') renderGenealogyView();
+                else if (gv === 'sims-profile-view') renderSimsProfileView();
+                else if (gv === 'sims-roles-view') renderSimsRolesView();
+                else if (gv === 'employment-view') renderEmploymentView();
+                else if (gv === 'lifestyle-view') renderLifestyleView();
+                else if (gv === 'residency-view') renderResidencyView();
+            });
+            
+            console.log("All Firebase listeners attached for user:", userId);
+            showView('gallery-view');
+        }
+
+        window.onload = async () => {
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = typeof __firebase_config !== 'undefined' 
+                ? JSON.parse(__firebase_config) 
+                : {
+                    apiKey: "AIzaSyAlt9mATV_kD9CNPkj9pTRZ92oNhqKPYg8",
+                    authDomain: "sims-4-gallery.firebaseapp.com",
+                    projectId: "sims-4-gallery",
+                    storageBucket: "sims-4-gallery.firebasestorage.app",
+                    messagingSenderId: "881427654109",
+                    appId: "1:881427654109:web:6aaffa062ca2d6ad2e0234",
+                    measurementId: "G-41V198HVRV"
+                  };
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('debug');
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        console.log("User is signed in:", user.uid);
+                        initApp('90vGdLGLABQTEppFvvfFjjLfCgC2');
+                    } else {
+                        console.log("User is not signed in.");
+                    }
+                });
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Firebase initialization failed:", e);
+                document.body.innerHTML = "<h1 class='text-white p-10'>Error: Could not connect to database.</h1>";
+            }
+        };

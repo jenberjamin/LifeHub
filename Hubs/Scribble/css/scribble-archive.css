@@ -1,0 +1,210 @@
+/* ═══════════════════════════════════════════════════
+   SCRIBBLE — ARCHIVE STYLES  v1.0
+   scribble-archive.css
+
+   Loads after scribble.css and scribble-recycle-bin.css
+   and reuses their table shell (.bin-table, .bin-view,
+   .bin-toolbar), so only the archive-specific pieces
+   live here.
+═══════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR — ARCHIVE ICON (active state)
+   The button already exists on every page; it just had
+   no active styling because it never led anywhere.
+═══════════════════════════════════════════════════ */
+.sidebar-archive-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 9px 6px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+    user-select: none;
+}
+
+.sidebar-archive-btn:hover { background: var(--row-hover); }
+
+.sidebar-archive-btn.active {
+    background: var(--active-bg);
+    border-left-color: var(--accent);
+}
+
+.sidebar-archive-btn.active .archive-icon,
+.sidebar-archive-btn.active .archive-text { color: var(--active-color); }
+.sidebar-archive-btn.active .archive-text { font-weight: 600; }
+
+
+/* ═══════════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════════ */
+.arc-subtitle {
+    font-size: 8.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--sub);
+    margin-left: 2px;
+}
+
+.arc-bulk-count {
+    font-size: 8.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--sub);
+    margin-right: 2px;
+    white-space: nowrap;
+}
+
+
+/* ═══════════════════════════════════════════════════
+   TABLE
+═══════════════════════════════════════════════════ */
+.arc-table .col-check  { width: 38px; }
+.arc-table .col-name   { width: 26%; }
+.arc-table .col-type   { width: 9%; }
+.arc-table .col-date   { width: 13%; }
+.arc-table .col-group  { width: 8%; }
+.arc-table .col-path   { width: 24%; }
+.arc-table .col-action { width: 84px; }
+
+/* Rows are neutral — nothing here is expiring, so there is
+   no green/yellow/red urgency language like the bin has. */
+.arc-table tbody tr             { background: transparent; }
+.arc-table tbody tr:hover       { background: #FAFAF9; filter: none; }
+.arc-table tbody td             { white-space: normal; }
+
+.arc-cb {
+    width: 13px;
+    height: 13px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    display: block;
+    margin: 0 auto;
+}
+
+.arc-name {
+    font-weight: 600;
+    font-size: 10px;
+    font-family: 'Roboto Condensed', sans-serif;
+    letter-spacing: 0.4px;
+    color: var(--text);
+    word-break: break-all;
+}
+
+.arc-link-badge {
+    font-size: 8px;
+    color: #346EA8;
+    margin-left: 3px;
+    opacity: .75;
+}
+
+.arc-note {
+    font-size: 8.5px;
+    color: var(--sub);
+    line-height: 1.4;
+    margin-top: 2px;
+    word-break: break-word;
+}
+.arc-note-empty { color: #D6D3CE; }
+
+.arc-type {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: var(--sub);
+    font-weight: 700;
+}
+
+.arc-date {
+    font-size: 9px;
+    color: var(--sub);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Item count — a badge only when it means "and its contents" */
+.arc-group {
+    display: inline-block;
+    min-width: 18px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: rgba(52,110,168,.12);
+    color: #346EA8;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: .3px;
+}
+.arc-group-single {
+    font-size: 8.5px;
+    color: #C8C6C2;
+    font-weight: 600;
+}
+
+.arc-path {
+    font-size: 9px;
+    color: var(--sub);
+    white-space: normal;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+
+/* ═══════════════════════════════════════════════════
+   ACTIONS
+═══════════════════════════════════════════════════ */
+.arc-action-cell { text-align: center; white-space: nowrap; }
+
+.arc-action-btn {
+    width: 24px;
+    height: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    color: var(--sub);
+    font-size: 11px;
+    transition: background 0.1s, color 0.1s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.arc-action-btn:hover          { background: var(--row-hover); color: var(--text); }
+.arc-action-btn.restore:hover  { background: rgba(46,125,82,.09); color: #2E7D52; }
+
+.arc-table-empty {
+    text-align: center;
+    padding: 52px 20px;
+    color: #C8C8C8;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+
+/* ═══════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════ */
+.arc-restore-modal { text-align: center; }
+
+.arc-restore-modal .modal-footer {
+    justify-content: center;
+    margin-top: 18px;
+}
+
+.arc-muted {
+    color: var(--sub);
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.arc-note-sub {
+    font-size: 10px;
+    color: var(--sub);
+    margin: -6px 0 14px;
+    word-break: break-all;
+}

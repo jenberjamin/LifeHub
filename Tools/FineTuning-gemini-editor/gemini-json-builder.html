@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DATASET BUILDER — See You Latte</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background-color: #f2e8e2;
+            font-family: 'Century Gothic', sans-serif;
+            margin: 0; color: #333;
+            height: 100vh;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        /* TOP BAR */
+        .top-bar {
+            background: #f3e6d8; padding: 14px 30px;
+            border-bottom: 1px solid #e3cfb8;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
+        }
+        .logo {
+            font-size: 18px; font-weight: bold; color: #9c6b4f;
+            display: flex; align-items: center; gap: 10px; letter-spacing: 2px;
+        }
+        .logo .subtitle {
+            font-size: 10px; color: #b08a6c; font-weight: normal;
+            letter-spacing: 1px; text-transform: uppercase; margin-left: 4px;
+        }
+        .actions { display: flex; gap: 10px; align-items: center; }
+        .btn {
+            padding: 8px 18px; border: none; border-radius: 6px; cursor: pointer;
+            font-weight: bold; font-family: 'Century Gothic', sans-serif;
+            display: flex; align-items: center; gap: 6px; font-size: 13px;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #b8866f; color: white; }
+        .btn-primary:hover { background: #a0705a; }
+        .btn-secondary { background: #fff; color: #9c6b4f; border: 1px solid #e3cfb8; }
+        .btn-secondary:hover { background: #fdf6ef; }
+        .btn-ghost {
+            background: none; color: #a8826a; border: 1px solid #e3cfb8;
+            font-family: 'Century Gothic', sans-serif; cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+            padding: 4px 12px; font-size: 11px; border-radius: 6px; font-weight: bold;
+        }
+        .btn-ghost:hover { color: #9c6b4f; border-color: #b8866f; background: #fdf6ef; }
+
+        /* WORKSPACE */
+        .workspace { display: flex; flex: 1; overflow: hidden; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px; background: #faf2e9;
+            border-right: 1px solid #e3cfb8;
+            display: flex; flex-direction: column; flex-shrink: 0;
+        }
+        .sidebar-header {
+            padding: 14px 16px; font-weight: bold; color: #b08a6c;
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #ecdcc8;
+        }
+        .icon-btn {
+            background: none; border: none; cursor: pointer;
+            color: #cbb8ad; padding: 4px; border-radius: 5px;
+            display: flex; align-items: center; transition: all 0.15s;
+        }
+        .icon-btn:hover { color: #b8866f; background: rgba(184,134,111,0.1); }
+        .room-list { flex: 1; overflow-y: auto; padding: 8px; }
+        .room-list::-webkit-scrollbar { width: 4px; }
+        .room-list::-webkit-scrollbar-thumb { background: #e3cfb8; border-radius: 2px; }
+        .room-item {
+            padding: 9px 10px; border-radius: 7px; cursor: pointer;
+            margin-bottom: 3px; font-size: 12px;
+            display: flex; align-items: flex-start; gap: 8px;
+            transition: all 0.15s; border: 1px solid transparent; color: #a8826a;
+        }
+        .room-item:hover { background: #f3e6d8; color: #8a5a3f; }
+        .room-item.active { background: #b8866f; color: white; border-color: #b8866f; }
+        .room-name { flex: 1; letter-spacing: 0.3px; line-height: 1.4; white-space: normal; word-break: break-word; padding-top: 1px; }
+        .room-count { font-size: 10px; background: rgba(0,0,0,0.2); padding: 1px 6px; border-radius: 8px; flex-shrink: 0; margin-top: 1px; }
+
+        /* Room ctx */
+        .room-ctx-wrap { position: relative; }
+        .room-ctx-btn {
+            background: none; border: none; cursor: pointer;
+            color: inherit; opacity: 0.5; padding: 2px 4px;
+            font-size: 14px; letter-spacing: 0.5px; font-weight: bold;
+            border-radius: 3px; line-height: 1; font-family: sans-serif;
+            transition: opacity 0.15s;
+        }
+        .room-item:hover .room-ctx-btn, .room-item.active .room-ctx-btn { opacity: 0.8; }
+        .room-ctx-btn:hover { opacity: 1 !important; background: rgba(255,255,255,0.2); }
+        .room-ctx-dropdown {
+            display: none; position: fixed;
+            background: #fff; border: 1px solid #e8ddd5;
+            border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+            min-width: 160px; z-index: 9999; overflow: hidden;
+        }
+        .room-ctx-wrap.open .room-ctx-dropdown { display: block; }
+
+        /* MAIN STAGE */
+        .main-stage { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fdf8f4; }
+
+        /* SYSTEM INSTRUCTION PANEL */
+        .sys-panel { background: #fff; border-bottom: 1px solid #e8ddd5; flex-shrink: 0; }
+        .sys-panel-header {
+            padding: 11px 22px; display: flex; align-items: center;
+            justify-content: space-between; cursor: pointer; user-select: none;
+            gap: 12px;
+        }
+        .sys-panel-header:hover { background: #fdf6ef; }
+        .sys-panel-label {
+            font-size: 10px; font-weight: bold; color: #b8866f;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+        }
+        .sys-panel-preview {
+            font-size: 11px; color: #a8826a; flex: 1;
+            overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+            font-style: italic;
+        }
+        .sys-panel-body { padding: 0 22px 14px; display: none; }
+        .sys-panel-body.open { display: block; }
+        .sys-instruction-box {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid #e0d5cc; border-radius: 8px;
+            font-family: 'Century Gothic', sans-serif; font-size: 12px;
+            background: #fdf8f4; color: #333; transition: border-color 0.2s;
+            resize: vertical; min-height: 110px; line-height: 1.6;
+        }
+        .sys-instruction-box:focus { border-color: #b8866f; outline: none; background: #fff; }
+        .sys-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+        .sys-char-count { font-size: 10px; color: #cbb8ad; }
+        .sys-hint { font-size: 10px; color: #cbb8ad; font-style: italic; }
+
+        /* STATS BAR */
+        .stats-bar {
+            display: flex; gap: 16px; padding: 7px 22px;
+            background: #faf2e9; border-bottom: 1px solid #e8ddd5;
+            font-size: 11px; color: #a8826a; flex-shrink: 0; flex-wrap: wrap;
+        }
+        .stat-item { display: flex; align-items: center; gap: 4px; }
+        .stat-num { font-weight: bold; color: #b8866f; }
+
+        /* TOP ACTION BAR */
+        .entry-editor-trigger {
+            background: #fff; border-bottom: 1px solid #e8ddd5;
+            padding: 10px 22px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        /* ENTRIES AREA */
+        .entries-area { flex: 1; overflow-y: auto; padding: 16px 22px; }
+        .entries-area::-webkit-scrollbar { width: 5px; }
+        .entries-area::-webkit-scrollbar-thumb { background: #e0d5cc; border-radius: 3px; }
+
+        /* ENTRY CARD */
+        .lore-card {
+            background: #fff; border: 1px solid #ede5de; border-radius: 10px;
+            padding: 4px 15px; margin-bottom: 9px; transition: all 0.15s;
+        }
+        .lore-card:hover { border-color: #d4b8a8; box-shadow: 0 2px 8px rgba(184,134,111,0.1); }
+        .lore-card.locked { background: #fdfaf6; border-color: #e8d5c8; border-style: dashed; }
+        .lore-card-title-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 0 6px; user-select: none;
+        }
+        .card-icon-btn {
+            background: none; border: none; cursor: pointer;
+            padding: 3px 4px; border-radius: 5px;
+            display: flex; align-items: center;
+            opacity: 0.4; transition: opacity 0.15s, background 0.15s;
+        }
+        .lore-card:hover .card-icon-btn { opacity: 0.7; }
+        .card-icon-btn:hover { opacity: 1 !important; background: rgba(184,134,111,0.1); }
+        .card-icon-btn.danger:hover { background: rgba(229,57,53,0.08); color: #e53935; }
+        .card-inline-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; margin-left: auto; }
+        .lore-card-title {
+            font-size: 13px; font-weight: bold; color: #5a4438;
+            flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .card-flavor-badge {
+            font-size: 10px; padding: 1px 8px; border-radius: 10px;
+            font-weight: bold; flex-shrink: 0;
+        }
+        .card-turn-badge {
+            font-size: 10px; padding: 1px 8px; border-radius: 10px;
+            background: #e8f0ff; color: #4a6fa8; border: 1px solid #c8d8f0;
+            font-weight: bold; flex-shrink: 0;
+        }
+        .lore-card-body { padding-bottom: 12px; }
+        .card-preview { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+        .card-preview-line { font-size: 12px; color: #888; line-height: 1.5; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .speaker { font-weight: bold; margin-right: 5px; }
+        .speaker-jen { color: #b8866f; }
+        .speaker-tom { color: #4a6fa8; }
+
+        /* Move panel */
+        .move-inline-wrap { position: relative; display: flex; align-items: center; }
+        .move-inline-panel {
+            position: absolute; right: 0; top: calc(100% + 4px);
+            background: #fff; border: 1px solid #e8ddd5;
+            border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+            padding: 6px; z-index: 200; display: none;
+            flex-wrap: wrap; gap: 4px; max-width: 200px;
+        }
+
+        /* Ctx menu */
+        .ctx-menu-wrap { position: relative; display: inline-flex; }
+        .ctx-btn {
+            background: none; border: none; cursor: pointer;
+            color: #cbb8ad; padding: 3px 5px; border-radius: 5px;
+            font-size: 15px; line-height: 1; letter-spacing: 1px;
+            font-weight: bold; display: flex; align-items: center;
+            transition: all 0.15s; font-family: sans-serif;
+        }
+        .ctx-btn:hover { color: #b8866f; background: rgba(184,134,111,0.1); }
+        .ctx-dropdown {
+            display: none; position: fixed;
+            background: #fff; border: 1px solid #e8ddd5;
+            border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            min-width: 150px; z-index: 9999; overflow: hidden;
+        }
+        .ctx-menu-wrap.open .ctx-dropdown { display: block; }
+        .ctx-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 9px 14px; font-size: 12px; color: #5a4438;
+            cursor: pointer; background: none; border: none; width: 100%;
+            font-family: 'Century Gothic', sans-serif; text-align: left;
+            transition: background 0.12s;
+        }
+        .ctx-item:hover { background: #fdf6ef; }
+        .ctx-item .material-icons { font-size: 15px; color: #b8866f; }
+        .ctx-item.danger { color: #c0392b; }
+        .ctx-item.danger .material-icons { color: #c0392b; }
+        .ctx-item.danger:hover { background: #fff5f5; }
+        .ctx-sep { height: 1px; background: #f0e8e0; margin: 3px 0; }
+
+        /* INPUT */
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label {
+            font-size: 10px; font-weight: bold; color: #b8866f;
+            text-transform: uppercase; letter-spacing: 1px;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .input-box {
+            width: 100%; padding: 8px 11px;
+            border: 1px solid #e0d5cc; border-radius: 6px;
+            font-family: 'Century Gothic', sans-serif; font-size: 13px;
+            background: #fdf8f4; color: #333; transition: border-color 0.2s;
+        }
+        .input-box:focus { border-color: #b8866f; outline: none; background: #fff; }
+        textarea.input-box { resize: vertical; line-height: 1.6; }
+
+        /* FLAVOR TAGS */
+        .flavor-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .flavor-tag {
+            padding: 4px 12px; border-radius: 20px; border: 1px solid #e0d5cc;
+            font-size: 11px; font-weight: bold; cursor: pointer;
+            background: #fdf8f4; color: #a8826a; transition: all 0.15s;
+            font-family: 'Century Gothic', sans-serif;
+        }
+        .flavor-tag:hover { border-color: #b8866f; color: #b8866f; }
+        .flavor-tag.active { color: white; border-color: transparent; }
+
+        /* ENTRY MODAL */
+        .entry-modal-content {
+            background: #fff; width: 820px; max-width: 97vw; max-height: 92vh;
+            border-radius: 12px; display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden;
+        }
+        .entry-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 22px; border-bottom: 1px solid #f0e8e0; flex-shrink: 0;
+        }
+        .entry-modal-title {
+            font-size: 16px; font-weight: bold; color: #2a1f1a;
+            margin: 0; display: flex; align-items: center; gap: 8px;
+        }
+        .modal-close-btn {
+            background: none; border: none; cursor: pointer; color: #bbb;
+            padding: 6px; border-radius: 50%; display: flex; align-items: center;
+            transition: all 0.15s;
+        }
+        .modal-close-btn:hover { color: #e53935; background: rgba(229,57,53,0.08); }
+        .entry-modal-body { display: flex; flex: 1; overflow: hidden; }
+        .entry-modal-scroll {
+            padding: 18px 22px; overflow-y: auto; flex: 1;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .entry-modal-scroll::-webkit-scrollbar { width: 5px; }
+        .entry-modal-scroll::-webkit-scrollbar-thumb { background: #e0d5cc; border-radius: 3px; }
+        .entry-modal-footer {
+            display: flex; justify-content: flex-end; gap: 8px;
+            padding: 14px 22px; border-top: 1px solid #f0e8e0; flex-shrink: 0;
+        }
+
+        /* TURN SIDEBAR (replaces shift sidebar) */
+        .shift-sidebar {
+            width: 135px; flex-shrink: 0; background: #fff8f3;
+            border-right: 1px solid #e8ddd5;
+            display: flex; flex-direction: column;
+            align-items: stretch; padding: 10px 0;
+            overflow-y: auto; overflow-x: hidden;
+        }
+        .shift-sidebar::-webkit-scrollbar { width: 3px; }
+        .shift-sidebar::-webkit-scrollbar-thumb { background: #e3cfb8; border-radius: 2px; }
+        .shift-sidebar-label {
+            font-size: 9px; font-weight: bold; color: #b08a6c;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 6px; text-align: center; padding: 0 10px;
+        }
+        .shift-tab-list { display: flex; flex-direction: column; align-items: flex-start; width: 100%; gap: 3px; padding: 0 0 8px; }
+        .shift-tab {
+            position: relative; display: flex; flex-direction: column; align-items: flex-start;
+            width: calc(100% + 1px); background: #f5ede7;
+            border: 1px solid #e0cfc4; border-right: none;
+            border-radius: 6px 0 0 6px; padding: 7px 8px 7px 10px;
+            cursor: pointer; transition: all 0.15s; margin-right: -1px;
+        }
+        .shift-tab:hover { background: #fdf6ef; border-color: #c9a480; }
+        .shift-tab.active { background: #fff; border-color: #b8866f; border-right: none; box-shadow: -1px 0 6px rgba(184,134,111,0.18); z-index: 1; }
+        .shift-tab-number { font-size: 9px; color: #b8866f; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .shift-tab-title { font-size: 11px; color: #5a4438; font-weight: bold; word-break: break-word; line-height: 1.35; margin-top: 2px; }
+        .shift-tab-del {
+            position: absolute; top: 4px; right: 6px;
+            background: none; border: none; cursor: pointer; color: #e0cfc4;
+            padding: 1px; display: flex; align-items: center; border-radius: 3px;
+            font-size: 12px; transition: color 0.15s;
+        }
+        .shift-tab:hover .shift-tab-del { color: #cbb8ad; }
+        .shift-tab-del:hover { color: #e53935 !important; }
+        .shift-sidebar-empty { font-size: 10px; color: #cbb8ad; font-style: italic; text-align: center; padding: 0 10px; line-height: 1.6; }
+        .add-turn-btn {
+            margin: 6px 8px 0; padding: 5px;
+            background: none; border: 1px dashed #e0d5cc;
+            border-radius: 6px; font-size: 10px; color: #cbb8ad;
+            cursor: pointer; font-family: 'Century Gothic', sans-serif;
+            transition: all 0.15s; text-align: center; display: block; width: calc(100% - 16px);
+        }
+        .add-turn-btn:hover { border-color: #b8866f; color: #b8866f; background: #fdf6ef; }
+
+        /* TURN MODAL */
+        .shift-modal-content {
+            background: #fff; width: 580px; max-width: 95vw; max-height: 88vh;
+            border-radius: 12px; padding: 22px 24px;
+            display: flex; flex-direction: column; gap: 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow-y: auto;
+        }
+        .shift-modal-title { font-size: 15px; font-weight: bold; color: #2a1f1a; margin: 0; display: flex; align-items: center; gap: 8px; }
+        .shift-modal-sub { font-size: 12px; color: #9a7a68; margin: 0; }
+        .shift-modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px; border-top: 1px solid #f0e8e0; }
+
+        /* MODAL */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.65); align-items: center; justify-content: center; z-index: 200;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #fff; width: 82%; max-width: 860px; max-height: 88vh;
+            border-radius: 12px; padding: 22px;
+            display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-content h2 { margin: 0 0 4px; color: #2a1f1a; font-size: 18px; }
+        .modal-content .export-sub { margin: 0 0 12px; color: #888; font-size: 12px; }
+        .code-area {
+            flex: 1; background: #1e1510; color: #e8c9b0;
+            font-family: 'Courier New', monospace; font-size: 11px;
+            padding: 14px; border-radius: 8px; resize: none;
+            border: 1px solid #3d2e26; line-height: 1.6; min-height: 260px;
+        }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; align-items: center; }
+        .export-count { font-size: 11px; color: #a8826a; margin-right: auto; }
+
+        /* EMPTY STATE */
+        .empty-state { text-align: center; color: #cbb8ad; padding: 50px 20px; }
+        .empty-state .material-icons { font-size: 44px; margin-bottom: 10px; opacity: 0.35; display: block; }
+        .empty-state p { font-size: 13px; line-height: 1.7; }
+
+        /* TOAST */
+        .toast {
+            position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+            background: #2a1f1a; color: #e8c9b0; padding: 10px 20px;
+            border-radius: 30px; font-size: 13px; opacity: 0;
+            transition: opacity 0.3s; pointer-events: none; z-index: 1000;
+            border: 1px solid #4a3428;
+        }
+        .toast.show { opacity: 1; }
+
+        /* SYNC */
+        .sync-status { font-size: 11px; color: #a8826a; display: flex; align-items: center; gap: 5px; }
+        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: #4caf50; }
+        .sync-dot.offline { background: #ff9800; }
+
+        /* CONVO BLOCK (visual separator in form) */
+        .convo-divider {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 10px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 1px; color: #cbb8ad; margin: 2px 0;
+        }
+        .convo-divider::before, .convo-divider::after {
+            content: ''; flex: 1; height: 1px; background: #f0e8e0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div class="logo">
+        <span class="material-icons" style="font-size:20px; color:#b8866f;">psychology</span>
+        DATASET BUILDER
+        <span class="subtitle">— See You Latte</span>
+    </div>
+    <div class="actions">
+        <div class="sync-status">
+            <div class="sync-dot" id="syncDot"></div>
+            <span id="syncLabel">Connecting…</span>
+        </div>
+        <button class="btn btn-secondary" onclick="openExportModal()">
+            <span class="material-icons" style="font-size:16px;">download</span> Export JSONL
+        </button>
+    </div>
+</div>
+
+<div class="workspace">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <span>Chapters</span>
+            <button class="icon-btn" onclick="addRoom()" title="New Chapter" style="color:#b8866f; opacity:1;">
+                <span class="material-icons" style="font-size:18px;">add_circle</span>
+            </button>
+        </div>
+        <div class="room-list" id="roomList"></div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-stage">
+
+        <!-- STATS BAR -->
+        <div class="stats-bar" id="statsBar" style="display:none;">
+            <div class="stat-item">Chapter: <span class="stat-num" id="statChapter">—</span></div>
+            <div class="stat-item">Entries here: <span class="stat-num" id="statEntries">0</span></div>
+            <div class="stat-item">Total examples: <span class="stat-num" id="statTotal">0</span></div>
+        </div>
+
+        <!-- TOP ACTION BAR -->
+        <div class="entry-editor-trigger">
+            <button class="btn btn-primary" id="newEntryBtn" onclick="openEntryModal()" style="height:40px;">
+                <span class="material-icons" style="font-size:18px;">add</span> New Entry
+            </button>
+            <select onchange="setSortMode(this.value)" id="sortSelect"
+                style="border:1px solid #e0d5cc; border-radius:6px; padding:6px 10px;
+                font-family:'Century Gothic',sans-serif; font-size:12px;
+                background:#fdf8f4; color:#a8826a; cursor:pointer;">
+                <option value="manual">Manual order</option>
+                <option value="title-az">Title A → Z</option>
+                <option value="title-za">Title Z → A</option>
+                <option value="date-newest">Newest first</option>
+            </select>
+        </div>
+
+        <!-- ENTRIES -->
+        <div class="entries-area" id="entriesArea">
+            <div class="empty-state">
+                <span class="material-icons">psychology</span>
+                <p>Select a Chapter from the left<br>or add your first training entry above.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ENTRY EDITOR MODAL
+═══════════════════════════════════════════ -->
+<div class="modal" id="entryModal">
+    <div class="entry-modal-content">
+        <div class="entry-modal-header">
+            <p class="entry-modal-title">
+                <span class="material-icons" style="font-size:19px; color:#b8866f;">chat</span>
+                <span id="entryModalTitleText">New Entry</span>
+            </p>
+            <button class="modal-close-btn" onclick="closeEntryModal()">
+                <span class="material-icons" style="font-size:20px;">close</span>
+            </button>
+        </div>
+
+        <div class="entry-modal-body">
+
+            <!-- LEFT: turn tabs -->
+            <div class="shift-sidebar" id="shiftSidebar">
+                <div class="shift-sidebar-label">Turns</div>
+                <div id="shiftsList" class="shift-tab-list"></div>
+                <div id="shiftsEmpty" class="shift-sidebar-empty">No extra<br>turns yet</div>
+                <button class="add-turn-btn" onclick="addShift()">+ Turn</button>
+            </div>
+
+            <!-- RIGHT: form -->
+            <div class="entry-modal-scroll">
+
+                <!-- Title -->
+                <div class="input-group">
+                    <label>Title <span style="opacity:0.5;font-weight:normal;">label for this exchange</span></label>
+                    <input type="text" id="newTitle" class="input-box"
+                        placeholder="e.g. Casual greeting, She finishes her project, Late night tension…">
+                </div>
+
+                <!-- Flavor -->
+                <div class="input-group">
+                    <label>Flavor <span style="opacity:0.5;font-weight:normal;">tag this exchange</span></label>
+                    <div class="flavor-tags" id="flavorTagsContainer"></div>
+                </div>
+
+                <!-- System Instruction (per-entry) -->
+                <div class="sys-panel" style="border:1px solid #e0d5cc; border-radius:8px; background:#fdf8f4;">
+                    <div class="sys-panel-header" onclick="toggleSysPanel()" style="padding:9px 14px;">
+                        <div class="sys-panel-label">
+                            <span class="material-icons" style="font-size:14px;">settings</span>
+                            System Instruction
+                        </div>
+                        <div class="sys-panel-preview" id="sysPanelPreview">Click to paste Tom's identity + register prompt…</div>
+                        <span class="material-icons" style="font-size:18px; color:#cbb8ad; flex-shrink:0;" id="sysPanelChevron">expand_more</span>
+                    </div>
+                    <div class="sys-panel-body" id="sysPanelBody" style="padding:0 14px 12px;">
+                        <textarea class="sys-instruction-box" id="sysInstructionText"
+                            placeholder="Paste Tom's system prompt for THIS entry — his identity plus this exchange's register (e.g. CASUAL, IDENTITY/DIALOGUE, IDENTITY/IN-SCENE)."
+                            oninput="onSysChange()"></textarea>
+                        <div class="sys-meta">
+                            <div class="sys-hint">Unique to this entry — carried into every turn within it on export.</div>
+                            <div class="sys-char-count" id="sysCharCount">0 chars</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="convo-divider">Turn 1</div>
+
+                <!-- Jen -->
+                <div class="input-group">
+                    <label style="color:#b8866f;">
+                        <span class="material-icons" style="font-size:13px;">person</span>
+                        Jen says
+                    </label>
+                    <textarea id="newUser" class="input-box" style="min-height:90px;"
+                        placeholder="What Jen says…"></textarea>
+                </div>
+
+                <!-- Tom -->
+                <div class="input-group">
+                    <label style="color:#4a6fa8;">
+                        <span class="material-icons" style="font-size:13px;">face</span>
+                        Tom responds
+                    </label>
+                    <textarea id="newModel" class="input-box" style="min-height:110px;"
+                        placeholder="Tom's response — in his voice, his words…"></textarea>
+                </div>
+
+                <div style="font-size:11px; color:#cbb8ad; text-align:center; padding-top:2px;">
+                    Need more back-and-forth? Add a Turn in the left sidebar.
+                </div>
+
+            </div>
+        </div>
+
+        <div class="entry-modal-footer">
+            <button class="btn btn-secondary" onclick="closeEntryModal()">Cancel</button>
+            <button class="btn btn-primary" id="addBtn" onclick="addEntry()">
+                <span class="material-icons" style="font-size:16px;">add</span> Add Entry
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TURN EDITOR MODAL
+═══════════════════════════════════════════ -->
+<div class="modal" id="shiftModal">
+    <div class="shift-modal-content">
+        <p class="shift-modal-title">
+            <span class="material-icons" style="font-size:18px; color:#4a6fa8;">add_comment</span>
+            <span id="shiftModalTitle">Add Turn</span>
+        </p>
+        <p class="shift-modal-sub">A follow-up exchange in the same training example. Teaches Tom how to sustain a conversation across multiple messages.</p>
+
+        <div class="input-group">
+            <label>Turn Label <span style="opacity:0.5;font-weight:normal;">for your reference only</span></label>
+            <input type="text" id="sm_title" class="input-box" placeholder="e.g. She pushes back, He softens, The almost-moment…">
+        </div>
+
+        <div class="convo-divider" style="margin:4px 0;">Follow-up</div>
+
+        <div class="input-group">
+            <label style="color:#b8866f;">
+                <span class="material-icons" style="font-size:13px;">person</span>
+                Jen follows up
+            </label>
+            <textarea id="sm_user" class="input-box" style="min-height:80px;" placeholder="Jen's follow-up message…"></textarea>
+        </div>
+        <div class="input-group">
+            <label style="color:#4a6fa8;">
+                <span class="material-icons" style="font-size:13px;">face</span>
+                Tom responds
+            </label>
+            <textarea id="sm_model" class="input-box" style="min-height:90px;" placeholder="Tom's follow-up response…"></textarea>
+        </div>
+
+        <div class="shift-modal-footer">
+            <button class="btn btn-secondary" onclick="closeShiftModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveShiftFromModal()">
+                <span class="material-icons" style="font-size:16px;">check</span> Save Turn
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal" id="exportModal">
+    <div class="modal-content">
+        <h2>Export JSONL</h2>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <p class="export-sub" id="exportHint" style="margin:0;">Ready to upload to Google AI Studio.</p>
+            <div style="display:flex; gap:6px; flex-shrink:0;">
+                <button class="btn-ghost" id="modeFullBtn" onclick="setExportMode('full')">All Chapters</button>
+                <button class="btn-ghost" id="modeChapterBtn" onclick="setExportMode('chapter')">This Chapter</button>
+            </div>
+        </div>
+        <textarea class="code-area" id="exportCode" readonly spellcheck="false"></textarea>
+        <div class="modal-footer">
+            <span class="export-count" id="exportCount"></span>
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            <button class="btn btn-secondary" onclick="downloadJSONL()">
+                <span class="material-icons" style="font-size:16px;">save_alt</span> Download .jsonl
+            </button>
+            <button class="btn btn-primary" id="copyBtn" onclick="copyExport()">
+                <span class="material-icons" style="font-size:16px;">content_copy</span> Copy
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCTc5nvEKAhSytX_TSAyTQUv-yQJmOk96I",
+    authDomain: "wordbook-8087b.firebaseapp.com",
+    databaseURL: "https://wordbook-8087b-default-rtdb.firebaseio.com",
+    projectId: "wordbook-8087b",
+    storageBucket: "wordbook-8087b.firebasestorage.app",
+    messagingSenderId: "746574723269",
+    appId: "1:746574723269:web:90b0a2cd1f563ed923d8ac"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const USER_ID = "Jen_Master_User";
+const DOC_PATH = `artifacts/dataset_builder/users/${USER_ID}/datasets/tom_v1`;
+const LOCAL_KEY = "jen_dataset_builder_v1";
+const SORT_PREF_KEY = "jen_dataset_builder_sort_v1";
+
+// ── FLAVOR CONFIG ──────────────────────────────
+const FLAVORS = [
+    { id: 'casual',     label: 'casual',     color: '#6b8f71', bg: '#edf5ee' },
+    { id: 'playful',    label: 'playful',     color: '#b8866f', bg: '#fdf0e8' },
+    { id: 'flirty',     label: 'flirty',      color: '#b05080', bg: '#fce8f3' },
+    { id: 'soft',       label: 'soft',        color: '#7a6fa8', bg: '#f0eeff' },
+    { id: 'stressed',   label: 'stressed',    color: '#a06040', bg: '#f5ede7' },
+    { id: 'serious',    label: 'serious',     color: '#4a6fa8', bg: '#e8f0ff' },
+    { id: 'deflecting', label: 'deflecting',  color: '#8a6a58', bg: '#f5ede7' },
+    { id: 'identity',   label: 'identity',    color: '#2e7d32', bg: '#e8f5e9' },
+    { id: 'roleplay',   label: 'roleplay',    color: '#7b1fa2', bg: '#f3e5f5' },
+];
+
+// ── STATE ──────────────────────────────────────
+let loreData = { chapters: {} };
+let currentRoom = null;
+let editingIndex = null;
+let pendingShifts = [];
+let pendingSysInstruction = '';
+let currentFlavor = null;
+let currentShiftEditIndex = null;
+let sortPrefs = {};
+let exportMode = 'full';
+let sysPanelOpen = false;
+
+// ── SORT PREFS ─────────────────────────────────
+function loadSortPrefs() {
+    try { const s = localStorage.getItem(SORT_PREF_KEY); sortPrefs = s ? JSON.parse(s) : {}; }
+    catch(e) { sortPrefs = {}; }
+}
+function saveSortPrefs() {
+    try { localStorage.setItem(SORT_PREF_KEY, JSON.stringify(sortPrefs)); } catch(e) {}
+}
+function getSortMode() { return (currentRoom && sortPrefs[currentRoom]) || 'manual'; }
+window.setSortMode = function(mode) {
+    if (!currentRoom) return;
+    sortPrefs[currentRoom] = mode;
+    saveSortPrefs();
+    renderEntries();
+};
+function getSortedEntries() {
+    const entries = ((loreData.chapters || {})[currentRoom]) || [];
+    const indexed = entries.map((e, i) => ({ entry: e, originalIndex: i }));
+    const titleOf = e => (e.entry.title || 'Untitled').toLowerCase();
+    switch(getSortMode()) {
+        case 'title-az':   return indexed.sort((a,b) => titleOf(a).localeCompare(titleOf(b)));
+        case 'title-za':   return indexed.sort((a,b) => titleOf(b).localeCompare(titleOf(a)));
+        case 'date-newest':return indexed.sort((a,b) => (b.entry._createdAt||0)-(a.entry._createdAt||0));
+        default: return indexed;
+    }
+}
+
+// ── FIREBASE ───────────────────────────────────
+async function saveToCloud() {
+    try {
+        await setDoc(doc(db, DOC_PATH), { data: JSON.stringify(loreData), lastUpdated: new Date() });
+        setSyncStatus(true);
+    } catch(e) { console.error('Cloud save failed:', e); setSyncStatus(false); }
+}
+async function loadFromCloud() {
+    try {
+        const snap = await getDoc(doc(db, DOC_PATH));
+        if (snap.exists() && snap.data().data) {
+            const parsed = JSON.parse(snap.data().data);
+            loreData = parsed.chapters ? parsed : { chapters: parsed };
+            setSyncStatus(true); return;
+        }
+    } catch(e) { console.error('Cloud load failed:', e); setSyncStatus(false); }
+    try {
+        const saved = localStorage.getItem(LOCAL_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            loreData = parsed.chapters ? parsed : { chapters: parsed };
+        }
+    } catch(e) { loreData = { chapters: {} }; }
+}
+function saveLocal() { localStorage.setItem(LOCAL_KEY, JSON.stringify(loreData)); }
+async function save() { saveLocal(); await saveToCloud(); updateStats(); }
+function setSyncStatus(ok) {
+    document.getElementById('syncDot').className = 'sync-dot' + (ok ? '' : ' offline');
+    document.getElementById('syncLabel').textContent = ok ? 'Synced' : 'Local only';
+}
+
+// ── INIT ───────────────────────────────────────
+(async () => {
+    loadSortPrefs();
+    buildFlavorTags();
+    await loadFromCloud();
+    renderRooms();
+    const chapters = Object.keys(loreData.chapters || {});
+    if (chapters.length) selectRoom(chapters[0]);
+})();
+
+// ── FLAVOR TAGS ────────────────────────────────
+function buildFlavorTags() {
+    const container = document.getElementById('flavorTagsContainer');
+    container.innerHTML = '';
+    FLAVORS.forEach(f => {
+        const btn = document.createElement('button');
+        btn.className = 'flavor-tag';
+        btn.dataset.fid = f.id;
+        btn.textContent = f.label;
+        btn.onclick = () => toggleFlavor(f.id);
+        container.appendChild(btn);
+    });
+}
+function toggleFlavor(id) {
+    currentFlavor = (currentFlavor === id) ? null : id;
+    syncFlavorUI();
+}
+function syncFlavorUI() {
+    document.querySelectorAll('.flavor-tag').forEach(btn => {
+        const f = FLAVORS.find(x => x.id === btn.dataset.fid);
+        const active = btn.dataset.fid === currentFlavor;
+        btn.classList.toggle('active', active);
+        btn.style.background = active ? f.color : '';
+        btn.style.borderColor = active ? f.color : '';
+        btn.style.color = active ? '#fff' : '';
+    });
+}
+
+// ── SYSTEM INSTRUCTION (per-entry) ─────────────
+window.toggleSysPanel = function() {
+    sysPanelOpen = !sysPanelOpen;
+    document.getElementById('sysPanelBody').classList.toggle('open', sysPanelOpen);
+    document.getElementById('sysPanelChevron').textContent = sysPanelOpen ? 'expand_less' : 'expand_more';
+};
+window.onSysChange = function() {
+    pendingSysInstruction = document.getElementById('sysInstructionText').value;
+    updateSysPreview();
+    updateSysCharCount();
+};
+function updateSysPreview() {
+    const t = pendingSysInstruction || '';
+    const el = document.getElementById('sysPanelPreview');
+    el.textContent = t.length > 0 ? t.substring(0, 120) + (t.length > 120 ? '…' : '') : 'Click to paste Tom\'s identity + register prompt…';
+    el.style.opacity = t.length > 0 ? '1' : '0.6';
+}
+function updateSysCharCount() {
+    const c = (pendingSysInstruction || '').length;
+    document.getElementById('sysCharCount').textContent = c.toLocaleString() + ' chars';
+}
+
+// ── ROOMS ──────────────────────────────────────
+window.addRoom = function() {
+    const name = prompt("Chapter name (e.g. GREETINGS, FLIRTY, SOFT MOMENTS, IDENTITY):");
+    if (!name || !name.trim()) return;
+    const key = name.trim().toUpperCase();
+    if (!loreData.chapters) loreData.chapters = {};
+    if (loreData.chapters[key]) { showToast("⚠️ Chapter already exists"); return; }
+    loreData.chapters[key] = [];
+    save(); renderRooms(); selectRoom(key);
+};
+
+function renderRooms() {
+    const list = document.getElementById('roomList');
+    list.innerHTML = '';
+    const chapters = loreData.chapters || {};
+    Object.keys(chapters).forEach(name => {
+        const count = (chapters[name] || []).length;
+        const safeId = name.replace(/[^a-z0-9]/gi, '_');
+        const div = document.createElement('div');
+        div.className = 'room-item' + (name === currentRoom ? ' active' : '');
+        div.innerHTML = `
+            <span class="material-icons" style="font-size:15px;flex-shrink:0;margin-top:1px;">folder</span>
+            <span class="room-name">${name}</span>
+            <span class="room-count">${count}</span>
+            <div class="room-ctx-wrap">
+                <button class="room-ctx-btn" onclick="toggleRoomCtx(event,'${name}')">···</button>
+                <div class="room-ctx-dropdown" id="rctx_${safeId}">
+                    <button class="ctx-item" onclick="renameRoom('${name}')">
+                        <span class="material-icons">edit</span> Rename
+                    </button>
+                    <div class="ctx-sep"></div>
+                    <button class="ctx-item danger" onclick="deleteRoom('${name}')">
+                        <span class="material-icons">delete</span> Delete Chapter
+                    </button>
+                </div>
+            </div>`;
+        div.addEventListener('click', e => {
+            if (e.target.closest('.room-ctx-wrap')) return;
+            selectRoom(name);
+        });
+        list.appendChild(div);
+    });
+}
+
+window.toggleRoomCtx = function(e, name) {
+    e.stopPropagation();
+    const safeId = name.replace(/[^a-z0-9]/gi, '_');
+    const wrap = document.getElementById('rctx_' + safeId)?.parentElement;
+    if (!wrap) return;
+    const isOpen = wrap.classList.contains('open');
+    document.querySelectorAll('.room-ctx-wrap.open').forEach(w => w.classList.remove('open'));
+    if (!isOpen) {
+        wrap.classList.add('open');
+        const dd = wrap.querySelector('.room-ctx-dropdown');
+        const r = e.currentTarget.getBoundingClientRect();
+        dd.style.top = (r.bottom + 4) + 'px';
+        dd.style.left = r.left + 'px';
+    }
+};
+window.renameRoom = function(oldName) {
+    closeAllCtx();
+    const n = prompt("Rename chapter:", oldName);
+    if (!n || !n.trim() || n.trim().toUpperCase() === oldName) return;
+    const key = n.trim().toUpperCase();
+    if (loreData.chapters[key]) { showToast("⚠️ Name taken"); return; }
+    const entries = loreData.chapters[oldName];
+    delete loreData.chapters[oldName];
+    loreData.chapters[key] = entries;
+    if (currentRoom === oldName) currentRoom = key;
+    save(); renderRooms(); renderEntries();
+};
+window.deleteRoom = function(name) {
+    closeAllCtx();
+    if (!confirm(`Delete chapter "${name}" and all its entries?`)) return;
+    delete loreData.chapters[name];
+    if (currentRoom === name) currentRoom = null;
+    save(); renderRooms(); renderEntries();
+};
+
+function selectRoom(name) {
+    currentRoom = name;
+    renderRooms();
+    renderEntries();
+    document.getElementById('statsBar').style.display = 'flex';
+    document.getElementById('statChapter').textContent = name;
+    const sel = document.getElementById('sortSelect');
+    if (sel) sel.value = getSortMode();
+    updateStats();
+}
+
+function updateStats() {
+    const chapters = loreData.chapters || {};
+    let total = 0;
+    Object.values(chapters).forEach(ch => total += (ch || []).length);
+    const here = currentRoom ? (chapters[currentRoom] || []).length : 0;
+    document.getElementById('statEntries').textContent = here;
+    document.getElementById('statTotal').textContent = total;
+}
+
+// ── RENDER ENTRIES ─────────────────────────────
+function renderEntries() {
+    const area = document.getElementById('entriesArea');
+    if (!currentRoom || !loreData.chapters?.[currentRoom]) {
+        area.innerHTML = `<div class="empty-state">
+            <span class="material-icons">psychology</span>
+            <p>Select a Chapter from the left<br>or add your first training entry above.</p>
+        </div>`; return;
+    }
+    const sorted = getSortedEntries();
+    if (!sorted.length) {
+        area.innerHTML = `<div class="empty-state">
+            <span class="material-icons">chat_bubble_outline</span>
+            <p>No entries in this chapter yet.<br>Click <b>New Entry</b> to start writing.</p>
+        </div>`; return;
+    }
+    area.innerHTML = '';
+    sorted.forEach(({ entry, originalIndex }) => area.appendChild(buildCard(entry, originalIndex)));
+}
+
+function buildCard(entry, idx) {
+    const card = document.createElement('div');
+    card.className = 'lore-card' + (entry.locked ? ' locked' : '');
+
+    const title = entry.title || 'Untitled Entry';
+    const fObj = entry.flavor ? FLAVORS.find(f => f.id === entry.flavor) : null;
+    const turnCount = (entry.Shifts || []).length;
+    const userPreview = (entry.user || '').replace(/\n/g,' ').substring(0, 90);
+    const modelPreview = (entry.model || '').replace(/\n/g,' ').substring(0, 90);
+
+    const flavorBadge = fObj
+        ? `<span class="card-flavor-badge" style="background:${fObj.bg};color:${fObj.color};border:1px solid ${fObj.color}40;">${fObj.label}</span>`
+        : '';
+    const turnBadge = turnCount > 0
+        ? `<span class="card-turn-badge">+${turnCount} turn${turnCount>1?'s':''}</span>`
+        : '';
+    const sysBadge = (entry.systemInstruction && entry.systemInstruction.trim())
+        ? `<span class="card-turn-badge" style="background:#e8f5e9;color:#2e7d32;border-color:#c8e6c9;" title="Has its own system instruction">
+             <span class="material-icons" style="font-size:11px;vertical-align:-2px;">settings</span>
+           </span>`
+        : '';
+
+    card.innerHTML = `
+        <div class="lore-card-title-row">
+            ${flavorBadge}
+            <span class="lore-card-title">${title}</span>
+            ${turnBadge}
+            ${sysBadge}
+            ${entry.locked ? '<span class="material-icons" style="font-size:14px;color:#cbb8ad;flex-shrink:0;">lock</span>' : ''}
+            <div class="card-inline-actions">
+                <button class="card-icon-btn" onclick="duplicateEntry(${idx})" title="Duplicate">
+                    <span class="material-icons" style="font-size:17px;color:#b8866f;">content_copy</span>
+                </button>
+                <div class="move-inline-wrap">
+                    <button class="card-icon-btn" onclick="toggleMovePanel(event,${idx})" title="Move to chapter">
+                        <span class="material-icons" style="font-size:17px;color:#b8866f;">drive_file_move</span>
+                    </button>
+                    <div class="move-inline-panel" id="movePanel_${idx}"></div>
+                </div>
+                <button class="card-icon-btn" onclick="toggleLock(${idx})" title="${entry.locked?'Unlock':'Lock'}">
+                    <span class="material-icons" style="font-size:17px;color:#b8866f;">${entry.locked?'lock':'lock_open'}</span>
+                </button>
+                <button class="card-icon-btn" onclick="openEntryModal(${idx})" title="Edit">
+                    <span class="material-icons" style="font-size:17px;color:#b8866f;">edit</span>
+                </button>
+                <button class="card-icon-btn danger" onclick="deleteEntry(${idx})" title="Delete">
+                    <span class="material-icons" style="font-size:17px;color:#e57373;">delete_outline</span>
+                </button>
+            </div>
+        </div>
+        <div class="lore-card-body">
+            <div class="card-preview">
+                ${userPreview ? `<div class="card-preview-line"><span class="speaker speaker-jen">Jen:</span>${userPreview}${(entry.user||'').length>90?'…':''}</div>` : ''}
+                ${modelPreview ? `<div class="card-preview-line"><span class="speaker speaker-tom">Tom:</span>${modelPreview}${(entry.model||'').length>90?'…':''}</div>` : ''}
+            </div>
+        </div>`;
+    return card;
+}
+
+// ── ENTRY MODAL ────────────────────────────────
+window.openEntryModal = function(idx) {
+    editingIndex = (idx !== undefined) ? idx : null;
+    pendingShifts = [];
+    currentFlavor = null;
+
+    const entries = (loreData.chapters?.[currentRoom]) || [];
+    const entry = editingIndex !== null ? entries[editingIndex] : null;
+
+    document.getElementById('newTitle').value = entry?.title || '';
+    document.getElementById('newUser').value = entry?.user || '';
+    document.getElementById('newModel').value = entry?.model || '';
+
+    pendingSysInstruction = entry?.systemInstruction || '';
+    document.getElementById('sysInstructionText').value = pendingSysInstruction;
+    updateSysPreview();
+    updateSysCharCount();
+    sysPanelOpen = false;
+    document.getElementById('sysPanelBody').classList.remove('open');
+    document.getElementById('sysPanelChevron').textContent = 'expand_more';
+
+    currentFlavor = entry?.flavor || null;
+    syncFlavorUI();
+
+    (entry?.Shifts || []).forEach(s => pendingShifts.push({ ...s }));
+
+    document.getElementById('entryModalTitleText').textContent = editingIndex !== null ? 'Edit Entry' : 'New Entry';
+    document.getElementById('addBtn').innerHTML = editingIndex !== null
+        ? '<span class="material-icons" style="font-size:16px;">check</span> Save Changes'
+        : '<span class="material-icons" style="font-size:16px;">add</span> Add Entry';
+
+    renderShiftTabs();
+    document.getElementById('entryModal').classList.add('active');
+    setTimeout(() => document.getElementById('newTitle').focus(), 100);
+};
+
+window.closeEntryModal = function() {
+    document.getElementById('entryModal').classList.remove('active');
+    editingIndex = null;
+};
+
+window.addEntry = function() {
+    if (!currentRoom) { showToast("⚠️ Select a chapter first"); return; }
+    const user = document.getElementById('newUser').value.trim();
+    const model = document.getElementById('newModel').value.trim();
+    if (!user) { showToast("⚠️ Jen's message is required"); return; }
+    if (!model) { showToast("⚠️ Tom's response is required"); return; }
+
+    const entry = {
+        title: document.getElementById('newTitle').value.trim(),
+        flavor: currentFlavor || null,
+        systemInstruction: pendingSysInstruction.trim(),
+        user, model,
+        Shifts: pendingShifts.map(s => ({ ...s })),
+        locked: false,
+        _createdAt: Date.now()
+    };
+
+    if (!loreData.chapters) loreData.chapters = {};
+    if (!loreData.chapters[currentRoom]) loreData.chapters[currentRoom] = [];
+
+    if (editingIndex !== null) {
+        const prev = loreData.chapters[currentRoom][editingIndex];
+        entry.locked = prev?.locked || false;
+        entry._createdAt = prev?._createdAt || Date.now();
+        loreData.chapters[currentRoom][editingIndex] = entry;
+        showToast("✓ Entry updated");
+    } else {
+        loreData.chapters[currentRoom].push(entry);
+        showToast("✓ Entry added");
+    }
+
+    save(); renderEntries(); renderRooms(); closeEntryModal();
+};
+
+// ── SHIFT / TURN TABS ──────────────────────────
+function renderShiftTabs() {
+    const list = document.getElementById('shiftsList');
+    const empty = document.getElementById('shiftsEmpty');
+    list.innerHTML = '';
+
+    if (!pendingShifts.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+
+    pendingShifts.forEach((sh, i) => {
+        const tab = document.createElement('div');
+        tab.className = 'shift-tab';
+        tab.innerHTML = `
+            <div class="shift-tab-number">Turn ${i+2}</div>
+            <div class="shift-tab-title">${sh.title || 'Untitled Turn'}</div>
+            <button class="shift-tab-del" onclick="deleteShift(event,${i})" title="Delete turn">
+                <span class="material-icons" style="font-size:13px;">close</span>
+            </button>`;
+        tab.addEventListener('click', e => { if (!e.target.closest('.shift-tab-del')) editShift(i); });
+        list.appendChild(tab);
+    });
+}
+
+window.addShift = function() {
+    currentShiftEditIndex = null;
+    document.getElementById('sm_title').value = '';
+    document.getElementById('sm_user').value = '';
+    document.getElementById('sm_model').value = '';
+    document.getElementById('shiftModalTitle').textContent = 'Add Turn';
+    document.getElementById('shiftModal').classList.add('active');
+};
+
+function editShift(i) {
+    currentShiftEditIndex = i;
+    const sh = pendingShifts[i];
+    document.getElementById('sm_title').value = sh.title || '';
+    document.getElementById('sm_user').value = sh.user || '';
+    document.getElementById('sm_model').value = sh.model || '';
+    document.getElementById('shiftModalTitle').textContent = `Edit Turn ${i+2}`;
+    document.getElementById('shiftModal').classList.add('active');
+}
+
+window.deleteShift = function(e, i) {
+    e.stopPropagation();
+    pendingShifts.splice(i, 1);
+    renderShiftTabs();
+};
+
+window.closeShiftModal = function() { document.getElementById('shiftModal').classList.remove('active'); };
+
+window.saveShiftFromModal = function() {
+    const user = document.getElementById('sm_user').value.trim();
+    const model = document.getElementById('sm_model').value.trim();
+    if (!user || !model) { showToast("⚠️ Both turn fields are required"); return; }
+    const sh = {
+        title: document.getElementById('sm_title').value.trim(),
+        user, model
+    };
+    if (currentShiftEditIndex !== null) pendingShifts[currentShiftEditIndex] = sh;
+    else pendingShifts.push(sh);
+    renderShiftTabs();
+    closeShiftModal();
+};
+
+// ── CARD ACTIONS ───────────────────────────────
+window.deleteEntry = function(idx) {
+    if (!currentRoom) return;
+    if ((loreData.chapters[currentRoom]?.[idx])?.locked) { showToast("🔒 Unlock first"); return; }
+    if (!confirm("Delete this training entry?")) return;
+    loreData.chapters[currentRoom].splice(idx, 1);
+    save(); renderEntries(); renderRooms();
+};
+
+window.duplicateEntry = function(idx) {
+    if (!currentRoom) return;
+    const entry = JSON.parse(JSON.stringify(loreData.chapters[currentRoom][idx]));
+    entry.locked = false;
+    entry._createdAt = Date.now();
+    entry.title = (entry.title ? entry.title + ' (copy)' : 'Copy');
+    loreData.chapters[currentRoom].splice(idx + 1, 0, entry);
+    save(); renderEntries(); showToast("✓ Duplicated");
+};
+
+window.toggleLock = function(idx) {
+    if (!currentRoom) return;
+    loreData.chapters[currentRoom][idx].locked = !loreData.chapters[currentRoom][idx].locked;
+    save(); renderEntries();
+};
+
+window.toggleMovePanel = function(e, idx) {
+    e.stopPropagation();
+    const panel = document.getElementById('movePanel_' + idx);
+    if (!panel) return;
+    const isOpen = panel.style.display === 'flex';
+    document.querySelectorAll('[id^="movePanel_"]').forEach(p => p.style.display = 'none');
+    if (isOpen) return;
+    const chapters = Object.keys(loreData.chapters || {}).filter(c => c !== currentRoom);
+    if (!chapters.length) { showToast("No other chapters to move to"); return; }
+    panel.innerHTML = chapters.map(c =>
+        `<button onclick="moveEntry(${idx},'${c}')" class="btn-ghost" style="font-size:11px;white-space:nowrap;">${c}</button>`
+    ).join('');
+    panel.style.display = 'flex';
+};
+
+window.moveEntry = function(idx, target) {
+    if (!currentRoom) return;
+    const entry = loreData.chapters[currentRoom].splice(idx, 1)[0];
+    if (!loreData.chapters[target]) loreData.chapters[target] = [];
+    loreData.chapters[target].push(entry);
+    save(); renderEntries(); renderRooms();
+    showToast(`✓ Moved to ${target}`);
+};
+
+// ── EXPORT / JSONL ─────────────────────────────
+function buildJSONL(chaptersToInclude) {
+    const lines = [];
+
+    chaptersToInclude.forEach(chName => {
+        const entries = (loreData.chapters?.[chName]) || [];
+        entries.forEach(entry => {
+            if (!entry.user || !entry.model) return;
+
+            const contents = [
+                { role: "user",  parts: [{ text: entry.user  }] },
+                { role: "model", parts: [{ text: entry.model }] }
+            ];
+
+            (entry.Shifts || []).forEach(sh => {
+                if (sh.user && sh.model) {
+                    contents.push({ role: "user",  parts: [{ text: sh.user  }] });
+                    contents.push({ role: "model", parts: [{ text: sh.model }] });
+                }
+            });
+
+            const sys = (entry.systemInstruction || '').trim();
+            const obj = {};
+            if (sys) obj.systemInstruction = { role: "system", parts: [{ text: sys }] };
+            obj.contents = contents;
+
+            lines.push(JSON.stringify(obj));
+        });
+    });
+
+    return lines.join('\n');
+}
+
+window.openExportModal = function() {
+    setExportMode(exportMode);
+    document.getElementById('exportModal').classList.add('active');
+};
+window.closeModal = function() { document.getElementById('exportModal').classList.remove('active'); };
+
+window.setExportMode = function(mode) {
+    if (mode === 'chapter' && !currentRoom) { showToast("⚠️ Select a chapter first"); return; }
+    exportMode = mode;
+    const chs = mode === 'chapter' ? [currentRoom] : Object.keys(loreData.chapters || {});
+    const jsonl = buildJSONL(chs);
+    document.getElementById('exportCode').value = jsonl;
+
+    const lineCount = jsonl ? jsonl.split('\n').filter(l => l.trim()).length : 0;
+    document.getElementById('exportCount').textContent = `${lineCount} training example${lineCount !== 1 ? 's' : ''}`;
+    document.getElementById('exportHint').textContent = mode === 'chapter'
+        ? `Chapter: ${currentRoom}`
+        : `All ${chs.length} chapter${chs.length !== 1 ? 's' : ''}`;
+
+    ['modeFullBtn','modeChapterBtn'].forEach(id => {
+        const btn = document.getElementById(id);
+        const active = (id === 'modeFullBtn' && mode === 'full') || (id === 'modeChapterBtn' && mode === 'chapter');
+        btn.style.background    = active ? '#b8866f' : 'transparent';
+        btn.style.color         = active ? '#fff'    : '#a8826a';
+        btn.style.borderColor   = active ? '#b8866f' : '#e3cfb8';
+    });
+};
+
+window.copyExport = function() {
+    const ta = document.getElementById('exportCode'); ta.select(); document.execCommand('copy');
+    const btn = document.getElementById('copyBtn');
+    btn.innerHTML = '<span class="material-icons" style="font-size:16px;">check</span> Copied!';
+    setTimeout(() => { btn.innerHTML = '<span class="material-icons" style="font-size:16px;">content_copy</span> Copy'; }, 1600);
+};
+
+window.downloadJSONL = function() {
+    const text = document.getElementById('exportCode').value;
+    if (!text.trim()) { showToast("⚠️ Nothing to export yet"); return; }
+    const name = exportMode === 'chapter'
+        ? `tom_${(currentRoom||'chapter').toLowerCase().replace(/\s+/g,'_')}.jsonl`
+        : 'tom_training_data.jsonl';
+    const blob = new Blob([text], { type: 'application/jsonl' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    showToast("✓ Downloading " + name);
+};
+
+// ── UTILS ──────────────────────────────────────
+function closeAllCtx() {
+    document.querySelectorAll('.ctx-menu-wrap.open, .room-ctx-wrap.open').forEach(w => w.classList.remove('open'));
+}
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('.ctx-menu-wrap') && !e.target.closest('.room-ctx-wrap')) closeAllCtx();
+    if (!e.target.closest('.move-inline-wrap'))
+        document.querySelectorAll('[id^="movePanel_"]').forEach(p => p.style.display = 'none');
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeEntryModal(); closeShiftModal(); closeModal();
+    }
+});
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+window.showToast = showToast;
+
+</script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+ /* --- CORE VARIABLES --- */
+        :root {
+            --font-main: 'Red Hat Display', sans-serif;
+            --font-fancy: 'Cinzel', serif; 
+            --color-text-muted: #c2baad;
+            --color-text-dark: #2a2520; /* Darkened for better contrast */
+            --bg-image: url('files/LifeHub_BG.webp');
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 35%; 
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+            padding-left: 80px; 
+            background: linear-gradient(90deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 100%);
+        }
+
+        .logo {
+            position: absolute;
+            top: 30px; left: 80px; width: 160px; z-index: 12;
+        }
+
+        .nav-menu {
+            display: flex; flex-direction: column; gap: 45px; margin-top: 60px; 
+        }
+
+        .nav-item {
+            color: var(--color-text-muted);
+            text-decoration: none;
+            font-size: 13px; font-weight: 500;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            display: flex; align-items: center; gap: 40px;
+            transition: color 0.3s ease, transform 0.3s ease;
+            cursor: pointer; 
+        }
+
+        .nav-item:hover { color: #ffffff; transform: translateX(5px); }
+        .nav-item.active { color: #fff; }
+
+        .arrow { font-size: 14px; opacity: 0.7; }
+
+        .add-btn {
+            position: absolute; bottom: 50px; left: 50px;
+            color: var(--color-text-muted); font-size: 24px; font-weight: 300;
+            cursor: pointer; transition: transform 0.3s ease; z-index: 12;
+        }
+        .add-btn:hover { transform: rotate(90deg) scale(1.2); color: white; }
+
+        /* --- THE GALLERY STAGE --- */
+        .gallery-stage {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 65%; 
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding-left: 0px; 
+            z-index: 5;
+        }
+
+        .gallery-container {
+            display: flex;
+            gap: 25px; 
+            height: 60vh; 
+        }
+
+        /* --- THE GLASS PILLARS (UPDATED FOR VISIBILITY) --- */
+        .hub-pillar {
+            position: relative;
+            width: 130px; 
+            height: 100%;
+            
+            /* UPDATED: Stronger "Milky" Background */
+            background: linear-gradient(180deg, rgba(240, 240, 240, 0.5) 0%, rgba(220, 220, 220, 0.3) 100%);
+            
+            /* UPDATED: Heavier Blur to wash out background noise */
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            
+            /* Definition */
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 100px; 
+            
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center;
+            
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            overflow: hidden;
+            
+            /* Stronger shadow to lift it off the wall */
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        /* Hover Interaction */
+        .hub-pillar:hover {
+            width: 260px; /* Expands even wider for better reading */
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(245, 245, 245, 0.6) 100%);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+            border-color: #fff;
+            transform: translateY(-5px);
+        }
+
+        /* Inner Content */
+        .hub-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 15px;
+            width: 100%;
+            padding: 0 10px;
+            z-index: 2;
+        }
+
+        /* Typography Fixes */
+        .hub-title {
+            font-family: var(--font-fancy); 
+            font-size: 19px; 
+            font-weight: 700; /* BOLDER weight */
+            color: var(--color-text-dark); /* Darker ink */
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            line-height: 1.4;
+            
+            /* Text Shadow to help it pop against any remaining transparency */
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            
+            transition: 0.3s;
+        }
+
+        .hub-pillar:hover .hub-title {
+            transform: scale(1.05);
+        }
+
+        .hub-index {
+            position: absolute;
+            top: 30px;
+            font-family: var(--font-fancy);
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(42, 37, 32, 0.6); /* Darker index */
+            border-bottom: 1px solid rgba(42, 37, 32, 0.3);
+            padding-bottom: 5px;
+        }
+
+        .hub-icon {
+            font-size: 30px;
+            color: #2a2520; /* Solid dark color */
+            margin-bottom: 10px;
+            opacity: 0.8;
+            transition: 0.3s;
+        }
+        
+        .hub-pillar:hover .hub-icon {
+            opacity: 1;
+            transform: translateY(-5px);
+        }

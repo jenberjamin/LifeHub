@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — Hydration entries</title>
+<style>
+    body {
+        background: #f2e8e2; font-family: 'Century Gothic', sans-serif;
+        margin: 0; padding: 32px; color: #333;
+    }
+    .box {
+        max-width: 720px; margin: 0 auto; background: #fdf8f4;
+        border: 1px solid #e3cfb8; border-radius: 12px; padding: 26px 30px;
+    }
+    h1 { font-size: 17px; color: #9c6b4f; letter-spacing: 2px; margin: 0 0 4px; }
+    .sub { font-size: 11px; color: #b08a6c; text-transform: uppercase; letter-spacing: 1px; }
+    p { font-size: 13px; line-height: 1.65; color: #6b5a4d; }
+    .warn {
+        background: #fdf1e4; border: 1px solid #e8d3b8; border-radius: 8px;
+        padding: 12px 15px; font-size: 12.5px; line-height: 1.6; color: #8a5a3f;
+    }
+    button {
+        padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
+        font-weight: bold; font-family: inherit; font-size: 13px;
+        background: #b8866f; color: #fff; margin-top: 16px;
+    }
+    button:hover { background: #a0705a; }
+    button:disabled { background: #d6c4b8; cursor: default; }
+    #log {
+        margin-top: 18px; font-family: Consolas, monospace; font-size: 12px;
+        line-height: 1.8; color: #6b5a4d; white-space: pre-wrap;
+    }
+    .ok  { color: #4c7a4c; }
+    .new { color: #9c6b4f; font-weight: bold; }
+    .err { color: #c0392b; }
+    code { background: #f3e6d8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>💧 SEED HYDRATION ENTRIES</h1>
+    <div class="sub">PoppyEngine · one-time setup</div>
+
+    <p>
+        Four entries: logging water in any unit, undoing the last one, marking a
+        workout day, and answering questions about the day. Writes into the
+        editor's Firebase, not into <code>PoppyEngine-core.js</code>.
+    </p>
+
+    <div class="warn">
+        Matched <strong>by name</strong>, so a second run updates the four rather
+        than creating eight. Your other entries are never read or changed.
+    </div>
+
+    <p><strong>After it finishes:</strong> open the editor, read them, then
+        <strong>Export PoppyEngine.js</strong> over <code>JS/poppy/PoppyEngine-core.js</code>.
+        One export covers this and any earlier seeder you haven't exported yet.</p>
+
+    <button id="go">Write the four entries</button>
+    <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, update }
+    from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157"
+};
+
+const db = getDatabase(initializeApp(cfg));
+
+const CATEGORY = "Hydration";
+
+/* What makes a message about water at all. The gate; the keywords then
+   decide which of the four it is. */
+const ABOUT_WATER = [
+    "water", "drink", "drank", "drinking", "hydration", "hydrate", "hydrated",
+    "sip", "sips", "glass", "glasses", "cup", "cups", "bottle", "bottles",
+    "oz", "ounce", "ounces", "ml", "litre", "litres", "liter", "liters",
+    "thirsty", "dehydrated", "intake",
+
+    /* Everything else that goes in a glass. Without these, "I had a
+       latte" never reaches the hydration entries at all — it contains
+       no word about water. */
+    "coffee", "latte", "espresso", "americano", "cappuccino", "mocha",
+    "brew", "tea", "chai", "matcha", "milk", "juice", "oj", "soda",
+    "coke", "cola", "pepsi", "sprite", "soft drink", "softdrink",
+    "smoothie", "milkshake", "shake", "frappe", "energy drink",
+    "sports drink", "gatorade", "beer", "wine", "cocktail", "cider",
+    "alcohol", "booze", "whisky", "whiskey", "vodka", "gin", "rum"
+];
+
+const RULE = "═══════════════════════════════════════════════════════════════";
+
+const HEAD = (title, action) =>
+    RULE + "\n💧 " + title + (action ? " ; " + action : "") + "\n" + RULE + "\n";
+
+const FOOT = RULE;
+
+const ENTRIES = [
+
+/* ── 1. LOGGING WATER ─────────────────────────────────────────────── */
+{
+    name: "Hydration: Log water",
+    intent: "HYDRATION_LOG",
+    priority: 5,
+    /* Four, not two. Asking how much is the NORMAL path here — "I had a
+       coffee" carries no amount — so the entry has to survive Jen
+       answering a question, and the answer is often two or three
+       messages later once she has thought about it. The window counts
+       her messages only; Poppy's replies are not in it. */
+    window: 4,
+    keywords: ["drank", "drink", "had", "just", "finished", "log", "add",
+               "record", "track", "another", "more", "downed", "sipped",
+               /* Vessels and units, so a bare answer to "how much?" —
+                  "two cups", "500 ml", "a bottle" — re-fires the entry
+                  on its own merit instead of relying on the window
+                  still reaching back to the first message. */
+               "glass", "glasses", "cup", "cups", "bottle", "bottles",
+               "litre", "liter", "litres", "liters", "ml", "oz", "ounces",
+               /* The drinks themselves. "I had a latte" contains none of
+                  the verbs above in some phrasings, and a message naming
+                  a drink is exactly this entry's business. */
+               "coffee", "latte", "espresso", "americano", "cappuccino",
+               "tea", "chai", "matcha", "milk", "juice", "soda", "coke",
+               "cola", "smoothie", "milkshake", "shake", "beer", "wine",
+               "cocktail", "water"],
+    requireAny: ABOUT_WATER,
+    requireNone: ["undo", "remove", "delete", "mistake", "didn't", "did not"],
+    /* The food list comes along because a caloric drink is two logs,
+       and the food side needs to know whether "Bear Brand milk" is
+       already on the list before it can be added. Without it Poppy
+       could see that milk belongs in FoodHub and still have nothing
+       to act on. */
+    fetchTargets: ["hydration/today", "food/catalogue"],
+    writeFields: ["action", "amount", "unit", "drink", "date",
+                  /* the food_log half of a caloric drink */
+                  "item", "servings", "serving", "cal", "prot", "carb",
+                  "fat", "sugar", "category", "kind"],
+    guidelines:
+HEAD("Jen drank something", "hydration_log") +
+`FIVE RULES. These outrank anything below.
+
+1. PASS THE UNIT THROUGH. Send her number and her unit exactly as she said them — "500" and "ml", "1.5" and "litres", "2" and "glasses". Do NOT convert to ounces yourself. The action does the maths and refuses a unit it doesn't know; a conversion you do in your head is one nobody can check, and reading millilitres as ounces logs five times her daily goal in a single glass.
+2. PASS THE DRINK THROUGH TOO. Send what she called it — "latte", "flat white", "coke", "red wine", "orange juice". Don't translate it into a category; the action knows the names. Leave the drink field empty only when she said water, or said nothing about what it was.
+3. Never invent an amount. "I had some water" is not a number. Ask how much. A glass is 8 oz and a bottle is 20 oz, so "a glass" and "a bottle" ARE amounts — send 1 with that unit.
+
+3b. ASK, THEN LOG — and log ONCE. Most drinks arrive without an amount: "I had a coffee". That is two turns, not one. Ask how much, send NO action, and log it when she answers — carrying the drink she named earlier across. Her answer may be bare ("two cups", "about 300 ml"); the drink is still coffee.
+   Then leave it alone. This entry stays loaded for several messages, so the words "I had a coffee" are still in front of you after it is logged. Before sending, check today's entries in LIVE DATA: if that drink is already there at that time, it is done. One coffee mentioned three times is one coffee.
+4. One action per drink. If she says she had two glasses, that is amount 2, unit glasses — not two separate actions. But a coffee AND a glass of water is two actions, because they are different drinks.
+5. Today unless she says otherwise. Only send a date if she is plainly talking about a past day.
+
+HOW OTHER DRINKS COUNT. Two separate things, and don't muddle them:
+  · Toward the goal — nearly everything counts in FULL. Coffee, tea, juice, milk and soft drinks hydrate her about as well as water does; the idea that coffee dehydrates you is not what the research says. Alcohol is the exception and counts about a third.
+  · Toward prestige — less. Water pays full, milk 75%, coffee/tea/juice half, soda and milkshakes a quarter, alcohol nothing.
+So a coffee genuinely moves her closer to the goal. It just doesn't get a party. If she asks why a drink paid less, that is the honest answer: it hydrated her fine, the points are about the habit.
+
+Don't editorialise about what she drank. Log the beer, say what it did, move on. She is an adult who knows what beer is, and a tracker that tuts is a tracker she stops telling the truth to.
+
+LIVE DATA gives you the Hydration - today block: how much she has drunk, the goal, what's left in ounces AND glasses, whether the first-sip window is open, how close the drought fine is, and her goal-streak.
+
+WHAT TO SAY AFTER. The receipt carries the new total, what's left and what it paid. Keep it to a line.
+Worth mentioning when it happens, and not otherwise:
+  · the first-sip window (4am-8am) pays 2.5x — if she drinks in it, that is a nice thing to notice
+  · crossing the goal pays 1,000, and the receipt says so
+  · a 7- or 30-day streak milestone
+Do not read her the whole standing every time she drinks a glass. She knows.
+
+If she is under 40 oz and the day is getting late, the drought fine is worth ONE mention — 500 prestige off tomorrow morning. Once. Not every glass.
+
+A DRINK WITH CALORIES IS TWO LOGS, NOT ONE.
+Milk, juice, soda, smoothies, milkshakes, energy and sports drinks and alcohol are fluid AND food. Send hydration_log AND food_log in the same reply — both actions in the one fenced block. The hydration receipt reminds you when a drink is one of these.
+Water, black coffee and plain tea are fluid only; one action.
+The food side follows the ordinary food rules: check her food list first, and if "Bear Brand milk" isn't on it, read the estimate back before adding. A glass of milk is roughly 150 calories and 8g of protein; a can of Coke is about 140 and all sugar.
+This is the one that went wrong on the first real morning — the milk was logged as fluid and its calories never reached FoodHub at all.
+
+SAY WHAT SHE SAID. Send the drink exactly as she named it — "bear brand milk", "iced caramel latte", "coke zero". The action finds the category inside the phrase. Don't reduce it to "milk" yourself, and don't refuse a brand you don't recognise; send it and let the action answer.
+
+THE SLEEP TAG. Caffeine after 2pm, and alcohol after midday, are added to tonight's sleep log automatically — they are already factor chips there, and she shouldn't have to remember at 7am what she drank at 11pm. The receipt tells you when it happened; pass it on in a few words ("tagged caffeine on tonight's sleep") so it is never a surprise on her sleep log. LIVE DATA also lists what is already queued, so don't announce the same tag twice.
+` + FOOT
+},
+
+/* ── 2. UNDOING ───────────────────────────────────────────────────── */
+{
+    name: "Hydration: Undo last water",
+    intent: "HYDRATION_UNDO",
+    priority: 5,
+    window: 2,
+    keywords: ["undo", "remove", "delete", "take back", "cancel", "mistake",
+               "wrong", "didn't", "did not", "scratch", "oops", "revert"],
+    requireAny: ABOUT_WATER,
+    fetchTargets: ["hydration/today"],
+    writeFields: ["action", "date"],
+    guidelines:
+HEAD("Jen wants to take back some water she logged", "hydration_undo") +
+`THREE RULES.
+
+1. It removes the LAST entry only. There is no way to pick an older one. LIVE DATA names the entry that would go — "the most recent entry ... is 20 oz at 09:14". If what she means is not that entry, say so plainly and do not send the action. Deleting the wrong glass is worse than not deleting one.
+2. Read it back when there is any doubt. If she says "undo that" straight after logging, just send it — she means the one you both just talked about. If she says "I didn't drink that bottle earlier", check which entry she means first.
+3. There has to be something there. LIVE DATA says when nothing is logged today. Say so rather than sending an action that will come back empty.
+
+The prestige comes back out with it. If the undo drops her back under the goal, the 1,000 completion bonus is released too — the receipt says so, and it means crossing the goal again will pay it properly rather than twice.
+
+Repeat it if she wants more than one gone: each call removes one more.
+` + FOOT
+},
+
+/* ── 3. WORKOUT DAY ───────────────────────────────────────────────── */
+{
+    name: "Hydration: Workout day",
+    intent: "HYDRATION_WORKOUT",
+    priority: 4,
+    window: 3,
+    keywords: ["workout", "worked out", "training", "trained", "gym", "ran",
+               "run", "running", "exercise", "exercised", "sweat", "sweated",
+               "goal", "target"],
+    requireAny: ABOUT_WATER.concat(["workout", "worked out", "gym", "training",
+                                    "trained", "exercise", "goal", "target"]),
+    fetchTargets: ["hydration/today"],
+    writeFields: ["action", "on", "date"],
+    guidelines:
+HEAD("Jen worked out, so today needs more water", "hydration_workout") +
+`Marking a workout day raises the goal from 100 oz to 124 oz. Nothing is paid or taken — it only moves the target, which changes what "how much is left" means and what the day has to reach to count toward her streak.
+
+TWO RULES.
+
+1. Only when it is about TODAY'S water. She may mention the gym in passing, in a conversation that has nothing to do with drinking. Don't move her goal because a workout came up — send this when she is telling you the target should be higher, or when she has just trained and the two are obviously connected. If you are unsure, ask in a few words.
+2. on:false unmarks it. Use that if she says she didn't actually train, or wants the ordinary goal back.
+
+LIVE DATA already says whether today is marked. If it is marked and she says it again, say so rather than sending it twice.
+
+After it lands, the receipt says the new goal and what's left against it. That is the useful part — 24 more ounces is three more glasses.
+` + FOOT
+},
+
+/* ── 4. ASKING AND ADVISING ───────────────────────────────────────── */
+{
+    name: "Hydration: How am I doing",
+    intent: "HYDRATION_REVIEW",
+    priority: 4,
+    window: 3,
+    keywords: ["how much", "how many", "left", "still", "need", "behind",
+               "on track", "doing", "enough", "goal", "streak", "today",
+               "average", "history", "week", "pattern", "should"],
+    requireAny: ABOUT_WATER,
+    fetchTargets: ["hydration/today", "hydration/history"],
+    writeFields: [],
+    guidelines:
+HEAD("Jen is asking how her water is going") +
+`A question. Send no action.
+
+LIVE DATA gives you two blocks:
+  Hydration - today        where she stands, what's left in oz and glasses, the
+                           bonuses in play, the drought line, her goal-streak
+  Hydration - recent days  the last fortnight, each with its own goal and
+                           whether it was met
+
+FIVE RULES.
+
+1. Answer in GLASSES unless she asked in something else. "About four more glasses" lands; "32 more ounces" is arithmetic she then has to do. LIVE DATA gives you both, and the millilitres too if that is how she asked.
+
+1b. The total already counts every drink. Coffee, juice and milk are in there at full value; alcohol only partly. So the number IS her hydration — don't discount it again in your head or tell her it "doesn't really count". LIVE DATA separates plain water from everything else when both are present; mention that split only if she asks, or if she is genuinely drinking almost no water.
+2. Only what's in LIVE DATA. Never estimate a total or invent a day that isn't listed.
+3. Pace, not just totals. It is the Manila hour in LIVE DATA that makes a number mean something — 40 oz at 2pm is fine, 40 oz at 10pm is not. That is the single most useful thing you can tell her.
+4. One suggestion, not a lecture. If she is behind, say by how much and what would fix it — "three glasses before bed and you're there". Don't list the benefits of hydration at her; she built a tracker for it.
+5. Stay out of medicine. If she describes being unwell, dizzy, or not able to keep water down, that is a doctor, said once and without drama.
+
+Things worth noticing that a number alone won't say: the goal met several days running, a streak about to break, mornings that keep missing the 4am-8am bonus, a workout day that hasn't had its extra 24 oz.
+
+If nothing is logged today and it is still morning, that is not a problem — don't make it one.
+` + FOOT
+}
+
+];
+
+const logEl = document.getElementById('log');
+const say = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+};
+
+document.getElementById('go').onclick = async () => {
+    const btn = document.getElementById('go');
+    btn.disabled = true;
+    logEl.textContent = '';
+
+    try {
+        const catSnap = await get(ref(db, 'poppyEngine/categories'));
+        const cats = catSnap.val() || {};
+        if (!Object.values(cats).includes(CATEGORY)) {
+            await push(ref(db, 'poppyEngine/categories'), CATEGORY);
+            say('+ category "' + CATEGORY + '"', 'new');
+        } else {
+            say('- category "' + CATEGORY + '" already there', 'ok');
+        }
+
+        const intentPatch = {};
+        ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
+        await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
+        say('- ' + ENTRIES.length + ' intents registered', 'ok');
+
+        const entSnap = await get(ref(db, 'poppyEngine/entries'));
+        const existing = entSnap.val() || {};
+        const byName = {};
+        Object.entries(existing).forEach(([id, e]) => {
+            if (e && e.name) byName[e.name] = id;
+        });
+
+        let n = Object.keys(existing).length;
+
+        for (const src of ENTRIES) {
+            const id = byName[src.name];
+            const was = id ? existing[id] : null;
+
+            const entry = {
+                name:         src.name,
+                category:     CATEGORY,
+                intent:       src.intent,
+                keywords:     src.keywords || [],
+                priority:     src.priority || 4,
+                order:        was && was.order != null ? was.order : n++,
+                hidden:       false,
+                window:       src.window != null ? src.window : null,
+                cooldown:     src.cooldown || 0,
+                blockType:    src.blockType || "instruction",
+                guidelines:   src.guidelines,
+                Shifts:       [],
+                fetchTargets: src.fetchTargets || [],
+                writeFields:  src.writeFields || [],
+                requireAny:   src.requireAny  || [],
+                requireAll:   src.requireAll  || [],
+                requireNone:  src.requireNone || [],
+                notAll:       src.notAll      || [],
+                updatedAt:    Date.now()
+            };
+
+            if (id) {
+                entry.createdAt = was.createdAt || Date.now();
+                await set(ref(db, 'poppyEngine/entries/' + id), entry);
+                say('~ updated  ' + src.name, 'ok');
+            } else {
+                entry.createdAt = Date.now();
+                await push(ref(db, 'poppyEngine/entries'), entry);
+                say('+ created  ' + src.name, 'new');
+            }
+        }
+
+        say('');
+        say('Done. Open the editor, then Export PoppyEngine.js and paste it', 'new');
+        say('over JS/poppy/PoppyEngine-core.js.', 'new');
+
+    } catch (err) {
+        say('');
+        say('Failed: ' + err.message, 'err');
+        say('Entries are matched by name, so just run it again.', 'err');
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

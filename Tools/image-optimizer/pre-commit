@@ -1,0 +1,28 @@
+#!/bin/sh
+# LifeHub image optimizer - Git pre-commit hook.
+# Converts any new PNG/JPG/GIF to WebP before the commit is made, so an
+# uncompressed image can never enter the repository history.
+# Installed by Tools/image-optimizer/install-git-hook.bat
+
+ROOT="$(git rev-parse --show-toplevel)"
+DIR="$ROOT/Tools/image-optimizer"
+PY="$DIR/.venv/Scripts/python.exe"
+LIST="$(git rev-parse --absolute-git-dir)/optimizer-changed.txt"
+
+if [ ! -x "$PY" ]; then
+  echo "" >&2
+  echo "  image-optimizer is not set up on this computer yet." >&2
+  echo "  Double-click Tools/image-optimizer/optimize.bat once, then commit again." >&2
+  echo "  (Commit stopped so no uncompressed image slips in.)" >&2
+  echo "" >&2
+  exit 1
+fi
+
+"$PY" "$DIR/optimize.py" --changed-list "$LIST" || exit 1
+
+# stage only what the optimizer changed - nothing else of yours
+while IFS= read -r p; do
+  [ -n "$p" ] && git add -A -- "$ROOT/$p"
+done < "$LIST"
+: > "$LIST"
+exit 0

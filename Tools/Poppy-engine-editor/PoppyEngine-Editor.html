@@ -1,0 +1,2334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POPPY ENGINE — Intent Dictionary</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <!-- ============================================================
+         EVALUATE FUNCTION SOURCE
+         Stored here safely (no escaping nightmares) so the
+         Export feature can inject it into the full PoppyEngine.js
+         ============================================================ -->
+    <script type="text/plain" id="evaluateSrc">
+    evaluate: function(chatHistory) {
+
+        // ── 1. INPUT NORMALIZATION ──────────────────────────
+        function _str(x) { return (x == null ? "" : String(x)); }
+        function _normalize(s) {
+            return _str(s).toLowerCase()
+                .replace(/[^a-z0-9_\s-]/g, " ")
+                .replace(/[-_]+/g, " ")
+                .replace(/\s+/g, " ").trim();
+        }
+
+        // The current message, plus a rolling window of recent ones so
+        // context stays loaded while you talk casually. An entry's own
+        // `window` overrides the engine default. window: 1 = this
+        // message only, for actions that must never read stale words.
+        const msgs  = Array.isArray(chatHistory) ? chatHistory : [];
+        const DEPTH = Math.max(1, this.WINDOW_DEPTH || 1);
+
+        // accepts either {content} or {text} message shapes
+        function textOf(m) {
+            if (!m) return "";
+            return _str(m.content != null ? m.content : m.text);
+        }
+
+        const _hayCache = {};
+        function hayFor(n) {
+            const d = Math.max(1, Math.min(50, (isFinite(n) && n) ? +n : DEPTH));
+            if (!_hayCache[d]) {
+                _hayCache[d] = " " + msgs.slice(-d).map(m => _normalize(textOf(m))).join(" ") + " ";
+            }
+            return _hayCache[d];
+        }
+
+        const HAY  = hayFor(1);   // the current message, on its own
+        const self = this;
+
+        // Firing memory. Survives between calls so cooldowns can count turns.
+        if (!this._fired) this._fired = {};
+        this._turn = (this._turn || 0) + 1;
+        const TURN = this._turn;
+
+        // ── 2. UTILITIES ────────────────────────────────────
+        function arr(x) { return Array.isArray(x) ? x : (x == null ? [] : [x]); }
+        function reEsc(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+        function hasTerm(term, hay) {
+            const H = hay || HAY;
+            let t = _str(term).toLowerCase().trim();
+            if (!t) return false;
+            if (t.endsWith("*")) {
+                return new RegExp("(?:^|\\s)" + reEsc(t.slice(0, -1)) + "[a-z]*?(?=\\s|$)").test(H);
+            }
+            return new RegExp("(?:^|\\s)" + reEsc(t) + "(?=\\s|$)").test(H);
+        }
+
+        function prio(e) {
+            let p = (e && isFinite(e.priority)) ? +e.priority : 3;
+            return Math.max(1, Math.min(5, p));
+        }
+
+        // How far back this entry is allowed to look.
+        function depthOf(e) {
+            const n = (e && isFinite(e.window)) ? +e.window : DEPTH;
+            return Math.max(1, Math.min(50, n || DEPTH));
+        }
+
+        // How many turns it stays quiet after firing. 0 = never quiet.
+        function coolOf(e) {
+            const n = (e && isFinite(e.cooldown)) ? +e.cooldown : 0;
+            return Math.max(0, Math.min(50, n));
+        }
+
+        // ── 3. GATES ────────────────────────────────────────
+        // Every LoreEngine alias maps to the same gate, so entries
+        // written in that dialect paste in and just work.
+        function collectGates(e) {
+            const r = (e && e.requires) ? e.requires : {};
+            return {
+                any:  [].concat(arr(e && e.requireAny),  arr(e && e.andAny),  arr(r.any)),
+                all:  [].concat(arr(e && e.requireAll),  arr(e && e.andAll),  arr(r.all)),
+                none: [].concat(arr(e && e.requireNone), arr(e && e.notAny),  arr(r.none),
+                                arr(e && e.block),       arr(e && e.Block)),
+                nall: [].concat(arr(e && e.notAll),      arr(r.nall))
+            };
+        }
+
+        function gatesPass(e, hay) {
+            const H = hay || HAY;
+            const g = collectGates(e);
+            if (g.any.length  && !g.any.some(t  => hasTerm(t, H)))  return false;
+            if (g.all.length  && !g.all.every(t => hasTerm(t, H)))  return false;
+            if (g.none.length &&  g.none.some(t => hasTerm(t, H)))  return false;
+            if (g.nall.length &&  g.nall.every(t => hasTerm(t, H))) return false;
+            return true;
+        }
+
+        // ── 4. FALLBACK DEFINITION ──────────────────────────
+        // A fallback has nothing that CAN match — no keywords and
+        // no positive gates. Gate-only entries are real matches.
+        function isFallback(e) {
+            // Identity and context with no keywords are ALWAYS on — they
+            // describe standing truths, not a last resort. Only a
+            // keywordless instruction is a fallback.
+            if (e && e.blockType && e.blockType !== "instruction") return false;
+            const g = collectGates(e);
+            return !arr(e && e.keywords).length && !g.any.length && !g.all.length;
+        }
+
+        // ── 5. SCORING ──────────────────────────────────────
+        const matched   = [];
+        const fallbacks = [];
+
+        this.dictionary.forEach((entry, i) => {
+            if (!entry || !entry.intent) return;
+
+            const key = entry.intent + "#" + i;
+            const HW  = hayFor(depthOf(entry));     // this entry's window
+            if (!gatesPass(entry, HW)) return;
+
+            const kws   = arr(entry.keywords);
+            const hits  = kws.filter(t => hasTerm(t, HW));    // anywhere in window
+            const fresh = kws.filter(t => hasTerm(t, HAY));   // in this message
+
+            if (isFallback(entry)) {
+                fallbacks.push({ entry, key, matched: [], score: prio(entry) });
+                return;
+            }
+
+            if (kws.length === 0 || hits.length > 0) {
+                // COOLDOWN. Saying it again in the current message always
+                // fires and resets the clock. A stale hit inside the window
+                // stays quiet until the cooldown runs out.
+                const cd   = coolOf(entry);
+                const last = self._fired[key] || 0;
+                if (cd > 0 && !fresh.length && last && (TURN - last) <= cd) {
+                    console.log(
+                        `%c   \u23f8 ${entry.intent} on cooldown%c ${cd - (TURN - last) + 1} more`,
+                        "color:#999;font-weight:bold;", "color:#bbb;"
+                    );
+                    return;
+                }
+
+                matched.push({
+                    entry, key,
+                    matched: hits,
+                    score: prio(entry) * 100 + Math.min(hits.length, 20)
+                                             + (fresh.length ? 50 : 0)
+                });
+            }
+        });
+
+        // ── 6. SELECTION ────────────────────────────────────
+        let pool = matched.length ? matched : fallbacks;
+        pool.sort((a, b) => b.score - a.score);
+
+        const seen = {}, selected = [];
+        for (const c of pool) {
+            if (selected.length >= (this.INTENT_LIMIT || 4)) break;
+            if (seen[c.entry.intent]) continue;
+            seen[c.entry.intent] = 1;
+            selected.push(c);
+        }
+
+        // Remember what fired, so cooldowns have something to count from.
+        selected.forEach(c => { if (c.key) self._fired[c.key] = TURN; });
+
+        if (!selected.length) {
+            // No match still gets the core prompt — Poppy should never
+            // arrive with no identity at all.
+            return { intent: this.FALLBACK_INTENT || null, intents: [],
+                     fetchTargets: [], writeFields: [],
+                     identity: [], context: [], rules: [],
+                     prompt: (this.core || "").trim() };
+        }
+
+        // ── 7. REPORT ───────────────────────────────────────
+        selected.forEach(c => {
+            const kw = c.matched.length ? c.matched.join(", ") : "(gate/fallback)";
+            console.log(
+                `%c🎯 PoppyEngine → [${c.entry.intent}]%c via: "${kw}"  p${prio(c.entry)}`,
+                "color:#b8866f;font-weight:bold;", "color:#aaa;"
+            );
+        });
+
+        // ── 8. PAYLOAD ──────────────────────────────────────
+        const primary = selected[0].entry;
+        const uniq = a => [...new Set(a)];
+
+        const intents = selected.map(c => {
+            const e = c.entry;
+            let guide  = e.guidelines || "";
+            let fetch  = arr(e.fetchTargets);
+            let write  = arr(e.writeFields);
+            const firedShifts = [];
+
+            // SHIFTS — sub-layers that stack onto a parent entry.
+            // A shift only runs if its parent was selected, then it
+            // needs its own keyword hit (or no keywords = always).
+            arr(e.Shifts).forEach(sh => {
+                if (!sh) return;
+                if (!gatesPass(sh)) return;
+                const skws = arr(sh.keywords);
+                const shits = skws.filter(hasTerm);
+                if (skws.length && !shits.length) return;
+
+                if (sh.guidelines) guide += "\n\n" + sh.guidelines;
+                fetch = fetch.concat(arr(sh.fetchTargets));
+                write = write.concat(arr(sh.writeFields));
+                firedShifts.push(sh.title || "(untitled shift)");
+
+                console.log(`%c   ↳ shift: ${sh.title || "(untitled)"}%c ${shits.length ? '"' + shits.join(", ") + '"' : "(always)"}`,
+                    "color:#c98aa8;font-weight:bold;", "color:#aaa;");
+            });
+
+            return {
+                intent:       e.intent,
+                priority:     prio(e),
+                blockType:    e.blockType || "instruction",
+                matched:      c.matched,
+                fetchTargets: [...new Set(fetch)],
+                writeFields:  [...new Set(write)],
+                guidelines:   guide,
+                shifts:       firedShifts
+            };
+        });
+
+        // Group text by what KIND of thing it is, so the assembled
+        // prompt reads as sections instead of one pile of orders.
+        const byType = t => intents.filter(x => x.blockType === t && x.guidelines)
+                                   .map(x => x.guidelines);
+
+        const identity = byType("identity");
+        const context  = byType("context");
+        const rules    = intents.filter(x => (x.blockType || "instruction") === "instruction" && x.guidelines)
+                                .map(x => `[${x.intent}]\n${x.guidelines}`);
+
+        // Ready-to-send prompt. core is set on the engine object.
+        let prompt = (this.core || "").trim();
+        if (identity.length) prompt += "\n\n## ABOUT YOU\n"            + identity.join("\n\n");
+        if (context.length)  prompt += "\n\n## CONTEXT\n"              + context.join("\n\n");
+        if (rules.length)    prompt += "\n\n## FOR THIS MESSAGE\n"     + rules.join("\n\n");
+
+        return {
+            intent:       primary.intent,
+            fetchTargets: uniq(intents.flatMap(x => x.fetchTargets)),
+            writeFields:  uniq(intents.flatMap(x => x.writeFields)),
+            identity, context, rules,
+            prompt:       prompt.trim(),
+            intents
+        };
+    }
+    </script>
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: #f2e8e2;
+            font-family: 'Century Gothic', sans-serif;
+            margin: 0; color: #333;
+            height: 100vh;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        /* ── TOP BAR ─────────────────────────────────────── */
+        .top-bar {
+            background: #f3e6d8; padding: 13px 28px;
+            border-bottom: 1px solid #e3cfb8;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
+        }
+        .logo { font-size: 17px; font-weight: bold; color: #9c6b4f; display: flex; align-items: center; gap: 10px; letter-spacing: 2px; }
+        .logo-sub { font-size: 10px; color: #b08a6c; font-weight: normal; letter-spacing: 1px; text-transform: uppercase; }
+        .fb-pill {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 11px; color: #b08a6c;
+            background: #fff; border: 1px solid #e3cfb8; border-radius: 20px;
+            padding: 4px 12px;
+        }
+        .fb-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; transition: background 0.4s; flex-shrink: 0; }
+        .fb-dot.on  { background: #4caf50; }
+        .fb-dot.err { background: #e53935; }
+        .actions { display: flex; gap: 8px; }
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;
+            font-weight: bold; font-family: 'Century Gothic', sans-serif;
+            display: flex; align-items: center; gap: 6px; font-size: 13px;
+            transition: all 0.2s;
+        }
+        .btn-primary   { background: #b8866f; color: #fff; }
+        .btn-primary:hover  { background: #a0705a; }
+        .btn-secondary { background: #fff; color: #9c6b4f; border: 1px solid #e3cfb8; }
+        .btn-secondary:hover { background: #fdf6ef; }
+
+        /* ── WORKSPACE ───────────────────────────────────── */
+        .workspace { display: flex; flex: 1; overflow: hidden; }
+
+        /* ── SIDEBAR ─────────────────────────────────────── */
+        .sidebar { width: 240px; background: #faf2e9; border-right: 1px solid #e3cfb8; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-hd {
+            padding: 13px 16px; font-weight: bold; color: #b08a6c;
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #ecdcc8; flex-shrink: 0;
+        }
+        .add-cat {
+            background: none; border: 1px solid #e3cfb8; border-radius: 5px;
+            color: #b08a6c; cursor: pointer; padding: 3px 9px;
+            font-size: 11px; font-family: 'Century Gothic', sans-serif; font-weight: bold;
+        }
+        .add-cat:hover { background: #f3e6d8; }
+        .cat-list { flex: 1; overflow-y: auto; padding: 8px; }
+        .cat-list::-webkit-scrollbar { width: 4px; }
+        .cat-list::-webkit-scrollbar-thumb { background: #e3cfb8; border-radius: 2px; }
+        .cat-item {
+            padding: 9px 10px; border-radius: 7px; cursor: pointer;
+            margin-bottom: 3px; font-size: 12px; color: #a8826a;
+            display: flex; align-items: center; gap: 7px;
+            transition: all 0.15s; border: 1px solid transparent;
+        }
+        .cat-item:hover { background: #f3e6d8; color: #8a5a3f; }
+        .cat-item.active { background: #b8866f; color: #fff; border-color: #b8866f; }
+        .cat-item .cat-icon { font-size: 15px; flex-shrink: 0; }
+        .cat-name { flex: 1; }
+        .cat-count { font-size: 10px; background: rgba(0,0,0,0.14); padding: 1px 6px; border-radius: 8px; flex-shrink: 0; }
+        .cat-item.active .cat-count { background: rgba(255,255,255,0.25); }
+
+        /* ── MAIN STAGE ──────────────────────────────────── */
+        .main-stage { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fdf8f4; }
+
+        /* ── ENTRY LIST ──────────────────────────────────── */
+        .entries-area { flex: 1; overflow-y: auto; padding: 18px 22px; }
+        .entries-area::-webkit-scrollbar { width: 5px; }
+        .entries-area::-webkit-scrollbar-thumb { background: #e0d5cc; border-radius: 3px; }
+        .list-title-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px; padding-bottom: 10px;
+            border-bottom: 2px solid #f0e8e0;
+        }
+        .list-title { font-size: 11px; font-weight: bold; color: #b8866f; text-transform: uppercase; letter-spacing: 2px; }
+        .list-count { font-size: 11px; color: #c4a899; }
+
+        /* Entry card */
+        .entry-card {
+            background: #fff; border: 1px solid #ede5de; border-radius: 10px;
+            margin-bottom: 9px; transition: all 0.15s;
+        }
+        .entry-card:hover { border-color: #d4b8a8; box-shadow: 0 2px 8px rgba(184,134,111,0.1); }
+        .entry-card-hd {
+            display: flex; align-items: center; gap: 9px;
+            padding: 11px 14px; cursor: pointer; user-select: none;
+        }
+        .chevron { color: #cbb8ad; font-size: 18px; transition: transform 0.2s; flex-shrink: 0; }
+        .chevron.open { transform: rotate(90deg); }
+        .entry-card-title { font-size: 13px; font-weight: bold; color: #5a4438; flex: 1; }
+        .intent-badge {
+            font-size: 10px; font-weight: bold; padding: 3px 9px;
+            border-radius: 10px; background: #f3e6d8; color: #9c6b4f;
+            border: 1px solid #e3cfb8; white-space: nowrap; flex-shrink: 0;
+        }
+        .list-tools { display:flex; align-items:center; gap:8px; margin-left:auto; }
+        .sort-sel {
+            font-family: inherit; font-size: 11px; color:#7a6155;
+            background:#fff; border:1px solid #e3cfb8; border-radius:6px;
+            padding:5px 8px; cursor:pointer; outline:none;
+        }
+        .tool-btn {
+            font-family: inherit; font-size: 11px; color:#9c6b4f;
+            background:#fff; border:1px solid #e3cfb8; border-radius:6px;
+            padding:5px 9px; cursor:pointer; display:flex; align-items:center; gap:4px;
+        }
+        .tool-btn:hover { border-color:#b8866f; }
+        .tool-btn .material-icons { font-size:14px; }
+        .entry-card.is-hidden { opacity:.5; background:#faf7f5; border-style:dashed; }
+        .icon-btn.eye-off { color:#c98a8a; }
+        .ctx-menu {
+            position: fixed; z-index: 9999; display: none;
+            background:#fff; border:1px solid #e3cfb8; border-radius:9px;
+            box-shadow:0 6px 22px rgba(120,85,65,.18); padding:5px;
+            min-width:158px; font-size:12.5px; color:#5a4a42;
+        }
+        .ctx-menu.open { display:block; }
+        .ctx-menu button {
+            display:flex; align-items:center; gap:9px; width:100%;
+            font-family:inherit; font-size:12.5px; color:#5a4a42;
+            background:none; border:none; border-radius:6px;
+            padding:8px 10px; cursor:pointer; text-align:left;
+        }
+        .ctx-menu button:hover { background:#f7ede4; }
+        .ctx-menu button.danger { color:#c05a5a; }
+        .ctx-menu button.danger:hover { background:#fceceb; }
+        .ctx-menu .material-icons { font-size:16px; }
+        .ctx-menu hr { border:none; border-top:1px solid #f0e4da; margin:4px 2px; }
+        .ctx-name {
+            padding:6px 10px 7px; font-size:11px; color:#a89185;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px;
+        }
+        .entry-card-hd { cursor: context-menu; }
+        .badge { font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 8px; flex-shrink: 0; }
+        .badge-prio  { background: #fff3e0; color: #e65100; }
+        .badge-cool  { background: #e8f5e9; color: #2e7d32; }
+        .card-actions { display: flex; gap: 2px; flex-shrink: 0; }
+        .icon-btn {
+            background: none; border: none; cursor: pointer; padding: 4px;
+            border-radius: 5px; color: #cbb8ad; display: flex; transition: all 0.15s;
+        }
+        .icon-btn:hover { background: #f5ede7; color: #b8866f; }
+        .icon-btn.del:hover { background: #fdecea; color: #e53935; }
+        .icon-btn .material-icons { font-size: 17px; }
+
+        /* Entry card body */
+        .entry-card-body { padding: 0 14px 14px; display: none; }
+        .entry-card-body.open { display: block; }
+        .kw-list { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+        .kw-pill {
+            background: #f5ede7; color: #b8866f; padding: 3px 10px;
+            border-radius: 10px; font-size: 11px; font-weight: bold;
+            border: 1px solid #e8d5c8;
+        }
+        .kw-none { font-size: 11px; color: #cbb8ad; font-style: italic; }
+        /* ── BLOCK TYPE ── */
+        .bt-row { display: flex; gap: 5px; }
+        .bt-opt {
+            flex: 1; text-align: center; padding: 7px 4px; border-radius: 6px;
+            border: 1px solid #e6d8d0; background: #faf7f5; cursor: pointer;
+            font-size: 11px; font-weight: 700; color: #a8938a; transition: .12s;
+        }
+        .bt-opt:hover { border-color: #d4b8a8; }
+        .bt-opt.on { background: #b8866f; border-color: #b8866f; color: #fff; }
+        .badge-identity { background: #e8e0f5; color: #5e4b8b; }
+        .badge-context  { background: #dfeee8; color: #2e6b56; }
+
+        /* ── CORE PROMPT ── */
+        .core-box {
+            background: #fff; width: 820px; max-width: 95vw; max-height: 90vh;
+            border-radius: 12px; display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;
+        }
+        .core-ta {
+            width: 100%; min-height: 420px; border: 1px solid #e6d8d0; border-radius: 8px;
+            padding: 14px; font-family: 'SF Mono', Menlo, Consolas, monospace;
+            font-size: 12px; line-height: 1.7; color: #4a3a32; resize: vertical;
+            outline: none; background: #fdfbfa;
+        }
+        .core-ta:focus { border-color: #b8866f; background: #fff; }
+
+        /* ── SHIFTS ── */
+        .sh-hd { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+        .sh-hd .ed-label { margin: 0; flex: 1; }
+        .sh-add {
+            background: #fce4ec; border: 1px solid #f0c4d5; color: #a8446b;
+            font-family: 'Century Gothic', sans-serif; font-size: 11px; font-weight: 700;
+            padding: 4px 10px; border-radius: 6px; cursor: pointer;
+            display: flex; align-items: center; gap: 3px;
+        }
+        .sh-add:hover { background: #fad3e0; }
+        .sh-add .material-icons { font-size: 14px; }
+        .sh-list { display: flex; flex-direction: column; gap: 5px; }
+        .sh-row {
+            display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+            background: #fdf4f7; border: 1px solid #f2dde5; border-radius: 7px;
+        }
+        .sh-title { flex: 1; font-size: 12px; font-weight: 600; color: #7d3f57; }
+        .sh-kw { font-size: 10px; color: #b98aa0; }
+        .sh-empty {
+            padding: 12px; text-align: center; font-size: 11.5px; color: #c4a8b4;
+            border: 1px dashed #f0dae3; border-radius: 7px;
+        }
+        .sh-box {
+            background: #fff; width: 640px; max-width: 95vw; max-height: 90vh;
+            border-radius: 12px; display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;
+        }
+        .sh-modal-hd { padding: 15px 20px; border-bottom: 1px solid #ece0d9; display: flex; align-items: center; gap: 9px; }
+        .sh-modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+        .sh-modal-ft { padding: 12px 20px; border-top: 1px solid #ece0d9; display: flex; justify-content: flex-end; gap: 8px; }
+
+        /* ── INTENT MANAGER ── */
+        .im-box {
+            background: #fff; width: 620px; max-width: 95vw; max-height: 88vh;
+            border-radius: 12px; display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;
+        }
+        .im-hd {
+            padding: 15px 20px; border-bottom: 1px solid #ece0d9;
+            display: flex; align-items: center; gap: 9px;
+        }
+        .im-title { font-size: 14px; font-weight: 700; color: #4a3a32; flex: 1; }
+        .im-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+        .im-catsel { margin-bottom: 14px; }
+        .im-add { display: flex; gap: 7px; margin-bottom: 15px; }
+        .im-add .ibox { flex: 1; text-transform: uppercase; }
+        .im-list { display: flex; flex-direction: column; gap: 6px; }
+        .im-row {
+            display: flex; align-items: center; gap: 9px;
+            padding: 9px 11px; background: #faf5f2;
+            border: 1px solid #ece0d9; border-radius: 7px;
+        }
+        .im-row.editing { background: #fff; border-color: #b8866f; }
+        .im-name {
+            flex: 1; font-size: 12.5px; font-weight: 600; color: #4a3a32;
+            letter-spacing: 0.3px;
+        }
+        .im-name-input {
+            flex: 1; font-family: 'Century Gothic', sans-serif; font-size: 12.5px;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+            border: none; outline: none; background: transparent; color: #4a3a32;
+        }
+        .im-use {
+            font-size: 10px; color: #a8938a; background: #f0e6e0;
+            padding: 2px 7px; border-radius: 9px; white-space: nowrap;
+        }
+        .im-use.zero { color: #c4b3aa; background: #f7f1ee; }
+        .im-acts { display: flex; gap: 1px; }
+        .im-empty {
+            text-align: center; padding: 26px 14px; color: #b09a8e; font-size: 12px;
+            border: 1px dashed #e0d0c7; border-radius: 8px;
+        }
+        .intent-row { display: flex; gap: 6px; align-items: center; }
+        .intent-row .ibox { flex: 1; }
+        .tall-ibox { min-height: 120px; font-size: 12.5px; line-height: 1.6; }
+        .guide-preview {
+            white-space: pre-wrap; font-size: 12px; line-height: 1.65;
+            background: #fbf6f3; border-left: 3px solid #b8866f;
+            padding: 9px 11px; border-radius: 0 5px 5px 0; color: #5a4a42;
+        }
+        .field-block { margin-bottom: 10px; }
+        .field-block-label {
+            font-size: 9px; font-weight: bold; color: #b8866f;
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+        }
+        .field-block-value { font-size: 12px; color: #666; line-height: 1.6; }
+        .code-preview {
+            font-family: 'Courier New', monospace; font-size: 11px;
+            background: #1e1510; color: #e8c9b0; padding: 10px 12px;
+            border-radius: 6px; line-height: 1.6; white-space: pre-wrap;
+            word-break: break-all; border: 1px solid #3d2e26;
+        }
+        .gate-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+        .gate-pill {
+            font-size: 10px; font-weight: bold; padding: 2px 8px;
+            border-radius: 8px; border: 1px solid;
+        }
+        .gate-any  { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+        .gate-all  { background: #e3f2fd; color: #1565c0; border-color: #bbdefb; }
+        .gate-none { background: #fdecea; color: #c62828; border-color: #ffcdd2; }
+
+        /* ── EMPTY STATE ─────────────────────────────────── */
+        .empty-state { text-align: center; padding: 60px 20px; color: #cbb8ad; }
+        .empty-state .material-icons { font-size: 44px; opacity: 0.35; display: block; margin-bottom: 10px; }
+        .empty-state p { font-size: 13px; line-height: 1.8; }
+
+        /* ── MODAL BASE ──────────────────────────────────── */
+        .modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
+            z-index: 200;
+        }
+        .modal.active { display: flex; }
+
+        /* ── ENTRY EDITOR MODAL ──────────────────────────── */
+        .editor-modal-box {
+            background: #fff; width: 1080px; max-width: 96vw; max-height: 93vh;
+            border-radius: 12px; display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;
+        }
+        .editor-modal-hd {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 22px; border-bottom: 1px solid #f0e8e0; flex-shrink: 0;
+        }
+        .editor-modal-title { font-size: 15px; font-weight: bold; color: #2a1f1a; display: flex; align-items: center; gap: 8px; }
+        .close-btn {
+            background: none; border: none; cursor: pointer; color: #bbb;
+            padding: 6px; border-radius: 50%; display: flex; transition: all 0.15s;
+        }
+        .close-btn:hover { color: #e53935; background: rgba(229,57,53,0.08); }
+        .editor-modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+        .editor-modal-body::-webkit-scrollbar { width: 5px; }
+        .editor-modal-body::-webkit-scrollbar-thumb { background: #e0d5cc; border-radius: 3px; }
+        .editor-modal-ft {
+            display: flex; justify-content: flex-end; gap: 8px;
+            padding: 14px 22px; border-top: 1px solid #f0e8e0; flex-shrink: 0;
+        }
+
+        /* Editor grid */
+        .ed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .ed-full { grid-column: 1 / -1; }
+        .ed-group { display: flex; flex-direction: column; gap: 4px; }
+        .ed-label { font-size: 10px; font-weight: bold; color: #b8866f; text-transform: uppercase; letter-spacing: 1px; }
+        .ed-hint  { font-size: 10px; color: #c4a899; margin-top: 2px; }
+        .ed-sep {
+            grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;
+            margin: 6px 0 2px;
+        }
+        .ed-sep-label { font-size: 10px; font-weight: bold; color: #b8866f; text-transform: uppercase; letter-spacing: 1.5px; white-space: nowrap; }
+        .ed-sep::after { content: ''; flex: 1; height: 1px; background: #f0e8e0; }
+
+        /* Inputs */
+        .ibox {
+            width: 100%; padding: 8px 11px;
+            border: 1px solid #e0d5cc; border-radius: 6px;
+            font-family: 'Century Gothic', sans-serif; font-size: 13px;
+            background: #fdf8f4; color: #333; transition: border-color 0.2s;
+        }
+        .ibox:focus { border-color: #b8866f; outline: none; background: #fff; }
+        select.ibox { cursor: pointer; }
+        textarea.ibox { resize: vertical; min-height: 72px; line-height: 1.55; }
+        #customIntentWrap { display: none; }
+
+        /* Keyword input */
+        .chip-hd { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+        .chip-hd .ed-label { margin: 0; flex: 1; }
+        .chip-tools { display: flex; gap: 2px; }
+        .chip-tool {
+            background: none; border: none; cursor: pointer; color: #b09a8e;
+            padding: 2px 4px; border-radius: 4px; display: flex; align-items: center;
+        }
+        .chip-tool:hover { background: #efe3dc; color: #8a6a58; }
+        .chip-tool.danger:hover { background: #fde5e3; color: #e53935; }
+        .chip-tool .material-icons { font-size: 15px; }
+        .chip-count { font-size: 10px; color: #b09a8e; font-weight: 600; min-width: 14px; text-align: right; }
+        .kw-area {
+            border: 1px solid #e0d5cc; border-radius: 6px; padding: 6px 8px;
+            background: #fdf8f4; min-height: 42px;
+            display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+            cursor: text; transition: border-color 0.2s;
+        }
+        .kw-area:focus-within { border-color: #b8866f; background: #fff; }
+        .kw-tag {
+            background: #f5ede7; color: #8a5a3f; border: 1px solid #e3cfb8;
+            border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: bold;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .kw-tag button { background: none; border: none; color: #b8866f; cursor: pointer; padding: 0; font-size: 14px; line-height: 1; display: flex; }
+        .kw-tag button:hover { color: #e53935; }
+        .kw-input-field { border: none; outline: none; font-family: 'Century Gothic', sans-serif; font-size: 12px; background: transparent; color: #333; min-width: 100px; flex: 1; }
+
+        /* Priority */
+        .prio-row { display: flex; gap: 4px; }
+        .prio-btn {
+            width: 30px; height: 30px; border: 1px solid #e0d5cc; border-radius: 5px;
+            background: #fdf8f4; cursor: pointer; font-size: 12px; font-weight: bold;
+            color: #bbb; font-family: 'Century Gothic', sans-serif; transition: all 0.15s;
+        }
+        .prio-btn:hover { border-color: #b8866f; color: #b8866f; }
+        .prio-btn.on { background: #b8866f; color: #fff; border-color: #b8866f; }
+
+        /* Advanced toggle */
+        .adv-toggle {
+            grid-column: 1/-1; background: none; border: none; cursor: pointer;
+            font-family: 'Century Gothic', sans-serif; font-size: 10px; font-weight: bold;
+            color: #a8826a; text-transform: uppercase; letter-spacing: 1px;
+            display: flex; align-items: center; gap: 5px; padding: 4px 0;
+        }
+        .adv-toggle:hover { color: #b8866f; }
+        .adv-icon { font-size: 16px; transition: transform 0.2s; }
+        .adv-toggle.open .adv-icon { transform: rotate(90deg); }
+        .adv-panel {
+            grid-column: 1/-1; display: none;
+            background: #fdf3ec; border: 1px solid #e8ddd5; border-radius: 8px;
+            padding: 14px;
+        }
+        .adv-panel.open { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+        /* ── EXPORT MODAL ────────────────────────────────── */
+        .export-box {
+            background: #fff; width: 700px; max-width: 97vw; max-height: 88vh;
+            border-radius: 12px; padding: 22px; display: flex; flex-direction: column;
+            gap: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .export-title { font-size: 15px; font-weight: bold; color: #2a1f1a; }
+        .export-modes { display: flex; gap: 6px; }
+        .mode-btn {
+            padding: 6px 14px; border: 1px solid #e3cfb8; border-radius: 6px;
+            background: transparent; color: #a8826a; font-family: 'Century Gothic', sans-serif;
+            font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.15s;
+        }
+        .mode-btn.on { background: #b8866f; color: #fff; border-color: #b8866f; }
+        .export-hint {
+            font-size: 11px; color: #a8826a;
+            background: #fdf3ec; border-radius: 6px; padding: 8px 12px;
+            border: 1px solid #e8ddd5;
+        }
+        .export-hint code { background: #f3e6d8; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+        .export-code {
+            flex: 1; font-family: 'Courier New', monospace; font-size: 12px;
+            border: 1px solid #3d2e26; border-radius: 8px; padding: 14px;
+            background: #1e1510; color: #e8c9b0; resize: none; min-height: 280px;
+            line-height: 1.6;
+        }
+        .export-foot { display: flex; justify-content: space-between; align-items: center; }
+
+        /* ── TOAST ───────────────────────────────────────── */
+        .toast {
+            position: fixed; bottom: 22px; left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: #2a1f1a; color: #e8c9b0;
+            padding: 10px 22px; border-radius: 30px; font-size: 13px;
+            opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 999;
+            border: 1px solid #4a3428;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+<!-- ── TOP BAR ──────────────────────────────────────────────── -->
+<div class="top-bar">
+    <div class="logo">
+        🌸 POPPY ENGINE
+        <span class="logo-sub">— Intent Dictionary</span>
+    </div>
+    <div class="fb-pill">
+        <div class="fb-dot" id="fbDot"></div>
+        <span id="fbLabel">Connecting…</span>
+    </div>
+    <div class="actions">
+        <button class="btn btn-secondary" onclick="openCore()">
+            <span class="material-icons" style="font-size:16px;">psychology</span>
+            Core Prompt
+        </button>
+        <button class="btn btn-secondary" onclick="openExport()">
+            <span class="material-icons" style="font-size:16px;">download</span>
+            Export PoppyEngine.js
+        </button>
+        <button class="btn btn-primary" onclick="openEditor(null)">
+            <span class="material-icons" style="font-size:16px;">add</span>
+            New Intent
+        </button>
+    </div>
+</div>
+
+<!-- ── WORKSPACE ────────────────────────────────────────────── -->
+<div class="workspace">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-hd">
+            Categories
+            <button class="add-cat" onclick="manageCats()">Manage</button>
+        </div>
+        <div class="cat-list" id="catList"></div>
+    </div>
+
+    <!-- CARD CONTEXT MENU -->
+    <div class="ctx-menu" id="ctxMenu" role="menu">
+        <div class="ctx-name" id="ctxName"></div>
+        <hr>
+        <button onclick="ctxDo('edit')"><span class="material-icons">edit</span> Edit</button>
+        <button onclick="ctxDo('dupe')"><span class="material-icons">content_copy</span> Duplicate</button>
+        <hr>
+        <button class="danger" onclick="ctxDo('del')"><span class="material-icons">delete</span> Delete</button>
+    </div>
+
+    <!-- MAIN STAGE -->
+    <div class="main-stage">
+        <div class="entries-area" id="entriesArea">
+            <div class="list-title-row">
+                <div class="list-title" id="listTitle">All Intents</div>
+                <div class="list-count" id="listCount"></div>
+                <div class="list-tools">
+                    <select class="sort-sel" id="sortSel" onchange="setSort(this.value)">
+                        <option value="manual">Manual Order</option>
+                        <option value="az">Title A–Z</option>
+                        <option value="za">Title Z–A</option>
+                        <option value="prio">Priority High–Low</option>
+                        <option value="new">Date Added (Newest)</option>
+                    </select>
+                    <button class="tool-btn" onclick="setAllVisible(true)" title="Include every entry shown here in the export">
+                        <span class="material-icons">visibility</span> All
+                    </button>
+                    <button class="tool-btn" onclick="setAllVisible(false)" title="Exclude every entry shown here from the export">
+                        <span class="material-icons">visibility_off</span> None
+                    </button>
+                </div>
+            </div>
+            <div id="entryList"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── ENTRY EDITOR MODAL ────────────────────────────────────── -->
+<div class="modal" id="editorModal">
+<div class="editor-modal-box">
+    <div class="editor-modal-hd">
+        <div class="editor-modal-title">
+            <span class="material-icons" style="font-size:18px;color:#b8866f;">edit</span>
+            <span id="editorTitle">New Intent Entry</span>
+        </div>
+        <button class="close-btn" onclick="closeEditor()">
+            <span class="material-icons">close</span>
+        </button>
+    </div>
+
+    <div class="editor-modal-body">
+    <div class="ed-grid">
+
+        <!-- Name -->
+        <div class="ed-group">
+            <div class="ed-label">Entry Name</div>
+            <input class="ibox" id="fName" type="text" placeholder="e.g. Wake Time Logger">
+        </div>
+
+        <!-- Category -->
+        <div class="ed-group">
+            <div class="ed-label">Category</div>
+            <select class="ibox" id="fCategory" onchange="onCategoryChange()">
+                <option value="Uncategorized">— Uncategorized —</option>
+            </select>
+        </div>
+
+        <!-- Intent -->
+        <div class="ed-group">
+            <div class="ed-label">Intent</div>
+            <div class="intent-row">
+                <select class="ibox" id="fIntentSel" onchange="onIntentChange()"></select>
+                <button class="icon-btn" title="Manage intents" onclick="manageIntents()">
+                    <span class="material-icons">tune</span>
+                </button>
+            </div>
+        </div>
+        <div class="ed-group" id="customIntentWrap">
+            <div class="ed-label">New Intent Name</div>
+            <input class="ibox" id="fIntentCustom" type="text" placeholder="e.g. WORKOUT_LOG" style="text-transform:uppercase;">
+            <div class="ed-hint">Added to this category's intent list</div>
+        </div>
+
+        <!-- Priority -->
+        <div class="ed-group">
+            <div class="ed-label">Priority <span style="font-weight:normal;text-transform:none;">(1 = low, 5 = high)</span></div>
+            <div class="prio-row" id="prioRow">
+                <button class="prio-btn" onclick="setPrio(1)">1</button>
+                <button class="prio-btn" onclick="setPrio(2)">2</button>
+                <button class="prio-btn on" onclick="setPrio(3)">3</button>
+                <button class="prio-btn" onclick="setPrio(4)">4</button>
+                <button class="prio-btn" onclick="setPrio(5)">5</button>
+            </div>
+        </div>
+
+        <!-- Window -->
+        <div class="ed-group">
+            <div class="ed-label">Window <span style="font-weight:normal;text-transform:none;">— messages back</span></div>
+            <input class="ibox" id="fWindow" type="number" min="1" max="50" placeholder="6">
+            <div class="ed-hint">Blank = engine default (6). Set <strong>1</strong> for actions that must only read the current message.</div>
+        </div>
+
+        <!-- Cooldown -->
+        <div class="ed-group">
+            <div class="ed-label">Cooldown <span style="font-weight:normal;text-transform:none;">— turns silent after firing</span></div>
+            <input class="ibox" id="fCooldown" type="number" min="0" max="50" placeholder="0">
+            <div class="ed-hint">0 = off. Saying it again in the current message always fires and resets it.</div>
+        </div>
+
+        <!-- Keywords -->
+        <div class="ed-group ed-full" id="chipwrap-kw"></div>
+
+        <!-- ── POPPY FIELDS ── -->
+        <div class="ed-sep ed-full">
+            <span class="ed-sep-label">🌸 Poppy Fields</span>
+        </div>
+
+        <!-- Block Type -->
+        <div class="ed-group">
+            <div class="ed-label">Block Type</div>
+            <div class="bt-row">
+                <div class="bt-opt" id="bt-identity" onclick="setBlockType('identity')">Identity</div>
+                <div class="bt-opt" id="bt-context"  onclick="setBlockType('context')">Context</div>
+                <div class="bt-opt" id="bt-instruction" onclick="setBlockType('instruction')">Instruction</div>
+            </div>
+            <div class="ed-hint">Identity = who she/you are · Context = background facts · Instruction = do this</div>
+        </div>
+
+        <!-- Guidelines / Script -->
+        <div class="ed-group ed-full">
+            <div class="ed-label" id="guideLabel">Guidelines &amp; Script</div>
+            <textarea class="ibox tall-ibox" id="fGuidelines" placeholder="Plain instructions, in your words. e.g.&#10;&#10;Confirm the hours back to me before writing.&#10;If I say a range (6-7), take the lower number.&#10;Never guess the wake time — ask if I didn't say it.&#10;If I sound rough about it, say one short kind thing. Don't fuss."></textarea>
+            <div class="ed-hint">Injected into Poppy's prompt when this intent fires. Prose, not code.</div>
+        </div>
+
+        <!-- Shifts -->
+        <div class="ed-group ed-full">
+            <div class="sh-hd">
+                <div class="ed-label">Shifts <span style="font-weight:normal;text-transform:none;">— extra layers on top of this entry</span></div>
+                <button class="sh-add" onclick="shOpen(null)">
+                    <span class="material-icons">add</span> Add Shift
+                </button>
+            </div>
+            <div class="sh-list" id="shList"></div>
+            <div class="ed-hint">A shift fires only when this entry fires <em>and</em> its own keywords hit. Use it to keep the base guidelines short.</div>
+        </div>
+
+        <!-- Fetch Targets -->
+        <div class="ed-group ed-full">
+            <div class="ed-label">Fetch Targets <span style="font-weight:normal;text-transform:none;">— what to read from Firebase</span></div>
+            <textarea class="ibox" id="fFetch" placeholder="One per line, e.g.&#10;sleepTracker.today&#10;poppyNotes.recent"></textarea>
+            <div class="ed-hint">The bridge pulls these Firebase paths before sending anything to Poppy</div>
+        </div>
+
+        <!-- Write Fields -->
+        <div class="ed-group ed-full">
+            <div class="ed-label">Write Fields <span style="font-weight:normal;text-transform:none;">— what Poppy may update</span></div>
+            <textarea class="ibox" id="fWrite" placeholder="One per line, e.g.&#10;wakeTime&#10;bedTime&#10;notes"></textarea>
+            <div class="ed-hint">Firebase fields Poppy is allowed to write back after this intent fires</div>
+        </div>
+
+        <!-- ── ADVANCED ── -->
+        <button class="adv-toggle" id="advToggle" onclick="toggleAdv()">
+            <span class="material-icons adv-icon">chevron_right</span>
+            Advanced Word Gates
+        </button>
+        <div class="adv-panel" id="advPanel">
+            <div class="ed-group ed-full" id="chipwrap-any"></div>
+            <div class="ed-group ed-full" id="chipwrap-all"></div>
+            <div class="ed-group ed-full" id="chipwrap-none"></div>
+            <div class="ed-group ed-full" id="chipwrap-nall"></div>
+        </div>
+
+    </div><!-- /ed-grid -->
+    </div><!-- /body -->
+
+    <div class="editor-modal-ft">
+        <button class="btn btn-secondary" onclick="closeEditor()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEntry()">
+            <span class="material-icons" style="font-size:16px;">save</span>
+            Save to Firebase
+        </button>
+    </div>
+</div>
+</div>
+
+<!-- ── CATEGORY MANAGER MODAL ────────────────────────────────── -->
+<div class="modal" id="catModal">
+<div class="im-box">
+    <div class="im-hd">
+        <span class="material-icons" style="font-size:18px;color:#b8866f;">folder</span>
+        <span class="im-title">Manage Categories</span>
+        <button class="close-btn" onclick="closeCats()"><span class="material-icons">close</span></button>
+    </div>
+    <div class="im-body">
+        <div class="im-add">
+            <input class="ibox" id="catNew" type="text" placeholder="New category name"
+                   onkeydown="if(event.key==='Enter')catAdd()">
+            <button class="btn btn-primary" onclick="catAdd()">
+                <span class="material-icons" style="font-size:16px;">add</span> Add
+            </button>
+        </div>
+        <div class="im-list" id="catMgrList"></div>
+    </div>
+</div>
+</div>
+
+<!-- ── CORE PROMPT MODAL ─────────────────────────────────────── -->
+<div class="modal" id="coreModal">
+<div class="core-box">
+    <div class="im-hd">
+        <span class="material-icons" style="font-size:18px;color:#b8866f;">psychology</span>
+        <span class="im-title">Core Prompt</span>
+        <button class="close-btn" onclick="closeCore()"><span class="material-icons">close</span></button>
+    </div>
+    <div class="im-body">
+        <div class="ed-hint" style="margin-bottom:10px;">
+            Always sent, every message. Who Poppy is and how she talks — no tasks.
+            Anything that should only appear sometimes belongs in an entry, gated by keywords.
+        </div>
+        <textarea class="core-ta" id="coreText" placeholder="You are Poppy. You live inside LifeHub…"></textarea>
+    </div>
+    <div class="sh-modal-ft">
+        <span style="flex:1;font-size:11px;color:#b09a8e;" id="coreCount"></span>
+        <button class="btn btn-secondary" onclick="closeCore()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCore()">
+            <span class="material-icons" style="font-size:16px;">check</span> Save
+        </button>
+    </div>
+</div>
+</div>
+
+<!-- ── SHIFT MODAL ───────────────────────────────────────────── -->
+<div class="modal" id="shiftModal">
+<div class="sh-box">
+    <div class="sh-modal-hd">
+        <span class="material-icons" style="font-size:18px;color:#c98aa8;">layers</span>
+        <span style="font-size:14px;font-weight:700;color:#4a3a32;flex:1;" id="shTitle">Add Shift</span>
+        <button class="close-btn" onclick="shClose()"><span class="material-icons">close</span></button>
+    </div>
+    <div class="sh-modal-body">
+        <div class="ed-group ed-full" style="margin-bottom:12px;">
+            <div class="ed-label">Shift Name</div>
+            <input class="ibox" id="shName" type="text" placeholder="e.g. Bad night, Post-workout, Skipped meal">
+        </div>
+        <div class="ed-group ed-full" id="chipwrap-skw" style="margin-bottom:12px;"></div>
+        <div class="ed-group ed-full" style="margin-bottom:12px;">
+            <div class="ed-label">Extra Guidelines</div>
+            <textarea class="ibox tall-ibox" id="shGuide" placeholder="What Poppy should do differently when this shift fires.&#10;&#10;Stacks on top of the entry's own guidelines — don't repeat them here."></textarea>
+        </div>
+        <div class="ed-group ed-full" id="chipwrap-sany" style="margin-bottom:12px;"></div>
+        <div class="ed-group ed-full" id="chipwrap-snone"></div>
+    </div>
+    <div class="sh-modal-ft">
+        <button class="btn btn-secondary" onclick="shClose()">Cancel</button>
+        <button class="btn btn-primary" onclick="shSave()">
+            <span class="material-icons" style="font-size:16px;">check</span> Save Shift
+        </button>
+    </div>
+</div>
+</div>
+
+<!-- ── INTENT MANAGER MODAL ──────────────────────────────────── -->
+<div class="modal" id="intentModal">
+<div class="im-box">
+    <div class="im-hd">
+        <span class="material-icons" style="font-size:18px;color:#b8866f;">tune</span>
+        <span class="im-title">Manage Intents</span>
+        <button class="close-btn" onclick="closeIntents()">
+            <span class="material-icons">close</span>
+        </button>
+    </div>
+    <div class="im-body">
+        <div class="im-catsel">
+            <div class="ed-label">Category</div>
+            <select class="ibox" id="imCat" onchange="renderIntentManager()"></select>
+            <div class="ed-hint">Each category keeps its own separate intent list</div>
+        </div>
+        <div class="im-add">
+            <input class="ibox" id="imNew" type="text" placeholder="NEW_INTENT_NAME"
+                   onkeydown="if(event.key==='Enter')imAdd()">
+            <button class="btn btn-primary" onclick="imAdd()">
+                <span class="material-icons" style="font-size:16px;">add</span> Add
+            </button>
+        </div>
+        <div class="im-list" id="imList"></div>
+    </div>
+</div>
+</div>
+
+<!-- ── EXPORT MODAL ──────────────────────────────────────────── -->
+<div class="modal" id="exportModal">
+<div class="export-box">
+    <div class="export-title">🌸 Export PoppyEngine.js</div>
+    <div class="export-modes">
+        <button class="mode-btn on"  id="mFull" onclick="setMode('full')">Full File</button>
+        <button class="mode-btn"     id="mDict" onclick="setMode('dict')">Dictionary Only</button>
+        <button class="mode-btn"     id="mCat"  onclick="setMode('cat')">By Category</button>
+    </div>
+    <div class="export-hint" id="exportHint"></div>
+    <textarea class="export-code" id="exportCode" readonly></textarea>
+    <div class="export-foot">
+        <button class="btn btn-secondary" onclick="closeExport()">Close</button>
+        <button class="btn btn-primary" id="copyBtn" onclick="copyCode()">
+            <span class="material-icons" style="font-size:16px;">content_copy</span>
+            Copy to Clipboard
+        </button>
+    </div>
+</div>
+</div>
+
+<!-- ── TOAST ─────────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── SCRIPT ────────────────────────────────────────────────── -->
+<script type="module">
+import { initializeApp }                          from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, push, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+// ============================================================
+// FIREBASE CONFIG
+// ── Why it's safe to embed here: ────────────────────────────
+//    Firebase Web SDK credentials are NOT secret.
+//    They are public identifiers — Google designed it this way.
+//    Security comes from your Firebase Rules, not hiding this.
+//    See: firebase.google.com/docs/projects/api-keys
+// ============================================================
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157",
+    measurementId:     "G-8JJ8C987WY"
+};
+
+const fbApp = initializeApp(cfg);
+const db    = getDatabase(fbApp);
+
+// ============================================================
+// STATE
+// ============================================================
+let entries    = {};   // { id: entryData }
+let categories = [];   // ['Sleep & Rest', ...]
+let intentsByCat = {}; // { 'Sleep & Rest': ['SLEEP_LOG', ...], ... }
+let activeCat  = null; // currently selected category filter
+let sortMode   = localStorage.getItem('poppySort') || 'manual';
+
+// Shared by the list and the export so what you see is what you ship.
+function sortedEntries(catFilter) {
+    const list = Object.entries(entries)
+        .filter(([, e]) => !catFilter || (e.category || 'Uncategorized') === catFilter);
+
+    const byName = (a, b) => (a[1].name || '').localeCompare(b[1].name || '');
+
+    switch (sortMode) {
+        case 'az':   return list.sort(byName);
+        case 'za':   return list.sort((a, b) => byName(b, a));
+        case 'new':  return list.sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+        case 'prio': return list.sort((a, b) =>
+                        (b[1].priority || 3) - (a[1].priority || 3) || byName(a, b));
+        default:     return list.sort((a, b) =>
+                        (a[1].order ?? 9e9) - (b[1].order ?? 9e9) || byName(a, b));
+    }
+}
+
+window.setSort = function(mode) {
+    sortMode = mode;
+    localStorage.setItem('poppySort', mode);
+    renderList();
+};
+
+// Manual order needs numbers to move around. Stamp them on first use.
+async function ensureOrder() {
+    const list = sortedEntries(null);
+    const jobs = [];
+    list.forEach((pair, i) => {
+        if (pair[1].order !== i) {
+            pair[1].order = i;
+            jobs.push(update(ref(db, 'poppyEngine/entries/' + pair[0]), { order: i }));
+        }
+    });
+    if (jobs.length) await Promise.all(jobs);
+}
+
+// ── CARD CONTEXT MENU ───────────────────────────────────────
+let ctxId = null;
+
+window.openCtx = function(ev, id) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    ctxId = id;
+
+    const m = document.getElementById('ctxMenu');
+    document.getElementById('ctxName').textContent =
+        (entries[id] && entries[id].name) || 'Unnamed';
+
+    m.classList.add('open');
+    const w = m.offsetWidth, h = m.offsetHeight;
+    m.style.left = Math.min(ev.clientX, window.innerWidth  - w - 8) + 'px';
+    m.style.top  = Math.min(ev.clientY, window.innerHeight - h - 8) + 'px';
+};
+
+function closeCtx() {
+    ctxId = null;
+    document.getElementById('ctxMenu').classList.remove('open');
+}
+
+window.ctxDo = function(action) {
+    const id = ctxId;
+    closeCtx();
+    if (!id) return;
+    if (action === 'edit') openEditor(id);
+    if (action === 'dupe') duplicateEntry(id);
+    if (action === 'del')  deleteEntry(id);
+};
+
+document.addEventListener('click', closeCtx);
+document.addEventListener('scroll', closeCtx, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCtx(); });
+
+// ── VISIBILITY ──────────────────────────────────────────────
+window.toggleVisible = async function(id) {
+    const e = entries[id];
+    if (!e) return;
+    const next = !(e.hidden === true);
+    try {
+        await update(ref(db, 'poppyEngine/entries/' + id), { hidden: next });
+        toast(next ? '\u{1f648} Excluded from export' : '\u{1f441} Included in export');
+    } catch (err) { toast('\u274c ' + err.message); }
+};
+
+window.setAllVisible = async function(show) {
+    const list = sortedEntries(activeCat);
+    if (!list.length) return;
+    try {
+        await Promise.all(list.map(([id]) =>
+            update(ref(db, 'poppyEngine/entries/' + id), { hidden: !show })));
+        toast(show ? `\u{1f441} ${list.length} included` : `\u{1f648} ${list.length} excluded`);
+    } catch (err) { toast('\u274c ' + err.message); }
+};
+let editingId  = null; // entry being edited (null = new)
+let prio       = 3;    // current priority selection
+
+
+// ============================================================
+// FIREBASE — LIVE LISTENERS
+// ============================================================
+onValue(ref(db, 'poppyEngine/entries'), snap => {
+    entries = snap.val() || {};
+    renderList();
+    setFb(true);
+}, () => setFb(false));
+
+onValue(ref(db, 'poppyEngine/intents'), async snap => {
+    const raw = snap.val() || {};
+
+    // Migrate the old flat shape { INTENT: true } into
+    // { category: { INTENT: true } }. Runs once, silently.
+    const flat = Object.keys(raw).filter(k => raw[k] === true);
+    if (flat.length) {
+        const moved = {};
+        Object.keys(raw).forEach(k => {
+            if (raw[k] === true) {
+                // park it under whichever category already uses it
+                const owner = Object.values(entries).find(e => e.intent === k);
+                const cat = (owner && owner.category) || 'Uncategorized';
+                moved[cat] = moved[cat] || {};
+                moved[cat][k] = true;
+            } else {
+                moved[k] = { ...(moved[k] || {}), ...raw[k] };
+            }
+        });
+        await set(ref(db, 'poppyEngine/intents'), moved);
+        return;
+    }
+
+    intentsByCat = {};
+    Object.keys(raw).forEach(cat => {
+        intentsByCat[cat] = Object.keys(raw[cat] || {}).sort();
+    });
+    syncIntentDropdown();
+    if (document.getElementById('intentModal').classList.contains('active')) {
+        renderIntentManager();
+    }
+});
+
+onValue(ref(db, 'poppyEngine/categories'), snap => {
+    const raw = snap.val() || {};
+    catKeys = {};
+    Object.entries(raw).forEach(([k, v]) => { catKeys[v] = k; });
+    categories = [...new Set(Object.values(raw))].sort();
+    renderSidebar();
+    syncCatDropdown();
+    if (document.getElementById('catModal').classList.contains('active')) renderCatManager();
+});
+
+function setFb(ok) {
+    document.getElementById('fbDot').className = 'fb-dot ' + (ok ? 'on' : 'err');
+    document.getElementById('fbLabel').textContent = ok ? 'Firebase connected' : 'Connection error';
+}
+
+// ============================================================
+// CORE PROMPT
+// ============================================================
+let corePrompt = '';
+
+onValue(ref(db, 'poppyEngine/core'), snap => { corePrompt = snap.val() || ''; });
+
+window.openCore = function() {
+    const ta = document.getElementById('coreText');
+    ta.value = corePrompt;
+    ta.oninput = () => {
+        document.getElementById('coreCount').textContent =
+            ta.value.length ? `${ta.value.length} characters` : '';
+    };
+    ta.oninput();
+    document.getElementById('coreModal').classList.add('active');
+    setTimeout(() => ta.focus(), 100);
+};
+
+window.closeCore = function() {
+    document.getElementById('coreModal').classList.remove('active');
+};
+
+window.saveCore = async function() {
+    try {
+        await set(ref(db, 'poppyEngine/core'), document.getElementById('coreText').value);
+        toast('✅ Core prompt saved');
+        closeCore();
+    } catch (err) { toast('❌ ' + err.message); }
+};
+
+// ============================================================
+// BLOCK TYPE
+// ============================================================
+let blockType = 'instruction';
+
+const BT_LABELS = {
+    identity:    'Identity Text',
+    context:     'Context Text',
+    instruction: 'Guidelines &amp; Script'
+};
+
+window.setBlockType = function(t) {
+    blockType = t;
+    ['identity','context','instruction'].forEach(x => {
+        document.getElementById('bt-' + x).classList.toggle('on', x === t);
+    });
+    const lbl = document.getElementById('guideLabel');
+    if (lbl) lbl.innerHTML = BT_LABELS[t];
+};
+
+// ============================================================
+// SHIFTS
+// ============================================================
+let pendingShifts = [];
+let editingShift  = null;   // index being edited, null = new
+
+function renderShifts() {
+    const box = document.getElementById('shList');
+    if (!box) return;
+    if (!pendingShifts.length) {
+        box.innerHTML = '<div class="sh-empty">No shifts. The entry\'s guidelines apply as-is.</div>';
+        return;
+    }
+    box.innerHTML = pendingShifts.map((s, i) => {
+        const kw = (s.keywords || []).length
+            ? (s.keywords || []).slice(0, 4).join(', ') + ((s.keywords || []).length > 4 ? '…' : '')
+            : 'always';
+        return `<div class="sh-row">
+            <span class="material-icons" style="font-size:15px;color:#d9a8bd;">layers</span>
+            <span class="sh-title">${esc(s.title || 'Untitled shift')}</span>
+            <span class="sh-kw">${esc(kw)}</span>
+            <div class="im-acts">
+                <button class="chip-tool" title="Edit" onclick="shOpen(${i})">
+                    <span class="material-icons">edit</span></button>
+                <button class="chip-tool danger" title="Delete" onclick="shDelete(${i})">
+                    <span class="material-icons">delete</span></button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+window.shOpen = function(i) {
+    editingShift = i;
+    const s = (i == null) ? {} : pendingShifts[i];
+    document.getElementById('shTitle').textContent = (i == null) ? 'Add Shift' : 'Edit Shift';
+    document.getElementById('shName').value  = s.title || '';
+    document.getElementById('shGuide').value = s.guidelines || '';
+    chips.skw   = [...(s.keywords    || [])];
+    chips.sany  = [...(s.requireAny  || [])];
+    chips.snone = [...(s.requireNone || [])];
+    ['skw','sany','snone'].forEach(renderChips);
+    document.getElementById('shiftModal').classList.add('active');
+    setTimeout(() => document.getElementById('shName').focus(), 100);
+};
+
+window.shClose = function() {
+    document.getElementById('shiftModal').classList.remove('active');
+    editingShift = null;
+};
+
+window.shSave = function() {
+    const title = document.getElementById('shName').value.trim();
+    const guide = document.getElementById('shGuide').value.trim();
+    if (!title) { toast('⚠️ Name your shift'); return; }
+    if (!guide) { toast('⚠️ A shift needs guidelines'); return; }
+
+    const sh = {
+        title,
+        guidelines:  guide,
+        keywords:    [...chips.skw],
+        requireAny:  [...chips.sany],
+        requireNone: [...chips.snone]
+    };
+    if (editingShift == null) pendingShifts.push(sh);
+    else pendingShifts[editingShift] = sh;
+
+    renderShifts();
+    shClose();
+    toast('✅ Shift saved — remember to save the entry');
+};
+
+window.shDelete = function(i) {
+    if (!confirm(`Delete shift "${pendingShifts[i].title}"?`)) return;
+    pendingShifts.splice(i, 1);
+    renderShifts();
+};
+
+// ============================================================
+// CATEGORY MANAGEMENT
+// ============================================================
+let catKeys = {};   // name -> firebase push key, so we can rename/delete
+
+window.manageCats = function() {
+    renderCatManager();
+    document.getElementById('catModal').classList.add('active');
+};
+
+window.closeCats = function() {
+    document.getElementById('catModal').classList.remove('active');
+    editingCat = null;
+};
+
+let editingCat = null;
+
+function catUsage(name) {
+    return Object.values(entries).filter(e => (e.category || 'Uncategorized') === name).length;
+}
+
+window.renderCatManager = function() {
+    const box = document.getElementById('catMgrList');
+    if (!categories.length) {
+        box.innerHTML = '<div class="im-empty">No categories yet. Add one above.</div>';
+        return;
+    }
+    box.innerHTML = categories.map(name => {
+        const n  = catUsage(name);
+        const ni = (intentsByCat[name] || []).length;
+
+        if (editingCat === name) {
+            return `<div class="im-row editing">
+                <span class="material-icons" style="font-size:15px;color:#b8866f;">folder</span>
+                <input class="im-name-input" id="catRenameField" value="${esc(name)}"
+                       style="text-transform:none;"
+                       onkeydown="if(event.key==='Enter')catCommitRename('${esc(name)}');
+                                  if(event.key==='Escape')catCancelRename()">
+                <div class="im-acts">
+                    <button class="chip-tool" onclick="catCommitRename('${esc(name)}')">
+                        <span class="material-icons">check</span></button>
+                    <button class="chip-tool" onclick="catCancelRename()">
+                        <span class="material-icons">close</span></button>
+                </div>
+            </div>`;
+        }
+
+        return `<div class="im-row">
+            <span class="material-icons" style="font-size:15px;color:#c9b3a6;">folder</span>
+            <span class="im-name" style="text-transform:none;">${esc(name)}</span>
+            <span class="im-use ${n ? '' : 'zero'}">${n} entr${n === 1 ? 'y' : 'ies'} · ${ni} intent${ni === 1 ? '' : 's'}</span>
+            <div class="im-acts">
+                <button class="chip-tool" title="Rename" onclick="catStartRename('${esc(name)}')">
+                    <span class="material-icons">edit</span></button>
+                <button class="chip-tool danger" title="Delete" onclick="catDelete('${esc(name)}')">
+                    <span class="material-icons">delete</span></button>
+            </div>
+        </div>`;
+    }).join('');
+};
+
+window.catAdd = async function() {
+    const f = document.getElementById('catNew');
+    const name = f.value.trim();
+    if (!name) { toast('⚠️ Give it a name'); return; }
+    if (categories.some(c => c.toLowerCase() === name.toLowerCase())) {
+        toast('⚠️ Already exists'); return;
+    }
+    await push(ref(db, 'poppyEngine/categories'), name);
+    f.value = '';
+    toast(`✅ ${name} added`);
+};
+
+window.catStartRename = function(name) {
+    editingCat = name;
+    renderCatManager();
+    setTimeout(() => {
+        const f = document.getElementById('catRenameField');
+        if (f) { f.focus(); f.select(); }
+    }, 40);
+};
+
+window.catCancelRename = function() { editingCat = null; renderCatManager(); };
+
+window.catCommitRename = async function(oldName) {
+    const f = document.getElementById('catRenameField');
+    const name = (f ? f.value : '').trim();
+    if (!name) { toast('⚠️ Name cannot be empty'); return; }
+    if (name === oldName) { editingCat = null; renderCatManager(); return; }
+    if (categories.some(c => c.toLowerCase() === name.toLowerCase())) {
+        toast('⚠️ That name is taken'); return;
+    }
+
+    const affected = Object.entries(entries).filter(([, e]) => (e.category || 'Uncategorized') === oldName);
+    if (affected.length && !confirm(
+        `Rename "${oldName}" → "${name}"?\n\n` +
+        `${affected.length} entr${affected.length === 1 ? 'y' : 'ies'} and its intent list move across.`
+    )) return;
+
+    try {
+        // rename the category record
+        if (catKeys[oldName]) await set(ref(db, `poppyEngine/categories/${catKeys[oldName]}`), name);
+        // move its intent list
+        const ints = intentsByCat[oldName];
+        if (ints && ints.length) {
+            await set(ref(db, `poppyEngine/intents/${name}`),
+                      Object.fromEntries(ints.map(i => [i, true])));
+            await remove(ref(db, `poppyEngine/intents/${oldName}`));
+        }
+        // repoint entries
+        for (const [id, e] of affected) {
+            await set(ref(db, `poppyEngine/entries/${id}`), { ...e, category: name, updatedAt: Date.now() });
+        }
+        editingCat = null;
+        toast(`✅ Renamed — ${affected.length} entr${affected.length === 1 ? 'y' : 'ies'} moved`);
+    } catch (err) { toast('❌ ' + err.message); }
+};
+
+window.catDelete = async function(name) {
+    const n = catUsage(name);
+    if (n) { toast(`⚠️ ${n} entr${n === 1 ? 'y' : 'ies'} still in "${name}" — move them first`); return; }
+    if (!confirm(`Delete category "${name}"?\n\nIts intent list goes with it.`)) return;
+    try {
+        if (catKeys[name]) await remove(ref(db, `poppyEngine/categories/${catKeys[name]}`));
+        await remove(ref(db, `poppyEngine/intents/${name}`));
+        if (activeCat === name) { activeCat = null; renderSidebar(); renderList(); }
+        toast('🗑️ Category deleted');
+    } catch (err) { toast('❌ ' + err.message); }
+};
+
+// ============================================================
+// INTENTS  — scoped per category
+// ============================================================
+function currentCat() {
+    return document.getElementById('fCategory').value || 'Uncategorized';
+}
+
+function intentsFor(cat) {
+    return intentsByCat[cat] || [];
+}
+
+function syncIntentDropdown() {
+    const sel = document.getElementById('fIntentSel');
+    if (!sel) return;
+    const cur  = sel.value;
+    const list = intentsFor(currentCat());
+
+    let html = '';
+    if (!list.length) html += '<option value="" disabled>— none in this category —</option>';
+    list.forEach(i => { html += `<option value="${esc(i)}">${esc(i)}</option>`; });
+    html += '<option value="custom">+ New intent…</option>';
+    sel.innerHTML = html;
+
+    if (cur && (list.includes(cur) || cur === 'custom')) sel.value = cur;
+    else if (!list.length) sel.value = 'custom';
+    onIntentChange();
+}
+
+// Called when the entry's Category dropdown changes — the intent
+// list has to follow, since intents belong to a category now.
+window.onCategoryChange = function() {
+    syncIntentDropdown();
+};
+
+function cleanIntentName(name) {
+    return String(name || '').trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_').replace(/^_+|_+$/g, '');
+}
+
+async function addIntent(name, cat) {
+    const clean = cleanIntentName(name);
+    if (!clean) return null;
+    cat = cat || currentCat();
+    if (!intentsFor(cat).includes(clean)) {
+        await set(ref(db, `poppyEngine/intents/${cat}/${clean}`), true);
+    }
+    return clean;
+}
+
+// ── usage counts ────────────────────────────────────────────
+function intentUsage(cat, name) {
+    return Object.values(entries).filter(e =>
+        e.intent === name && (e.category || 'Uncategorized') === cat).length;
+}
+
+// ── MANAGER MODAL ───────────────────────────────────────────
+window.manageIntents = function() {
+    const sel = document.getElementById('imCat');
+    let html = '<option value="Uncategorized">— Uncategorized —</option>';
+    categories.forEach(c => { html += `<option value="${esc(c)}">${esc(c)}</option>`; });
+    sel.innerHTML = html;
+    sel.value = currentCat();
+    renderIntentManager();
+    document.getElementById('intentModal').classList.add('active');
+    setTimeout(() => document.getElementById('imNew').focus(), 100);
+};
+
+window.closeIntents = function() {
+    document.getElementById('intentModal').classList.remove('active');
+    imEditing = null;
+    syncIntentDropdown();
+};
+
+let imEditing = null;   // intent name currently being renamed
+
+window.renderIntentManager = function() {
+    const cat  = document.getElementById('imCat').value;
+    const list = intentsFor(cat);
+    const box  = document.getElementById('imList');
+
+    if (!list.length) {
+        box.innerHTML = `<div class="im-empty">
+            No intents in <strong>${esc(cat)}</strong> yet.<br>Add one above.</div>`;
+        return;
+    }
+
+    box.innerHTML = list.map(name => {
+        const n = intentUsage(cat, name);
+        const useLabel = `${n} entr${n === 1 ? 'y' : 'ies'}`;
+
+        if (imEditing === name) {
+            return `<div class="im-row editing">
+                <span class="material-icons" style="font-size:15px;color:#b8866f;">label</span>
+                <input class="im-name-input" id="imRenameField" value="${esc(name)}"
+                       onkeydown="if(event.key==='Enter')imCommitRename('${esc(cat)}','${esc(name)}');
+                                  if(event.key==='Escape')imCancelRename()">
+                <div class="im-acts">
+                    <button class="chip-tool" title="Save" onclick="imCommitRename('${esc(cat)}','${esc(name)}')">
+                        <span class="material-icons">check</span></button>
+                    <button class="chip-tool" title="Cancel" onclick="imCancelRename()">
+                        <span class="material-icons">close</span></button>
+                </div>
+            </div>`;
+        }
+
+        return `<div class="im-row">
+            <span class="material-icons" style="font-size:15px;color:#c9b3a6;">label</span>
+            <span class="im-name">${esc(name)}</span>
+            <span class="im-use ${n ? '' : 'zero'}">${useLabel}</span>
+            <div class="im-acts">
+                <button class="chip-tool" title="Rename" onclick="imStartRename('${esc(name)}')">
+                    <span class="material-icons">edit</span></button>
+                <button class="chip-tool danger" title="Delete" onclick="imDelete('${esc(cat)}','${esc(name)}')">
+                    <span class="material-icons">delete</span></button>
+            </div>
+        </div>`;
+    }).join('');
+};
+
+window.imAdd = async function() {
+    const cat   = document.getElementById('imCat').value;
+    const field = document.getElementById('imNew');
+    const clean = cleanIntentName(field.value);
+    if (!clean) { toast('⚠️ Give it a name'); return; }
+    if (intentsFor(cat).includes(clean)) { toast('⚠️ Already exists here'); return; }
+    await set(ref(db, `poppyEngine/intents/${cat}/${clean}`), true);
+    field.value = '';
+    toast(`✅ ${clean} added`);
+};
+
+window.imStartRename = function(name) {
+    imEditing = name;
+    renderIntentManager();
+    setTimeout(() => {
+        const f = document.getElementById('imRenameField');
+        if (f) { f.focus(); f.select(); }
+    }, 40);
+};
+
+window.imCancelRename = function() { imEditing = null; renderIntentManager(); };
+
+window.imCommitRename = async function(cat, oldName) {
+    const field = document.getElementById('imRenameField');
+    const clean = cleanIntentName(field ? field.value : '');
+    if (!clean)              { toast('⚠️ Name cannot be empty'); return; }
+    if (clean === oldName)   { imEditing = null; renderIntentManager(); return; }
+    if (intentsFor(cat).includes(clean)) { toast('⚠️ That name is taken'); return; }
+
+    const affected = Object.entries(entries).filter(([, e]) =>
+        e.intent === oldName && (e.category || 'Uncategorized') === cat);
+
+    if (affected.length && !confirm(
+        `Rename ${oldName} → ${clean}?\n\n` +
+        `${affected.length} entr${affected.length === 1 ? 'y' : 'ies'} will be updated to match.`
+    )) return;
+
+    try {
+        // add new, repoint entries, drop old — entries never orphan
+        await set(ref(db, `poppyEngine/intents/${cat}/${clean}`), true);
+        for (const [id, e] of affected) {
+            await set(ref(db, `poppyEngine/entries/${id}`), { ...e, intent: clean, updatedAt: Date.now() });
+        }
+        await remove(ref(db, `poppyEngine/intents/${cat}/${oldName}`));
+        imEditing = null;
+        toast(`✅ Renamed — ${affected.length} entr${affected.length === 1 ? 'y' : 'ies'} updated`);
+    } catch (err) {
+        toast('❌ Rename failed: ' + err.message);
+    }
+};
+
+window.imDelete = async function(cat, name) {
+    const n = intentUsage(cat, name);
+    if (n) {
+        toast(`⚠️ ${name} is used by ${n} entr${n === 1 ? 'y' : 'ies'} — repoint them first`);
+        return;
+    }
+    if (!confirm(`Delete intent "${name}" from ${cat}?`)) return;
+    await remove(ref(db, `poppyEngine/intents/${cat}/${name}`));
+    toast('🗑️ Intent deleted');
+};
+
+// ============================================================
+// CATEGORIES
+// ============================================================
+window.addCategory = async function() {
+    const name = prompt('New category name:');
+    if (!name || !name.trim()) return;
+    if (categories.some(c => c.toLowerCase() === name.trim().toLowerCase())) {
+        toast('⚠️ Category already exists'); return;
+    }
+    await push(ref(db, 'poppyEngine/categories'), name.trim());
+};
+
+function renderSidebar() {
+    const counts = {};
+    Object.values(entries).forEach(e => {
+        const c = e.category || 'Uncategorized';
+        counts[c] = (counts[c] || 0) + 1;
+    });
+    const total = Object.keys(entries).length;
+
+    let html = catItem(null, 'all_inclusive', 'All Intents', total);
+    categories.forEach(c => {
+        html += catItem(c, 'label', c, counts[c] || 0);
+    });
+    if (!categories.includes('Uncategorized') && counts['Uncategorized']) {
+        html += catItem('Uncategorized', 'label', 'Uncategorized', counts['Uncategorized'] || 0);
+    }
+    document.getElementById('catList').innerHTML = html;
+}
+
+function catItem(cat, icon, label, count) {
+    const active = activeCat === cat;
+    return `<div class="cat-item ${active ? 'active' : ''}" onclick="selectCat(${cat ? `'${esc(cat)}'` : 'null'})">
+        <span class="material-icons cat-icon">${icon}</span>
+        <span class="cat-name">${esc(label)}</span>
+        <span class="cat-count">${count}</span>
+    </div>`;
+}
+
+window.selectCat = function(cat) {
+    activeCat = cat;
+    renderSidebar();
+    renderList();
+};
+
+function syncCatDropdown() {
+    const sel = document.getElementById('fCategory');
+    const cur = sel.value;
+    let html = '<option value="Uncategorized">— Uncategorized —</option>';
+    categories.forEach(c => {
+        html += `<option value="${esc(c)}">${esc(c)}</option>`;
+    });
+    sel.innerHTML = html;
+    if (cur) sel.value = cur;
+}
+
+// ============================================================
+// ENTRY LIST
+// ============================================================
+function renderList() {
+    const filtered = sortedEntries(activeCat);
+    const hiddenN  = filtered.filter(([, e]) => e.hidden === true).length;
+
+    document.getElementById('sortSel').value = sortMode;
+
+    document.getElementById('listTitle').textContent = activeCat || 'All Intents';
+    document.getElementById('listCount').textContent =
+        `${filtered.length} entr${filtered.length === 1 ? 'y' : 'ies'}` +
+        (hiddenN ? ` · ${hiddenN} excluded` : '');
+
+    if (!filtered.length) {
+        document.getElementById('entryList').innerHTML = `
+            <div class="empty-state">
+                <span class="material-icons">auto_awesome</span>
+                <p>No intent entries yet${activeCat ? ' in this category' : ''}.<br>
+                Click <strong>New Intent</strong> to start building Poppy's dictionary.</p>
+            </div>`;
+        return;
+    }
+
+    document.getElementById('entryList').innerHTML = filtered.map(([id, e]) => buildCard(id, e)).join('');
+}
+
+function buildCard(id, e) {
+    const kws = (e.keywords || []);
+    const kwHtml = kws.length
+        ? kws.map(k => `<span class="kw-pill">${esc(k)}</span>`).join('')
+        : '<span class="kw-none">no keywords — fallback</span>';
+
+    const fetchHtml = (e.fetchTargets || []).join('\n') || '—';
+    const writeHtml = (e.writeFields  || []).join('\n') || '—';
+    const guideHtml = (e.guidelines || '').trim();
+
+    const gateHtml = [
+        ...(e.requireAny  || []).map(w => `<span class="gate-pill gate-any">any: ${esc(w)}</span>`),
+        ...(e.requireAll  || []).map(w => `<span class="gate-pill gate-all">all: ${esc(w)}</span>`),
+        ...(e.requireNone || []).map(w => `<span class="gate-pill gate-none">none: ${esc(w)}</span>`),
+        ...(e.notAll      || []).map(w => `<span class="gate-pill gate-none">notAll: ${esc(w)}</span>`)
+    ].join('');
+
+    return `
+    <div class="entry-card${e.hidden === true ? ' is-hidden' : ''}" id="card-${id}">
+        <div class="entry-card-hd" onclick="toggleCard('${id}')"
+             oncontextmenu="openCtx(event,'${id}')">
+            <span class="material-icons chevron" id="chv-${id}">chevron_right</span>
+            <span class="entry-card-title">${esc(e.name || 'Unnamed')}</span>
+            <span class="intent-badge">${esc(e.intent || '—')}</span>
+            ${!activeCat && e.category ? `<span class="badge">${esc(e.category)}</span>` : ''}
+            ${(e.Shifts || []).length ? `<span class="badge badge-cool">⧉ ${e.Shifts.length}</span>` : ''}
+            ${e.blockType && e.blockType !== 'instruction' ? `<span class="badge badge-${e.blockType}">${e.blockType}</span>` : ''}
+            ${e.priority ? `<span class="badge badge-prio">P${e.priority}</span>` : ''}
+            ${e.window   ? `<span class="badge">W${e.window}</span>`   : ''}
+            ${e.cooldown ? `<span class="badge">CD${e.cooldown}</span>` : ''}
+            <div class="card-actions">
+                <button class="icon-btn${e.hidden === true ? ' eye-off' : ''}"
+                        title="${e.hidden === true ? 'Excluded from export — click to include' : 'Included in export — click to exclude'}"
+                        onclick="toggleVisible('${id}');event.stopPropagation()">
+                    <span class="material-icons">${e.hidden === true ? 'visibility_off' : 'visibility'}</span>
+                </button>
+            </div>
+        </div>
+        <div class="entry-card-body" id="body-${id}">
+            <div class="kw-list">${kwHtml}</div>
+            <div class="ed-grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+                ${guideHtml ? `<div class="field-block" style="grid-column:1/-1">
+                    <div class="field-block-label">Guidelines &amp; Script</div>
+                    <div class="guide-preview">${esc(guideHtml)}</div>
+                </div>` : ''}
+                <div class="field-block">
+                    <div class="field-block-label">Fetch Targets</div>
+                    <div class="field-block-value" style="white-space:pre-line">${esc(fetchHtml)}</div>
+                </div>
+                <div class="field-block">
+                    <div class="field-block-label">Write Fields</div>
+                    <div class="field-block-value" style="white-space:pre-line">${esc(writeHtml)}</div>
+                </div>
+                ${gateHtml ? `<div class="field-block" style="grid-column:1/-1">
+                    <div class="field-block-label">Word Gates</div>
+                    <div class="gate-pills">${gateHtml}</div>
+                </div>` : ''}
+            </div>
+        </div>
+    </div>`;
+}
+
+window.toggleCard = function(id) {
+    const body = document.getElementById('body-' + id);
+    const chv  = document.getElementById('chv-'  + id);
+    body.classList.toggle('open');
+    chv.classList.toggle('open');
+};
+
+// ============================================================
+// EDITOR
+// ============================================================
+window.openEditor = function(id) {
+    editingId = id;
+    clearForm();
+    syncCatDropdown();
+
+    // New entry while a category is selected — start in that category.
+    if (!id && activeCat) {
+        document.getElementById('fCategory').value = activeCat;
+        syncIntentDropdown();
+    }
+
+    if (id && entries[id]) {
+        const e = entries[id];
+        document.getElementById('editorTitle').textContent = 'Edit: ' + (e.name || 'Unnamed');
+        document.getElementById('fName').value     = e.name || '';
+        document.getElementById('fCategory').value = e.category || 'Uncategorized';
+        syncIntentDropdown();
+
+        // Intent — if it isn't registered under this category yet, register it
+        if (e.intent && !intentsFor(e.category || 'Uncategorized').includes(e.intent)) {
+            addIntent(e.intent, e.category || 'Uncategorized');
+        }
+        syncIntentDropdown();
+        document.getElementById('fIntentSel').value = e.intent || 'custom';
+        onIntentChange();
+
+        prio = e.priority || 3;
+        refreshPrio();
+
+        document.getElementById('fWindow').value   = e.window   || '';
+        document.getElementById('fCooldown').value = e.cooldown || '';
+
+        setBlockType(e.blockType || 'instruction');
+        document.getElementById('fGuidelines').value  = e.guidelines || '';
+        document.getElementById('fFetch').value       = (e.fetchTargets || []).join('\n');
+        document.getElementById('fWrite').value       = (e.writeFields  || []).join('\n');
+        chips.kw   = [...(e.keywords    || [])];
+        chips.any  = [...(e.requireAny  || [])];
+        chips.all  = [...(e.requireAll  || [])];
+        chips.none = [...(e.requireNone || [])];
+        chips.nall = [...(e.notAll      || [])];
+        renderAllChips();
+        pendingShifts = JSON.parse(JSON.stringify(e.Shifts || []));
+        renderShifts();
+    } else {
+        document.getElementById('editorTitle').textContent = 'New Intent Entry';
+    }
+
+    document.getElementById('editorModal').classList.add('active');
+    setTimeout(() => document.getElementById('fName').focus(), 100);
+};
+
+window.closeEditor = function() {
+    document.getElementById('editorModal').classList.remove('active');
+};
+
+window.saveEntry = async function() {
+    const name    = document.getElementById('fName').value.trim();
+    const cat     = document.getElementById('fCategory').value || 'Uncategorized';
+    const intentS = document.getElementById('fIntentSel').value;
+    let   intent  = intentS;
+
+    if (intentS === 'custom') {
+        intent = await addIntent(document.getElementById('fIntentCustom').value, cat);
+    }
+
+    if (!name)   { toast('⚠️ Entry name is required'); return; }
+    if (!intent) { toast('⚠️ Intent is required');     return; }
+
+    const fetchRaw = document.getElementById('fFetch').value.trim();
+    const writeRaw = document.getElementById('fWrite').value.trim();
+    const winRaw   = document.getElementById('fWindow').value.trim();
+    const coolRaw  = document.getElementById('fCooldown').value.trim();
+
+    const entry = {
+        name, category: cat, intent,
+        keywords:        [...chips.kw],
+        priority:        prio,
+        order:           editingId && entries[editingId] && entries[editingId].order != null
+                             ? entries[editingId].order
+                             : Object.keys(entries).length,
+        hidden:          editingId && entries[editingId] ? (entries[editingId].hidden === true) : false,
+        window:          winRaw  ? Math.max(1, Math.min(50, +winRaw))  : null,
+        cooldown:        coolRaw ? Math.max(0, Math.min(50, +coolRaw)) : 0,
+        blockType:       blockType,
+        guidelines:      document.getElementById('fGuidelines').value.trim(),
+        Shifts:          JSON.parse(JSON.stringify(pendingShifts)),
+        fetchTargets:    fetchRaw ? fetchRaw.split('\n').map(s => s.trim()).filter(Boolean) : [],
+        writeFields:     writeRaw ? writeRaw.split('\n').map(s => s.trim()).filter(Boolean) : [],
+        requireAny:      [...chips.any],
+        requireAll:      [...chips.all],
+        requireNone:     [...chips.none],
+        notAll:          [...chips.nall],
+        updatedAt:       Date.now()
+    };
+
+    try {
+        if (editingId) {
+            await set(ref(db, `poppyEngine/entries/${editingId}`), entry);
+            toast('✅ Entry updated!');
+        } else {
+            entry.createdAt = Date.now();
+            await push(ref(db, 'poppyEngine/entries'), entry);
+            toast('✅ Saved to Firebase!');
+        }
+        closeEditor();
+    } catch (err) {
+        toast('❌ Save failed: ' + err.message);
+    }
+};
+
+window.duplicateEntry = async function(id) {
+    const e = entries[id];
+    if (!e) return;
+    const copy = JSON.parse(JSON.stringify(e));
+    copy.name = (copy.name || 'Unnamed') + ' (copy)';
+    copy.createdAt = Date.now();
+    copy.order     = Object.keys(entries).length;   // lands at the end
+    copy.hidden    = false;
+    copy.updatedAt = Date.now();
+    try {
+        await push(ref(db, 'poppyEngine/entries'), copy);
+        toast('\u29c9 Entry duplicated');
+    } catch (err) {
+        toast('\u274c Duplicate failed: ' + err.message);
+    }
+};
+
+window.deleteEntry = async function(id) {
+    if (!confirm('Delete this entry?')) return;
+    try {
+        await remove(ref(db, `poppyEngine/entries/${id}`));
+        toast('🗑️ Entry deleted');
+    } catch (err) {
+        toast('❌ Delete failed');
+    }
+};
+
+function clearForm() {
+    prio = 3;
+    chips = { kw: [], any: [], all: [], none: [], nall: [], skw: [], sany: [], snone: [] };
+    document.getElementById('fName').value          = '';
+    document.getElementById('fCategory').value      = 'Uncategorized';
+    document.getElementById('fIntentCustom').value  = '';
+    document.getElementById('fWindow').value        = '';
+    document.getElementById('fCooldown').value      = '';
+    syncIntentDropdown();
+    document.getElementById('fGuidelines').value    = '';
+    document.getElementById('fFetch').value         = '';
+    document.getElementById('fWrite').value         = '';
+    document.getElementById('advToggle').classList.remove('open');
+    document.getElementById('advPanel').classList.remove('open');
+    pendingShifts = [];
+    setBlockType('instruction');
+    refreshPrio();
+    renderAllChips();
+    renderShifts();
+}
+
+// ============================================================
+// PRIORITY
+// ============================================================
+window.setPrio = function(p) { prio = p; refreshPrio(); };
+function refreshPrio() {
+    document.querySelectorAll('.prio-btn').forEach((b, i) => {
+        b.classList.toggle('on', i + 1 === prio);
+    });
+}
+
+// ============================================================
+// CHIP LISTS — keywords + all four word gates
+// One component, five instances. Every list dedupes on add and
+// has copy-all / clear-all.
+// ============================================================
+const CHIP_DEFS = {
+    kw:   { label: 'Trigger Keywords',  hint: 'Leave empty → fallback entry (fires only when nothing else matches)',
+            ph: 'Type a keyword + Enter…' },
+    any:  { label: 'Require Any',       hint: 'At least one of these must be present',
+            ph: 'Type a word + Enter…' },
+    all:  { label: 'Require All',       hint: 'Every one of these must be present',
+            ph: 'Type a word + Enter…' },
+    none: { label: 'Block Any',         hint: 'Blocks this entry if ANY of these appear',
+            ph: 'e.g. thinking, maybe…' },
+    nall: { label: 'Block All',         hint: 'Blocks only if ALL of these appear together',
+            ph: 'Type a word + Enter…' },
+    skw:  { label: 'Shift Keywords',    hint: 'Leave empty → this shift fires whenever the parent entry does',
+            ph: 'Type a keyword + Enter…' },
+    sany: { label: 'Require Any',       hint: 'Optional extra gate for this shift',
+            ph: 'Type a word + Enter…' },
+    snone:{ label: 'Block Any',         hint: 'Blocks this shift if ANY of these appear',
+            ph: 'Type a word + Enter…' }
+};
+
+let chips = { kw: [], any: [], all: [], none: [], nall: [], skw: [], sany: [], snone: [] };
+
+function buildChipBlocks() {
+    Object.keys(CHIP_DEFS).forEach(k => {
+        const d = CHIP_DEFS[k];
+        const wrap = document.getElementById('chipwrap-' + k);
+        if (!wrap) return;
+        wrap.innerHTML = `
+            <div class="chip-hd">
+                <div class="ed-label">${d.label}</div>
+                <span class="chip-count" id="chipcount-${k}"></span>
+                <div class="chip-tools">
+                    <button class="chip-tool" title="Copy all" onclick="chipCopy('${k}')">
+                        <span class="material-icons">content_copy</span>
+                    </button>
+                    <button class="chip-tool danger" title="Remove all" onclick="chipClear('${k}')">
+                        <span class="material-icons">delete_sweep</span>
+                    </button>
+                </div>
+            </div>
+            <div class="kw-area" id="chiparea-${k}" onclick="document.getElementById('chipin-${k}').focus()">
+                <input class="kw-input-field" id="chipin-${k}"
+                       placeholder="${esc(d.ph)}" onkeydown="chipDown(event,'${k}')">
+            </div>
+            <div class="ed-hint">${d.hint}</div>`;
+    });
+}
+
+function chipAdd(k, raw) {
+    // split on commas so pasting "a, b, c" works
+    let added = 0, dupes = 0;
+    String(raw).split(',').forEach(part => {
+        const v = part.trim();
+        if (!v) return;
+        if (chips[k].some(x => x.toLowerCase() === v.toLowerCase())) { dupes++; return; }
+        chips[k].push(v); added++;
+    });
+    if (dupes) toast(`⚠️ ${dupes} duplicate${dupes === 1 ? '' : 's'} skipped`);
+    if (added) renderChips(k);
+    return added;
+}
+
+window.chipDown = function(ev, k) {
+    if (ev.key === 'Enter' || ev.key === ',') {
+        ev.preventDefault();
+        chipAdd(k, ev.target.value);
+        ev.target.value = '';
+    } else if (ev.key === 'Backspace' && !ev.target.value && chips[k].length) {
+        chips[k].pop(); renderChips(k);
+    }
+};
+
+window.chipRemove = function(k, i) { chips[k].splice(i, 1); renderChips(k); };
+
+window.chipCopy = function(k) {
+    if (!chips[k].length) { toast('Nothing to copy'); return; }
+    const text = chips[k].join(', ');
+    navigator.clipboard.writeText(text)
+        .then(() => toast(`📋 ${chips[k].length} copied`))
+        .catch(() => toast('❌ Copy failed'));
+};
+
+window.chipClear = function(k) {
+    if (!chips[k].length) return;
+    if (!confirm(`Remove all ${chips[k].length} from "${CHIP_DEFS[k].label}"?`)) return;
+    chips[k] = []; renderChips(k);
+};
+
+function renderChips(k) {
+    if (!Array.isArray(chips[k])) chips[k] = [];
+    const area = document.getElementById('chiparea-' + k);
+    const inp  = document.getElementById('chipin-' + k);
+    if (!area || !inp) return;
+    area.querySelectorAll('.kw-tag').forEach(t => t.remove());
+    chips[k].forEach((v, i) => {
+        const tag = document.createElement('div');
+        tag.className = 'kw-tag';
+        tag.innerHTML = `${esc(v)}<button onclick="chipRemove('${k}',${i})">
+            <span class="material-icons" style="font-size:14px;">close</span></button>`;
+        area.insertBefore(tag, inp);
+    });
+    document.getElementById('chipcount-' + k).textContent = chips[k].length || '';
+}
+
+function renderAllChips() { Object.keys(CHIP_DEFS).forEach(renderChips); }
+
+// ============================================================
+// INTENT DROPDOWN
+// ============================================================
+window.onIntentChange = function() {
+    document.getElementById('customIntentWrap').style.display =
+        document.getElementById('fIntentSel').value === 'custom' ? '' : 'none';
+};
+
+// ============================================================
+// ADVANCED
+// ============================================================
+window.toggleAdv = function() {
+    document.getElementById('advToggle').classList.toggle('open');
+    document.getElementById('advPanel').classList.toggle('open');
+};
+
+// ============================================================
+// EXPORT
+// ============================================================
+let exportMode = 'full';
+
+function buildDict(catFilter) {
+    const list = sortedEntries(catFilter)
+        .map(p => p[1])
+        .filter(e => e.hidden !== true);
+
+    if (!list.length) return '        // No entries yet (or all are excluded)';
+
+    return list.map(e => {
+        const lines = [];
+        lines.push(`        {`);
+        if (e.name) lines.push(`            // ${e.name}`);
+        lines.push(`            keywords:     ${JSON.stringify(e.keywords || [])},`);
+        lines.push(`            intent:       "${e.intent}",`);
+        lines.push(`            fetchTargets: ${JSON.stringify(e.fetchTargets || [])},`);
+        lines.push(`            writeFields:  ${JSON.stringify(e.writeFields  || [])},`);
+        lines.push(`            priority:     ${e.priority || 3},`);
+        if (e.window)   lines.push(`            window:       ${e.window},`);
+        if (e.cooldown) lines.push(`            cooldown:     ${e.cooldown},`);
+        if (e.blockType && e.blockType !== 'instruction')
+            lines.push(`            blockType:    ${JSON.stringify(e.blockType)},`);
+        if ((e.guidelines || '').trim())
+            lines.push(`            guidelines:   ${JSON.stringify(e.guidelines.trim())},`);
+        if ((e.requireAny  || []).length) lines.push(`            requireAny:   ${JSON.stringify(e.requireAny)},`);
+        if ((e.requireAll  || []).length) lines.push(`            requireAll:   ${JSON.stringify(e.requireAll)},`);
+        if ((e.requireNone || []).length) lines.push(`            requireNone:  ${JSON.stringify(e.requireNone)},`);
+        if ((e.notAll      || []).length) lines.push(`            notAll:       ${JSON.stringify(e.notAll)},`);
+        if ((e.Shifts || []).length) {
+            lines.push(`            Shifts: [`);
+            e.Shifts.forEach(s => {
+                const parts = [`title: ${JSON.stringify(s.title || '')}`];
+                if ((s.keywords    || []).length) parts.push(`keywords: ${JSON.stringify(s.keywords)}`);
+                if ((s.requireAny  || []).length) parts.push(`requireAny: ${JSON.stringify(s.requireAny)}`);
+                if ((s.requireNone || []).length) parts.push(`requireNone: ${JSON.stringify(s.requireNone)}`);
+                parts.push(`guidelines: ${JSON.stringify(s.guidelines || '')}`);
+                lines.push(`                { ${parts.join(', ')} },`);
+            });
+            lines.push(`            ],`);
+        }
+        lines.push(`        }`);
+        return lines.join('\n');
+    }).join(',\n\n');
+}
+
+function buildFullFile() {
+    const evalSrc = document.getElementById('evaluateSrc').textContent.trim();
+    return [
+        `/* LifeHub — PoppyEngine.`,
+        `   ────────────────────────────────────────────────────────────────`,
+        `   THIS FILE IS GENERATED. Don't hand-edit it — open the PoppyEngine`,
+        `   editor, change it there, re-export, and paste over this file.`,
+        `   Anything typed in here directly is lost on the next export.`,
+        ``,
+        `   Generated ${new Date().toLocaleDateString()} · ${Object.keys(entries).length} entries`,
+        ``,
+        `   ── What this is ────────────────────────────────────────────────`,
+        `   A filter, not a brain. It reads the current message, decides which`,
+        `   entries the keywords let through, and returns only their text.`,
+        `   Nothing here describes how Poppy sounds — that lives in`,
+        `   js/LifeHub-poppy-modes.js.`,
+        ``,
+        `   ── What evaluate() gives back ──────────────────────────────────`,
+        `     intent        the highest-scoring match, or FALLBACK_INTENT`,
+        `     identity[]    standing facts about her or Jen`,
+        `     context[]     background that only matters sometimes`,
+        `     rules[]       what to do about THIS message`,
+        `     fetchTargets  paths to read before answering`,
+        `     writeFields   field names she's allowed to set`,
+        `     prompt        the above, already assembled`,
+        `     intents[]     every match, with its own fields`,
+        ``,
+        `   ── Window and cooldown ─────────────────────────────────────────`,
+        `     window     how many recent messages an entry may match against.`,
+        `                Defaults to WINDOW_DEPTH. Set 1 for actions.`,
+        `     cooldown   turns the entry stays quiet after firing. A fresh`,
+        `                mention in the current message always fires anyway.`,
+        ``,
+        `   ── Usage ───────────────────────────────────────────────────────`,
+        `     const result = PoppyEngine.evaluate([{ content: userMessage }]);`,
+        ``,
+        `   Load this BEFORE js/LifeHub-poppy.js.`,
+        `*/`,
+        ``,
+        `window.PoppyEngine = {`,
+        ``,
+        `    INTENT_LIMIT: 4,        // max intents returned per message`,
+        `    WINDOW_DEPTH: 6,        // how many recent messages keywords may match`,
+        `    FALLBACK_INTENT: null,  // returned when nothing matches`,
+        ``,
+        `    // Call this when the chat is cleared — forgets every cooldown.`,
+        `    resetMemory: function () { this._fired = {}; this._turn = 0; },`,
+        ``,
+        `    // Always-on. Edited in the Core Prompt panel.`,
+        `    core: ${JSON.stringify(corePrompt || "")},`,
+        ``,
+        `    dictionary: [`,
+        ``,
+        buildDict(null),
+        ``,
+        `    ],`,
+        ``,
+        `    ` + evalSrc,
+        ``,
+        `};`
+    ].join('\n');
+}
+
+function buildDictOnly(catFilter) {
+    return [
+        `/* Paste over the dictionary: [ ... ] block in js/PoppyEngine.js.`,
+        `   Leave everything else in that file alone. */`,
+        ``,
+        `dictionary: [`,
+        ``,
+        buildDict(catFilter),
+        ``,
+        `]`
+    ].join('\n');
+}
+
+window.setMode = function(mode) {
+    exportMode = mode;
+    ['full','dict','cat'].forEach(m => {
+        document.getElementById('m' + m.charAt(0).toUpperCase() + m.slice(1))
+            .classList.toggle('on', m === mode);
+    });
+    const hints = {
+        full: 'Overwrite your entire <code>PoppyEngine.js</code> with this.',
+        dict: 'Copy just the <code>dictionary: [...]</code> — paste it inside your existing PoppyEngine.js.',
+        cat:  activeCat
+            ? `Entries from <strong>${activeCat}</strong> only.`
+            : '⚠️ Select a category from the sidebar first.'
+    };
+    document.getElementById('exportHint').innerHTML = hints[mode];
+    document.getElementById('exportCode').value =
+        mode === 'full' ? buildFullFile()          :
+        mode === 'dict' ? buildDictOnly(null)      :
+        activeCat       ? buildDictOnly(activeCat) :
+        '// Select a category from the sidebar first';
+};
+
+window.openExport = function() {
+    document.getElementById('exportModal').classList.add('active');
+    setMode(exportMode);
+};
+window.closeExport = function() {
+    document.getElementById('exportModal').classList.remove('active');
+};
+window.copyCode = function() {
+    const ta = document.getElementById('exportCode');
+    ta.select(); document.execCommand('copy');
+    const btn = document.getElementById('copyBtn');
+    btn.innerHTML = '<span class="material-icons" style="font-size:16px;">check</span> Copied!';
+    setTimeout(() => {
+        btn.innerHTML = '<span class="material-icons" style="font-size:16px;">content_copy</span> Copy to Clipboard';
+        closeExport();
+    }, 1400);
+};
+
+// ============================================================
+// HELPERS
+// ============================================================
+function esc(s)   { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── INIT ────────────────────────────────────────────────────
+buildChipBlocks();
+renderAllChips();
+renderShifts();
+renderSidebar();
+renderList();
+syncIntentDropdown();
+
+</script>
+</body>
+</html>

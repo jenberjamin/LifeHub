@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>PassHub | Subscriptions</title>
+    
+
+    <link rel="icon" type="image/png" href="css/files/PassHub.png">
+    <link rel="stylesheet" href="css/passhub-subscriptions.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+</head>
+<body>
+
+    <header>
+        <button id="back-btn" class="nav-btn">← PassHub</button>
+        <h1>Subscriptions</h1>
+        <button id="new-btn" class="nav-btn primary">+ New</button>
+    </header>
+
+    <div class="money-summary">
+        <div class="money-label">Total Monthly Burn</div>
+        <div id="total-burn" class="money-val">$0.00</div>
+    </div>
+
+    <main>
+        <div id="entry-list-view" class="list-container">
+            <div id="entries-wrapper"></div>
+        </div>
+    </main>
+
+    <div id="modal-sub" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="font-size:14px; text-transform:uppercase; color:var(--accent); margin-bottom:20px; text-align:center;">Add Subscription</h2>
+            <form id="sub-form">
+                
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="inp-cat" class="form-select" required></select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Service Name</label>
+                    <input type="text" id="inp-name" class="form-input" placeholder="e.g. Netflix" required>
+                </div>
+
+                <div class="dual-input">
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">Cost</label>
+                        <input type="number" step="0.01" id="inp-cost" class="form-input" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group" style="width:100px;">
+                        <label class="form-label">Currency</label>
+                        <select id="inp-curr" class="form-select">
+                            <option value="$">$ (USD)</option>
+                            <option value="₱">₱ (PHP)</option>
+                            <option value="€">€ (EUR)</option>
+                            <option value="£">£ (GBP)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="dual-input">
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">Billing Cycle</label>
+                        <select id="inp-cycle" class="form-select">
+                            <option value="Monthly">Monthly</option>
+                            <option value="Yearly">Yearly</option>
+                            <option value="Weekly">Weekly</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">First Bill Date</label>
+                        <input type="date" id="inp-date" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <input type="text" id="inp-method" class="form-input" placeholder="e.g. Visa •••• 1234">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select id="inp-status" class="form-select">
+                        <option value="Active">Active</option>
+                        <option value="Free Trial">Free Trial</option>
+                        <option value="Paused">Paused</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom:15px; padding:10px; background:#f9f9f9; border-radius:6px;">
+                    <div style="font-size:11px; color:var(--accent); margin-bottom:5px;">Shared Subscription?</div>
+                    <div class="dual-input">
+                        <input type="text" id="inp-share-people" class="form-input" placeholder="Who with?">
+                        <input type="number" step="0.01" id="inp-share-cost" class="form-input" placeholder="My Share">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="inp-notes" class="form-input" rows="3" style="resize:vertical;"></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn-sec" onclick="closeModals()">Cancel</button>
+                    <button type="submit" class="btn-main">Track It</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-detail" class="modal-overlay">
+        <div class="modal-card">
+            <div class="detail-header">
+                <div id="det-cost" class="detail-cost-display">$0.00</div>
+                <div id="det-name" style="font-size:16px; margin-top:5px; font-weight:600;">Service</div>
+                <div id="det-cycle" class="detail-cycle">Monthly</div>
+                <div id="det-badge" style="margin-top:10px;"></div>
+            </div>
+
+            <div id="det-content"></div>
+
+            <div class="btn-group">
+                <button id="btn-delete" class="btn-sec btn-danger">Delete</button>
+                <button id="btn-edit" class="btn-sec">Edit</button>
+                <button onclick="closeModals()" class="btn-main">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-database-compat.js"></script>
+    <script src="js/passhub-firebase.js"></script>
+    <script src="js/passhub-store.js"></script>
+
+    <script>
+        // --- 1. CONFIG ---
+        const CATEGORIES = [
+            { name: "Streaming", icon: "movie" },
+            { name: "Software", icon: "terminal" },
+            { name: "Fitness", icon: "fitness_center" },
+            { name: "Music", icon: "headphones" },
+            { name: "Gaming", icon: "sports_esports" },
+            { name: "Utilities", icon: "bolt" },
+            { name: "Learning", icon: "school" },
+            { name: "Work", icon: "business_center" },
+            { name: "Others", icon: "receipt_long" }
+        ];
+
+        // Helper to find icon by category name
+        function getCatIcon(catName) {
+            const found = CATEGORIES.find(c => c.name === catName);
+            return found ? found.icon : 'receipt';
+        }
+
+        // Firebase lives in js/passhub-firebase.js — one config for all pages.
+        const db = window.PH_DB;
+        const subRef = PH_STORE.ref('subscriptions');
+
+        // State
+        let allSubs = {};
+        let currentEditingId = null;
+
+        // --- 2. LOGIC ---
+
+        subRef.on('value', (snapshot) => {
+            allSubs = snapshot.val() || {};
+            calculateTotalBurn();
+            renderList(); // Auto render the list
+        });
+
+        function calculateTotalBurn() {
+            let total = 0;
+            let currency = '$'; // Assuming primary currency
+            
+            Object.values(allSubs).forEach(sub => {
+                if(sub.status === 'Active') {
+                    let cost = parseFloat(sub.shareCost || sub.cost);
+                    if(sub.cycle === 'Yearly') cost = cost / 12;
+                    if(sub.cycle === 'Weekly') cost = cost * 4;
+                    total += cost;
+                    if(sub.currency) currency = sub.currency;
+                }
+            });
+            document.getElementById('total-burn').textContent = `${currency}${total.toFixed(2)}`;
+        }
+
+        function renderList() {
+            const listWrapper = document.getElementById('entries-wrapper');
+            listWrapper.innerHTML = '';
+            
+            // 1. Convert to Array and Add "Next Bill Date" Object
+            let subArray = Object.entries(allSubs).map(([key, item]) => {
+                const nextDate = getNextBillDate(item.startDate, item.cycle);
+                return {
+                    key: key,
+                    ...item,
+                    nextBillDate: nextDate // Store date object for sorting
+                };
+            });
+
+            // 2. Sort by Date (Earliest first)
+            subArray.sort((a, b) => a.nextBillDate - b.nextBillDate);
+
+            if (subArray.length === 0) {
+                listWrapper.innerHTML = '<div style="text-align:center; color:#ccc; margin-top:40px;">No subscriptions tracked.</div>';
+                return;
+            }
+
+            // 3. Render
+            subArray.forEach(item => {
+                const nextDateStr = item.nextBillDate.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+                
+                // Status Color
+                let statusColor = '#ccc';
+                if(item.status === 'Active') statusColor = 'var(--success)';
+                if(item.status === 'Free Trial') statusColor = 'var(--gold)';
+                if(item.status === 'Cancelled') statusColor = 'var(--danger)';
+
+                // Get Icon based on Category
+                const catIcon = getCatIcon(item.category);
+
+                const row = document.createElement('div');
+                row.className = 'entry-row';
+                row.innerHTML = `
+                    <div class="sub-left">
+                        <div class="sub-icon">
+                            <span class="material-symbols-outlined">${catIcon}</span>
+                        </div>
+                        <div class="sub-info">
+                            <div class="sub-name">${item.name}</div>
+                            <div class="sub-meta">${item.category} • ${item.method || 'No Card'}</div>
+                        </div>
+                    </div>
+                    <div class="sub-right">
+                        <div class="sub-cost">${item.currency}${item.cost}</div>
+                        <div class="sub-date">Due: ${nextDateStr} <span class="status-dot" style="background:${statusColor}"></span></div>
+                    </div>
+                `;
+                row.onclick = () => openDetail(item.key, item);
+                listWrapper.appendChild(row);
+            });
+        }
+
+        // --- 3. UTILS (Date Logic) ---
+        function getNextBillDate(startDate, cycle) {
+            if(!startDate) return new Date();
+            const start = new Date(startDate);
+            const now = new Date();
+            // Reset time to avoid timezone bugs
+            now.setHours(0,0,0,0);
+            start.setHours(0,0,0,0);
+            
+            let next = new Date(start);
+
+            // If cancelled, just show original date (or handle differently)
+            // But if active, calculate next occurrence
+            while (next < now) {
+                if(cycle === 'Monthly') next.setMonth(next.getMonth() + 1);
+                else if(cycle === 'Yearly') next.setFullYear(next.getFullYear() + 1);
+                else if(cycle === 'Weekly') next.setDate(next.getDate() + 7);
+                else next.setMonth(next.getMonth() + 1); 
+            }
+            return next;
+        }
+
+        document.getElementById('back-btn').onclick = () => {
+            window.location.href = "PassHub-landing_page.html";
+        };
+
+        // --- 4. MODALS & FORM ---
+        const modalSub = document.getElementById('modal-sub');
+        const modalDetail = document.getElementById('modal-detail');
+        const form = document.getElementById('sub-form');
+        
+        // Populate Categories
+        const catSelect = document.getElementById('inp-cat');
+        CATEGORIES.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name; opt.textContent = c.name;
+            catSelect.appendChild(opt);
+        });
+
+        document.getElementById('new-btn').onclick = () => {
+            currentEditingId = null;
+            form.reset();
+            document.getElementById('inp-date').valueAsDate = new Date();
+            modalSub.style.display = 'flex';
+        };
+
+        window.closeModals = () => {
+            modalSub.style.display = 'none';
+            modalDetail.style.display = 'none';
+        };
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const data = {
+                category: document.getElementById('inp-cat').value,
+                name: document.getElementById('inp-name').value,
+                cost: document.getElementById('inp-cost').value,
+                currency: document.getElementById('inp-curr').value,
+                cycle: document.getElementById('inp-cycle').value,
+                startDate: document.getElementById('inp-date').value,
+                method: document.getElementById('inp-method').value,
+                status: document.getElementById('inp-status').value,
+                shareWith: document.getElementById('inp-share-people').value,
+                shareCost: document.getElementById('inp-share-cost').value,
+                notes: document.getElementById('inp-notes').value,
+                timestamp: Date.now()
+            };
+
+            if(currentEditingId) subRef.child(currentEditingId).update(data);
+            else subRef.push(data);
+            
+            closeModals();
+        });
+
+        // --- 5. DETAIL VIEW ---
+        window.openDetail = (key, item) => {
+            // Re-calculate date for detail view
+            const nextDate = getNextBillDate(item.startDate, item.cycle);
+            const nextStr = nextDate.toLocaleDateString(undefined, {weekday:'short', year:'numeric', month:'long', day:'numeric'});
+
+            document.getElementById('det-cost').textContent = `${item.currency}${item.cost}`;
+            document.getElementById('det-name').textContent = item.name;
+            document.getElementById('det-cycle').textContent = item.cycle;
+
+            // Badge
+            let badgeClass = 'badge-active';
+            if(item.status === 'Free Trial') badgeClass = 'badge-trial';
+            if(item.status === 'Cancelled') badgeClass = 'badge-cancel';
+            if(item.status === 'Paused') badgeClass = 'badge-paused';
+            
+            document.getElementById('det-badge').innerHTML = `<span class="badge ${badgeClass}">${item.status}</span>`;
+
+            const content = document.getElementById('det-content');
+            
+            const shareInfo = item.shareWith ? `Shared with ${item.shareWith} (My part: ${item.currency}${item.shareCost})` : 'No';
+
+            content.innerHTML = `
+                <div style="height:20px;"></div>
+                ${row('Next Billing', nextStr)}
+                ${row('Category', item.category)}
+                ${row('Payment Method', item.method)}
+                ${row('Started On', item.startDate)}
+                ${row('Split / Shared', shareInfo)}
+                <div style="margin-top:20px; font-size:12px; color:#555; background:#f9f9f9; padding:10px; border-radius:4px; white-space: pre-wrap;">
+                    <strong>Notes:</strong><br>${item.notes || '-'}
+                </div>
+            `;
+
+            document.getElementById('btn-delete').onclick = () => deleteEntry(key);
+            document.getElementById('btn-edit').onclick = () => editEntry(key, item);
+            modalDetail.style.display = 'flex';
+        };
+
+        function row(lbl, val) {
+            return `<div class="detail-row"><span class="detail-lbl">${lbl}</span><span>${val}</span></div>`;
+        }
+
+        window.deleteEntry = (key) => {
+            if(confirm("Delete this subscription?")) {
+                subRef.child(key).remove();
+                closeModals();
+            }
+        };
+
+        window.editEntry = (key, item) => {
+            currentEditingId = key;
+            closeModals();
+            
+            document.getElementById('inp-cat').value = item.category;
+            document.getElementById('inp-name').value = item.name;
+            document.getElementById('inp-cost').value = item.cost;
+            document.getElementById('inp-curr').value = item.currency;
+            document.getElementById('inp-cycle').value = item.cycle;
+            document.getElementById('inp-date').value = item.startDate;
+            document.getElementById('inp-method').value = item.method;
+            document.getElementById('inp-status').value = item.status;
+            document.getElementById('inp-share-people').value = item.shareWith || '';
+            document.getElementById('inp-share-cost').value = item.shareCost || '';
+            document.getElementById('inp-notes').value = item.notes || '';
+
+            modalSub.style.display = 'flex';
+        };
+
+    </script>
+
+<script>
+        if (!sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+            window.location.href = "index.html";
+        }
+</script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

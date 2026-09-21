@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>PassHub | Connections</title>
+
+    <link rel="icon" type="image/png" href="css/files/PassHub.png">
+    <link rel="stylesheet" href="css/passhub-connections.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+
+    <!-- ── SECURITY SENSOR ── in <head> so nothing paints first -->
+    <script>
+    if (!sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+        window.location.replace('PassHub.html');
+    }
+    </script>
+
+</head>
+<body>
+
+    <header>
+        <button class="nav-btn" onclick="goLobby()">&larr; Lobby</button>
+        <h1>Connections</h1>
+        <div class="nav-group">
+            <button id="new-contact-btn" class="nav-btn primary">+ Contact</button>
+        </div>
+    </header>
+
+    <div class="breadcrumb-bar" id="breadcrumb">Contacts</div>
+
+    <main>
+        <div class="contact-toolbar">
+            <input type="text" id="contact-search" class="form-input contact-search"
+                   placeholder="Search name, number, email&hellip;" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div class="filter-chips" id="filter-chips"></div>
+
+        <div id="contact-list" class="list-view">
+            <div class="contact-empty">Loading&hellip;</div>
+        </div>
+    </main>
+
+    <!-- ═══ ADD / EDIT ═══════════════════════════════ -->
+    <div id="modal-contact" class="modal-overlay">
+        <div class="modal-card">
+            <h2 id="modal-contact-title">New Contact</h2>
+            <form id="form-contact">
+
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="inp-name" class="form-input" required autocomplete="off">
+                </div>
+
+                <div class="dual-input-row">
+                    <div class="form-group">
+                        <label class="form-label">Role / Title</label>
+                        <input type="text" id="inp-role" class="form-input" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Company</label>
+                        <input type="text" id="inp-company" class="form-input" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Group</label>
+                    <input type="text" id="inp-group" class="form-input" list="group-options"
+                           placeholder="Family, Work, Services&hellip;" autocomplete="off">
+                    <!-- Suggestions come from groups already in use, so the
+                         list grows with you instead of being fixed in code. -->
+                    <datalist id="group-options"></datalist>
+                </div>
+
+                <div class="dual-input-row">
+                    <div class="form-group">
+                        <label class="form-label">Mobile</label>
+                        <input type="tel" id="inp-mobile" class="form-input" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telephone</label>
+                        <input type="tel" id="inp-tel" class="form-input" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="inp-email" class="form-input" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Address</label>
+                    <textarea id="inp-address" class="form-textarea" rows="2" style="min-height:60px"></textarea>
+                </div>
+
+                <div class="dual-input-row">
+                    <div class="form-group">
+                        <label class="form-label">Birthday</label>
+                        <input type="date" id="inp-birthday" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Link</label>
+                        <input type="text" id="inp-link" class="form-input" placeholder="https://&hellip;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="inp-notes" class="form-textarea" rows="3"></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn-sec" onclick="closeModals()">Cancel</button>
+                    <button type="submit" class="btn-main" id="btn-save">Save Contact</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ DETAIL ══════════════════════════════════ -->
+    <div id="modal-detail" class="modal-overlay">
+        <div class="modal-card">
+            <div class="detail-header">
+                <div class="contact-avatar contact-avatar-lg" id="detail-avatar">?</div>
+                <h2 id="detail-name" style="margin:12px 0 2px">Name</h2>
+                <div class="detail-cycle" id="detail-role">&mdash;</div>
+            </div>
+
+            <div id="detail-fields"></div>
+
+            <div class="btn-group">
+                <button id="btn-delete" class="btn-danger">Delete</button>
+                <button id="btn-edit" class="btn-sec">Edit</button>
+                <button onclick="closeModals()" class="btn-main">Done</button>
+            </div>
+        </div>
+    </div>
+
+<script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-database-compat.js"></script>
+<script src="js/passhub-firebase.js"></script>
+    <script src="js/passhub-store.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   CONNECTIONS — contact list
+
+   DATA NOTE: this page reads and writes ONLY the
+   `contacts` node. It never touches `sharepoint_notes`
+   or `sharepoint_subcats` — those belong to Secure Notes,
+   which the old duplicated Connections page was sharing
+   by mistake. Nothing here can alter your notes.
+═══════════════════════════════════════════════════ */
+
+const db         = window.PH_DB;
+const contactRef = PH_STORE.ref('contacts');
+
+let allContacts = {};
+let activeGroup = 'all';
+let searchTerm  = '';
+let editingId   = null;
+
+/* Suggestions only — the real group list is whatever your
+   contacts actually use, so nothing is baked into the data. */
+const SUGGESTED_GROUPS = ['Family', 'Friends', 'Work', 'Services', 'Emergency'];
+
+contactRef.on('value', function (snap) {
+    allContacts = snap.val() || {};
+    renderChips();
+    renderList();
+}, function (err) {
+    document.getElementById('contact-list').innerHTML =
+        '<div class="contact-empty">Could not load contacts: ' + esc(err.message) + '</div>';
+});
+
+/* ─── HELPERS ────────────────────────────────── */
+function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function attr(s) { return esc(s).replace(/'/g, '&#39;'); }
+
+function initials(name) {
+    var parts = (name || '?').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function contactArray() {
+    return Object.keys(allContacts).map(function (id) {
+        var c = allContacts[id] || {};
+        return {
+            id: id, name: c.name, role: c.role, company: c.company, group: c.group,
+            mobile: c.mobile, telephone: c.telephone, email: c.email,
+            address: c.address, birthday: c.birthday, link: c.link, notes: c.notes
+        };
+    });
+}
+
+function usedGroups() {
+    var set = {};
+    contactArray().forEach(function (c) { if (c.group) set[c.group.trim()] = 1; });
+    return Object.keys(set).sort(function (a, b) { return a.localeCompare(b); });
+}
+
+/* ─── FILTER CHIPS ───────────────────────────── */
+function renderChips() {
+    var groups = usedGroups();
+    var all    = contactArray();
+
+    document.getElementById('filter-chips').innerHTML =
+        '<button class="chip' + (activeGroup === 'all' ? ' on' : '') + '" ' +
+        'onclick="setGroup(\'all\')">All (' + all.length + ')</button>' +
+        groups.map(function (g) {
+            var n = all.filter(function (c) { return (c.group || '').trim() === g; }).length;
+            return '<button class="chip' + (activeGroup === g ? ' on' : '') + '" ' +
+                   'onclick="setGroup(\'' + attr(g) + '\')">' + esc(g) + ' (' + n + ')</button>';
+        }).join('');
+
+    var suggestions = groups.concat(SUGGESTED_GROUPS.filter(function (g) {
+        return groups.indexOf(g) === -1;
+    }));
+    document.getElementById('group-options').innerHTML =
+        suggestions.map(function (g) { return '<option value="' + esc(g) + '">'; }).join('');
+}
+
+function setGroup(g) { activeGroup = g; renderChips(); renderList(); }
+
+document.getElementById('contact-search').addEventListener('input', function () {
+    searchTerm = this.value.toLowerCase().trim();
+    renderList();
+});
+
+/* ─── LIST ───────────────────────────────────── */
+function renderList() {
+    var el   = document.getElementById('contact-list');
+    var rows = contactArray();
+
+    if (activeGroup !== 'all') {
+        rows = rows.filter(function (c) { return (c.group || '').trim() === activeGroup; });
+    }
+
+    if (searchTerm) {
+        rows = rows.filter(function (c) {
+            return [c.name, c.role, c.company, c.mobile, c.telephone, c.email, c.address, c.notes]
+                .join(' ').toLowerCase().indexOf(searchTerm) !== -1;
+        });
+    }
+
+    rows.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
+
+    if (!rows.length) {
+        el.innerHTML = '<div class="contact-empty">' +
+            (contactArray().length ? 'No contacts match that search.'
+                                   : 'No contacts yet &mdash; add your first one.') + '</div>';
+        return;
+    }
+
+    /* Letter dividers, like a phone's address book. */
+    var html = '', lastLetter = '';
+    rows.forEach(function (c) {
+        var letter = (c.name || '#').trim().charAt(0).toUpperCase() || '#';
+        if (letter !== lastLetter) {
+            html += '<div class="contact-letter">' + esc(letter) + '</div>';
+            lastLetter = letter;
+        }
+
+        var sub = [c.role, c.company].filter(Boolean).join(' \u00b7 ') ||
+                  c.mobile || c.telephone || c.email || '';
+
+        html += '<div class="note-row" onclick="openDetail(\'' + c.id + '\')">' +
+            '<div class="contact-avatar">' + esc(initials(c.name)) + '</div>' +
+            '<div class="note-main">' +
+                '<div class="note-title">' + esc(c.name || 'Unnamed') + '</div>' +
+                (sub ? '<div class="contact-sub">' + esc(sub) + '</div>' : '') +
+            '</div>' +
+            (c.group ? '<span class="contact-group-tag">' + esc(c.group) + '</span>' : '') +
+        '</div>';
+    });
+
+    el.innerHTML = html;
+}
+
+/* ─── DETAIL ─────────────────────────────────── */
+function openDetail(id) {
+    var c = allContacts[id];
+    if (!c) return;
+    editingId = id;
+
+    document.getElementById('detail-avatar').textContent = initials(c.name);
+    document.getElementById('detail-name').textContent   = c.name || 'Unnamed';
+    document.getElementById('detail-role').textContent   =
+        [c.role, c.company].filter(Boolean).join(' \u00b7 ') || (c.group || '\u2014');
+
+    /* Only fields with a value are shown — a card full of dashes
+       reads as broken rather than empty. */
+    var fields = [
+        ['Mobile',    c.mobile,    'tel'],
+        ['Telephone', c.telephone, 'tel'],
+        ['Email',     c.email,     'mail'],
+        ['Address',   c.address,   'text'],
+        ['Birthday',  c.birthday,  'text'],
+        ['Group',     c.group,     'text'],
+        ['Link',      c.link,      'url'],
+        ['Notes',     c.notes,     'text']
+    ].filter(function (f) { return f[1]; });
+
+    document.getElementById('detail-fields').innerHTML = fields.length
+        ? fields.map(function (f) {
+            var label = f[0], val = f[1], kind = f[2], shown = esc(val);
+            if (kind === 'tel')  shown = '<a class="detail-link" href="tel:' + attr(val) + '">' + esc(val) + '</a>';
+            if (kind === 'mail') shown = '<a class="detail-link" href="mailto:' + attr(val) + '">' + esc(val) + '</a>';
+            if (kind === 'url')  shown = '<a class="detail-link" href="' + attr(val) + '" target="_blank" rel="noopener">' + esc(val) + '</a>';
+            return '<div class="detail-row">' +
+                '<span class="detail-label">' + label + '</span>' +
+                '<span class="detail-val">' + shown +
+                    '<span class="copy-icon material-symbols-outlined" title="Copy" ' +
+                    'onclick="copyValue(this,\'' + attr(val) + '\')">content_copy</span>' +
+                '</span></div>';
+        }).join('')
+        : '<div class="contact-empty" style="padding:20px">No details saved.</div>';
+
+    document.getElementById('modal-detail').style.display = 'flex';
+}
+
+function copyValue(el, val) {
+    navigator.clipboard.writeText(val).then(function () {
+        var was = el.textContent;
+        el.textContent = 'check';
+        setTimeout(function () { el.textContent = was; }, 900);
+    }).catch(function () { alert('Could not copy.'); });
+}
+
+/* ─── ADD / EDIT ─────────────────────────────── */
+document.getElementById('new-contact-btn').addEventListener('click', function () { openForm(null); });
+document.getElementById('btn-edit').addEventListener('click', function () { openForm(editingId); });
+
+function openForm(id) {
+    closeModals();
+    editingId = id;
+    var c = id ? (allContacts[id] || {}) : {};
+
+    document.getElementById('modal-contact-title').textContent = id ? 'Edit Contact' : 'New Contact';
+    document.getElementById('btn-save').textContent            = id ? 'Save Changes' : 'Save Contact';
+
+    function set(el, v) { document.getElementById(el).value = v || ''; }
+    set('inp-name', c.name);         set('inp-role', c.role);
+    set('inp-company', c.company);   set('inp-group', c.group);
+    set('inp-mobile', c.mobile);     set('inp-tel', c.telephone);
+    set('inp-email', c.email);       set('inp-address', c.address);
+    set('inp-birthday', c.birthday); set('inp-link', c.link);
+    set('inp-notes', c.notes);
+
+    document.getElementById('modal-contact').style.display = 'flex';
+    document.getElementById('inp-name').focus();
+}
+
+document.getElementById('form-contact').addEventListener('submit', function (e) {
+    e.preventDefault();
+    function val(id) { return document.getElementById(id).value.trim(); }
+
+    var payload = {
+        name:      val('inp-name'),
+        role:      val('inp-role'),
+        company:   val('inp-company'),
+        group:     val('inp-group'),
+        mobile:    val('inp-mobile'),
+        telephone: val('inp-tel'),
+        email:     val('inp-email'),
+        address:   val('inp-address'),
+        birthday:  val('inp-birthday'),
+        link:      val('inp-link'),
+        notes:     val('inp-notes'),
+        updatedAt: Date.now()
+    };
+
+    var btn = document.getElementById('btn-save');
+    var wasLabel = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    /* update() on an existing key, push() for a new one — editing must
+       never silently create a second copy. */
+    var op;
+    if (editingId) {
+        op = contactRef.child(editingId).update(payload);
+    } else {
+        payload.createdAt = Date.now();
+        op = contactRef.push(payload);
+    }
+
+    op.then(function () { closeModals(); })
+      .catch(function (err) { alert('Could not save: ' + err.message); })
+      .then(function () { btn.disabled = false; btn.textContent = wasLabel; });
+});
+
+/* ─── DELETE ─────────────────────────────────── */
+document.getElementById('btn-delete').addEventListener('click', function () {
+    if (!editingId) return;
+    var c = allContacts[editingId] || {};
+    if (!confirm('Delete "' + (c.name || 'this contact') + '"? This cannot be undone.')) return;
+
+    contactRef.child(editingId).remove()
+        .then(function () { editingId = null; closeModals(); })
+        .catch(function (err) { alert('Could not delete: ' + err.message); });
+});
+
+/* ─── MODALS / NAV ───────────────────────────── */
+function closeModals() {
+    document.getElementById('modal-contact').style.display = 'none';
+    document.getElementById('modal-detail').style.display  = 'none';
+}
+
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModals(); });
+
+['modal-contact', 'modal-detail'].forEach(function (id) {
+    document.getElementById(id).addEventListener('click', function (e) {
+        if (e.target === this) closeModals();
+    });
+});
+
+function goLobby() { window.location.href = 'PassHub-landing_page.html'; }
+</script>
+
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

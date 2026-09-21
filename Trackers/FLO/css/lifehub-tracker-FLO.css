@@ -1,0 +1,1578 @@
+:root {
+    --font-main: 'Red Hat Display', sans-serif;
+    
+    /* PALETTE: Soft, Airy, Expensive */
+    --c-bg-body: #FFF0F0;       
+    --c-text-header: #8E4A4E;   /* Deep Burgundy */
+    --c-text-sub: #B07C80;      /* Muted Rose */
+    --c-text-body: #6D5D5D;     /* Warm Grey */
+    
+    /* Shadows - Very diffuse, almost invisible */
+    --shadow-card: 0 40px 80px rgba(180, 140, 140, 0.1), inset 0 0 0 1px rgba(255,255,255,0.6);
+    --shadow-btn: 0 4px 10px rgba(166, 118, 118, 0.05), inset 0 0 0 1px rgba(255,255,255,0.9);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: var(--font-main);
+    /* Reverting to the soft gradient you liked */
+    background: linear-gradient(120deg, #FFF0F0 0%, #FFE4E4 100%);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--c-text-body);
+    overflow: hidden;
+}
+
+/* --- NAVIGATION --- */
+.nav-dock {
+    position: absolute;
+    top: 30px; left: 40px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    text-decoration: none;
+    color: var(--c-text-header);
+    padding: 9px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.4);
+    border: 1px solid rgba(255,255,255,0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0.75;
+    transition: opacity .25s ease, background .25s ease, gap .25s ease;
+}
+.nav-btn svg {
+    width: 17px; height: 17px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.nav-btn span {
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: var(--font-main);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    transition: max-width .3s ease;
+}
+
+.nav-btn:hover,
+.nav-btn:focus-visible {
+    opacity: 1;
+    background: rgba(255,255,255,0.8);
+    gap: 8px;
+}
+.nav-btn:hover span,
+.nav-btn:focus-visible span { max-width: 130px; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .nav-dock { top: 20px; left: 20px; }
+    .nav-btn { opacity: .95; gap: 8px; }
+    .nav-btn span { max-width: 130px; }
+}
+
+.main-stage {
+    width: 100%;
+    max-width: 1250px;
+    padding: 20px;
+}
+
+/* THE MAIN DASHBOARD CARD */
+.dashboard-card {
+    /* More transparent + lighter blur for "Clear" Glass feel */
+    background: rgba(255, 255, 255, 0.45); 
+    backdrop-filter: blur(40px);          
+    -webkit-backdrop-filter: blur(40px);
+    
+    border-radius: 40px;
+    padding: 35px 50px;
+    
+    /* This white border is crucial for the glass edge effect */
+    border: 1px solid rgba(255, 255, 255, 0.8); 
+    box-shadow: var(--shadow-card);
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 40px;
+    height: 80vh;
+    max-height: 750px;
+}
+
+/* --- LEFT ZONE --- */
+.zone-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+}
+
+.header-group { margin-bottom: 10px; }
+.date-display { 
+    font-size: 13px; 
+    text-transform: uppercase; 
+    color: var(--c-text-sub); 
+    letter-spacing: 2px; /* Wider spacing feels more luxury */
+    font-weight: 500;    /* Not Bold */
+}
+
+.phase-title { 
+    font-size: 52px; 
+    font-weight: 500;    /* KEY CHANGE: Thinning this out */
+    color: var(--c-text-header); 
+    letter-spacing: -1px;
+    margin: 5px 0;
+}
+
+.cycle-subtitle { 
+    font-size: 22px; 
+    font-weight: 300;    /* Very thin, elegant */
+    color: var(--c-text-header);
+    opacity: 0.9; 
+}
+
+/* Week Bubbles */
+.week-bubbles { display: flex; gap: 12px; margin: 25px 0; }
+.bubble {
+    width: 42px; height: 42px; border-radius: 50%;
+    
+    /* Default State: White & Muted Rose */
+    background: #FFF; 
+    color: #B07C80; 
+    
+    display: flex; justify-content: center; align-items: center;
+    font-weight: 500; font-size: 12px;
+    border: 1px solid rgba(255,255,255,0.5);
+    transition: 0.2s ease; /* Adds a smooth feel when they change color */
+}
+
+/* Main Button */
+.btn-main-log {
+    background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
+    border: 1px solid #FFF;
+    padding: 20px;
+    border-radius: 20px;
+    font-family: var(--font-main);
+    font-weight: 500; font-size: 14px; /* Thinned out */
+    color: var(--c-text-header);
+    box-shadow: 0 10px 20px rgba(186, 74, 85, 0.05);
+    cursor: pointer;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; 
+    transition: 0.2s ease;
+}
+.btn-main-log:hover { transform: translateY(-2px); background: #FFF; }
+.drop { color: #E03E52; font-size: 18px; }
+
+/* Grid Buttons */
+.action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+    width: 100%;
+}
+.btn-soft {
+    /* Reads as a real, liftable button: soft white gradient face,
+       a hairline rose edge and a low shadow to sit it off the glass.
+       Kept compact: eight of these plus the main log button have to fit
+       the left column without pushing the card. */
+    background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.62) 100%);
+    border: 1px solid rgba(255,255,255,0.9);
+    padding: 11px 14px;
+    border-radius: 13px;
+    color: var(--c-text-header);
+    font-family: var(--font-main);
+    font-weight: 500; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 1px;
+    box-shadow: 0 6px 14px rgba(166, 118, 118, 0.10),
+                inset 0 1px 0 rgba(255,255,255,0.9);
+    cursor: pointer;
+
+    display: flex; align-items: center; gap: 25px;
+    text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+/* Bare glyph, no chip. Fixed box + line-height 1 so every icon lands
+   on the same baseline no matter its own glyph height. */
+.btn-soft-icon {
+    flex-shrink: 0;
+    width: 17px;
+    font-size: 17px;
+    line-height: 1;
+    text-align: center;
+    color: #C75A68;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    transition: 0.2s ease;
+}
+
+.btn-soft-label { flex: 1; line-height: 1; }
+
+/* The "+" moves to the right edge so the labels can line up */
+.btn-soft-plus {
+    flex-shrink: 0;
+    font-size: 14px; font-weight: 400; line-height: 1;
+    color: var(--c-text-sub);
+    opacity: 0.55;
+    transition: 0.2s ease;
+}
+
+.btn-soft:hover {
+    background: #FFF;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 22px rgba(166, 118, 118, 0.16),
+                inset 0 1px 0 rgba(255,255,255,1);
+}
+.btn-soft:hover .btn-soft-icon { color: #E03E52; }
+.btn-soft:hover .btn-soft-plus { opacity: 1; color: #E03E52; }
+
+.btn-soft:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 8px rgba(166, 118, 118, 0.12),
+                inset 0 2px 5px rgba(166, 118, 118, 0.10);
+}
+
+/* --- CENTER ZONE (Nav Icons) --- */
+.zone-center-nav {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; 
+    gap: 30px;
+    align-items: center;
+    padding-top: 60px;
+    
+    /* NEW: Lifts this zone above the Left/Right zones so buttons work */
+    position: relative; 
+    z-index: 200; 
+}
+
+.nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer; opacity: 0.6; transition: 0.2s;
+}
+.nav-item:hover { opacity: 1; transform: scale(1.05); }
+.nav-item .material-symbols-rounded { font-size: 32px; color: var(--c-text-header); }
+.nav-item span:last-child { font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--c-text-header); }
+
+/* --- RIGHT ZONE --- */
+.zone-right {
+    flex: 0.9;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    justify-content: flex-start; /* Anchors content to the top */
+    padding-top: 10px; /* Slight breathing room from the glass edge */
+}
+
+.panel-card {
+    background: rgba(255,255,255,0.5); 
+    border-radius: 30px;
+    padding: 30px;
+    box-shadow: none; 
+    border: 1px solid rgba(255,255,255,0.6);
+    
+    /* NEW: Ensures the panel floats ABOVE everything else so clicks register */
+    z-index: 50; /* Add this line to force it to the front */
+    position: relative; /* And this line */
+}
+
+/* Althea Panel */
+.althea-panel { text-align: center; position: relative; }
+
+/* The settings handle. Deliberately quiet — it is touched once a
+   month, and it sits in the corner rather than in the reading path. */
+.pack-gear {
+    position: absolute;
+    top: 10px; right: 12px;
+    background: none; border: none; padding: 2px;
+    line-height: 1; cursor: pointer;
+    color: var(--c-text-sub);
+    opacity: 0.4;
+    transition: opacity 0.2s, color 0.2s;
+}
+.pack-gear:hover,
+.pack-gear[aria-expanded="true"] { opacity: 1; color: var(--c-text-header); }
+.pack-gear .material-symbols-rounded { font-size: 18px; }
+.panel-title { color: var(--c-text-header); font-weight: 500; font-size: 16px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
+.streak-count { font-size: 11px; color: var(--c-text-sub); margin-bottom: 12px; text-transform: uppercase; font-weight: 500; letter-spacing: 1px; }
+
+/* --- PILL PACK --- */
+/* Pack settings live in a modal, like every other occasional job on
+   this page. Two earlier attempts were worse: in the flow it shoved
+   the Daily Log off the bottom of the panel, and as a popover it
+   covered the card it was supposed to be configuring. */
+.pack-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: left;
+    max-width: 340px;
+}
+.pack-card h2 { text-align: center; margin-bottom: 4px; }
+
+.pack-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--c-text-sub);
+}
+.btn-newpack {
+    margin-top: 4px;
+    background: transparent;
+    border: 1px solid rgba(180,140,140,0.35);
+    border-radius: 15px;
+    padding: 12px;
+    font-family: var(--font-main);
+    font-size: 11px; font-weight: 600; letter-spacing: 1px;
+    color: var(--c-text-body);
+    cursor: pointer; transition: 0.2s;
+}
+.btn-newpack:hover {
+    background: #FFF;
+    border-color: var(--c-text-header);
+    color: var(--c-text-header);
+}
+.pack-hint {
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--c-text-sub);
+    text-transform: none;
+    letter-spacing: 0;
+}
+.pack-card .modal-actions { margin-top: 6px; }
+
+/* When today's tablet is due, or when it was actually taken. */
+.dose-line {
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    color: var(--c-text-sub);
+    min-height: 13px;
+    margin-bottom: 14px;
+}
+.dose-line.is-due { color: var(--c-text-header); font-weight: 500; }
+
+.pack-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--c-text-sub);
+    cursor: pointer;
+}
+.pack-toggle input { accent-color: var(--c-text-header); cursor: pointer; }
+
+.pack-date {
+    font-family: var(--font-main);
+    font-size: 12px;
+    color: var(--c-text-body);
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(180,140,140,0.25);
+    border-radius: 10px;
+    padding: 8px 10px;
+    outline: none;
+}
+.pack-date:focus { border-color: var(--c-text-sub); }
+
+.pack-status {
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    color: var(--c-text-sub);
+    min-height: 13px;
+    /* The dose line sits directly under this and carries the gap now. */
+    margin-bottom: 2px;
+    white-space: pre-line;
+}
+
+/* --- LOGGED vs ESTIMATED ---
+   The phase title is a claim. When it was calculated rather than
+   recorded, it should not carry the same visual weight as a fact. */
+body.phase-estimated .phase-title { opacity: 0.72; }
+body.phase-estimated .phase-title::after {
+    content: "estimated";
+    display: block;
+    margin-top: 2px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    font-weight: 500;
+    opacity: 0.75;
+}
+body.phase-observed .phase-title::after {
+    content: "logged";
+    display: block;
+    margin-top: 2px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    font-weight: 500;
+    opacity: 0.6;
+}
+
+.pill-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn-pill {
+    background: rgba(255,255,255,0.5); border: 1px solid transparent;
+    padding: 10px; border-radius: 20px;
+    font-size: 10px; font-weight: 600; color: var(--c-text-body);
+    cursor: pointer; transition: 0.2s;
+}
+.btn-pill:hover { background: #FFF; border-color: var(--c-text-header); color: var(--c-text-header); }
+
+/* ── THE JOURNAL ──────────────────────────────────────────────────
+   Her notes, read back. Deliberately plainer than the rest of this
+   tracker: the words are the content here, and a card competing with
+   them would be a card getting in the way. */
+.nh-card {
+    max-width: 620px;
+    width: 92%;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    padding: 34px 34px 24px;
+    text-align: left;
+}
+.nh-title { text-align: center; margin-bottom: 22px; }
+
+.nh-tools { position: relative; }
+.nh-search-icon {
+    position: absolute;
+    left: 13px; top: 50%; transform: translateY(-50%);
+    font-size: 18px; color: var(--c-text-sub); opacity: 0.6;
+    pointer-events: none;
+}
+.nh-search {
+    width: 100%;
+    font-family: var(--font-main);
+    font-size: 13px;
+    color: var(--c-text-body);
+    background: rgba(255,255,255,0.75);
+    border: 1px solid rgba(180,140,140,0.25);
+    border-radius: 14px;
+    padding: 11px 14px 11px 40px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.nh-search:focus { border-color: var(--c-text-sub); }
+.nh-search::placeholder { color: var(--c-text-sub); opacity: 0.65; }
+
+.nh-count {
+    font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--c-text-sub); opacity: 0.8;
+    margin: 12px 2px 6px;
+    min-height: 13px;
+}
+
+.nh-list {
+    overflow-y: auto;
+    flex: 1;
+    margin: 0 -8px;
+    padding: 4px 8px 0;
+}
+.nh-list::-webkit-scrollbar { width: 6px; }
+.nh-list::-webkit-scrollbar-thumb {
+    background: rgba(180,140,140,0.3); border-radius: 3px;
+}
+
+/* One day. The date is a button — reading a note and wanting to see
+   that day is the same impulse. */
+.nh-entry {
+    padding: 16px 4px 18px;
+    border-bottom: 1px solid rgba(180,140,140,0.14);
+}
+.nh-entry:last-child { border-bottom: none; }
+
+.nh-date {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; padding: 0;
+    font-family: var(--font-main);
+    font-size: 11px; font-weight: 600; letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--c-text-header);
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.nh-date:hover { opacity: 0.6; }
+.nh-date .material-symbols-rounded {
+    font-size: 14px; opacity: 0; transition: opacity 0.15s;
+}
+.nh-date:hover .material-symbols-rounded { opacity: 0.7; }
+
+.nh-text {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.72;
+    color: var(--c-text-body);
+    white-space: pre-wrap;      /* her line breaks are hers */
+    word-break: break-word;
+}
+.nh-text mark {
+    background: rgba(255, 205, 138, 0.55);
+    color: inherit;
+    border-radius: 3px;
+    padding: 0 1px;
+}
+
+/* The day around the note, small enough to ignore. */
+.nh-meta {
+    margin-top: 11px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+}
+.nh-chip {
+    font-size: 9.5px; letter-spacing: 0.8px; text-transform: uppercase;
+    font-weight: 500;
+    color: var(--c-text-sub);
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(180,140,140,0.2);
+    border-radius: 20px;
+    padding: 3px 9px;
+}
+.nh-chip.is-period { color: #C0566A; border-color: rgba(192,86,106,0.3); }
+
+.nh-empty {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 13px; line-height: 1.7;
+    color: var(--c-text-sub);
+}
+
+/* Today's Log */
+.log-panel { 
+    flex: 1; /* This makes it grow to fill empty space */
+    display: flex; 
+    flex-direction: column; }
+.log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid rgba(142, 74, 78, 0.1); }
+.log-header span:first-child { color: var(--c-text-header); font-size: 15px; font-weight: 500; letter-spacing: 0.5px; }
+.small-date { font-size: 11px; color: var(--c-text-sub); display: flex; align-items: center; gap: 5px; }
+
+.log-list { display: flex; flex-direction: column; gap: 14px; font-size: 12px; height: 100%; }
+.log-row { display: flex; align-items: center; }
+.log-row .key { color: #A08080; text-transform: uppercase; width: 100px; font-size: 10px; letter-spacing: 1px; font-weight: 500; }
+.log-row .val { color: var(--c-text-body); font-weight: 400; }
+.log-row .val.accent { color: var(--c-text-header); font-weight: 500; }
+
+/* Responsive */
+@media (max-width: 1000px) {
+    .dashboard-card { flex-direction: column; height: auto; max-height: none; overflow-y: auto; }
+    .zone-center-nav { flex-direction: row; margin: 30px 0; }
+}
+
+/* --- DATE PICKER FIX (FINAL) --- */
+.header-group {
+    /* Ensure the header itself is clickable/interactive */
+    position: relative;
+    z-index: 60; 
+}
+
+.date-container {
+    position: relative;
+    display: inline-block;
+    /* Lift this container above the glass card layers */
+    z-index: 100; 
+}
+
+.ghost-input {
+    position: absolute;
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    opacity: 0; /* Invisible */
+    
+    /* CRITICAL: This puts the button ABOVE the text */
+    z-index: 200; 
+    
+    cursor: pointer !important; /* Forces the 'Hand' cursor */
+}
+
+.date-display {
+    position: relative;
+    z-index: 50; /* Sits BELOW the input */
+    
+    /* CRITICAL: Makes the text ignore clicks so they pass to the input */
+    pointer-events: none; 
+    
+    /* Visuals */
+    transition: 0.2s;
+    border-bottom: 1px dashed transparent;
+}
+
+/* Hover Effect (When you hover the input, the text lights up) */
+.ghost-input:hover + .date-display {
+    color: var(--c-text-header);
+    border-bottom-color: var(--c-text-header);
+}
+
+/* --- PILL BUTTON & BUBBLE LOGIC --- */
+
+/* 1. POSITIVE STATE (On Time / Late) -> Glowing Pink */
+.btn-pill.active-success,
+.btn-pill.active-warn {
+    background-color: #FFC2CB !important; /* Strawberry Milk */
+    color: #FFF !important;
+    border-color: #FFC2CB !important;
+    box-shadow: 0 4px 15px rgba(255, 194, 203, 0.6); /* The Glow */
+    font-weight: 700;
+}
+
+/* 2. NEGATIVE STATE (Missed / No Stock) -> Deep Burgundy */
+.btn-pill.active-danger {
+    background-color: #8E4A4E !important; /* Your requested code */
+    color: #FFF !important;
+    border-color: #8E4A4E !important;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* --- WEEKLY BUBBLES SYNC --- */
+
+/* Positive Day */
+.bubble.status-pink {
+    background-color: #FFC2CB !important;
+    color: #FFF !important;
+    box-shadow: 0 2px 10px rgba(255, 194, 203, 0.8) !important;
+    border: 2px solid #FFF !important;
+    transform: scale(1.1);
+}
+
+/* Negative Day */
+.bubble.status-burgundy {
+    background-color: #8E4A4E !important;
+    color: #FFF !important;
+    border: 2px solid #FFF !important;
+    opacity: 0.8;
+}
+
+/* --- PHASE THEMES --- */
+/* The transition ensures the color shifts smoothly, not abruptly */
+body {
+    transition: background 0.6s ease, color 0.3s ease;
+}
+
+/* 1. MENSTRUAL (Deeper Red/Pink) */
+body.theme-menstrual {
+    background: linear-gradient(135deg, #FFD6D6 0%, #FFB6B9 100%);
+}
+body.theme-menstrual .phase-title { color: #A63A40; }
+body.theme-menstrual .dashboard-card { border-color: rgba(255, 182, 185, 0.6); }
+
+/* 2. FOLLICULAR (Standard Strawberry - Default) */
+body.theme-follicular {
+    background: linear-gradient(120deg, #FFF0F0 0%, #FFE4E4 100%);
+}
+
+/* 3. OVULATION (Bright/Glow) */
+body.theme-ovulation {
+    background: linear-gradient(120deg, #FFF5FA 0%, #FFCce6 100%);
+}
+body.theme-ovulation .phase-title { color: #D65A85; }
+
+/* 4. LUTEAL (Muted/Cozy) */
+body.theme-luteal {
+    background: linear-gradient(120deg, #FFF8F0 0%, #FFE8D6 100%);
+}
+body.theme-luteal .phase-title { color: #B08C7C; }
+
+/* --- MODAL OVERLAY --- */
+.hidden { display: none !important; }
+
+.modal-backdrop {
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    background: rgba(142, 74, 78, 0.2);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    
+    /* ADD THESE TWO LINES: */
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.modal-card {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 30px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(142, 74, 78, 0.15);
+    max-width: 400px; width: 90%;
+    border: 1px solid #FFF;
+    animation: floatUp 0.3s ease-out;
+}
+
+@keyframes floatUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-card h2 { color: var(--c-text-header); margin-bottom: 10px; font-weight: 500; letter-spacing: -0.5px; }
+.modal-msg { color: var(--c-text-body); margin-bottom: 30px; line-height: 1.6; font-size: 14px; }
+
+.modal-actions { display: flex; gap: 10px; justify-content: center; }
+
+.btn-primary {
+    background: var(--c-text-header); color: #FFF; border: none;
+    padding: 12px 25px; border-radius: 15px; cursor: pointer;
+    font-size: 12px; letter-spacing: 1px; font-weight: 600;
+    transition: 0.2s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(142, 74, 78, 0.2); }
+
+.btn-secondary {
+    background: transparent; color: var(--c-text-sub); border: 1px solid var(--c-text-sub);
+    padding: 12px 25px; border-radius: 15px; cursor: pointer;
+    font-size: 12px; letter-spacing: 1px; font-weight: 600;
+}
+.btn-secondary:hover { background: #FFF0F0; }
+
+/* --- ACTIVE PERIOD BUTTON STATE --- */
+/* When period is active, button turns white with red text */
+.btn-main-log.active-period {
+    background: #FFF;
+    border: 2px solid #8E4A4E;
+    color: #8E4A4E;
+    box-shadow: none;
+}
+
+
+/* --- MOOD MODAL STYLES --- */
+.mood-card-size {
+    max-width: 600px;
+    width: 95%;
+    position: relative; /* For the close button */
+}
+
+.close-icon {
+    position: absolute; top: 20px; right: 25px;
+    background: none; border: none;
+    font-size: 24px; color: var(--c-text-sub);
+    cursor: pointer;
+}
+
+.modal-header-text {
+    text-align: left;
+    color: var(--c-text-header);
+    font-size: 24px; line-height: 1.2;
+    margin-bottom: 30px;
+}
+
+.mood-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.mood-col {
+    display: flex; flex-direction: column; gap: 15px;
+}
+
+.mood-item {
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+    opacity: 0.5; /* Dimmed by default */
+    transition: 0.2s;
+}
+
+.mood-item span:first-child { font-size: 24px; } /* Icon size */
+.mood-item span:last-child { 
+    font-size: 11px; font-weight: 700; 
+    text-transform: uppercase; letter-spacing: 0.5px; 
+}
+
+/* HOVER STATE */
+.mood-item:hover { opacity: 0.8; color: var(--c-text-header); }
+
+/* SELECTED STATE (Active) */
+.mood-item.selected {
+    opacity: 1;
+    color: #8E4A4E; /* Deep Burgundy */
+    transform: translateX(5px); /* Subtle shift to right */
+}
+
+.full-width-btn { width: 100%; background: #4E3E3E; /* Dark Chocolate for contrast */ }
+
+/* --- FLOW MODAL STYLES --- */
+.flow-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.flow-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Pushes drops to left, text to right */
+    padding: 15px 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(142, 74, 78, 0.1);
+    cursor: pointer;
+    transition: 0.2s;
+    background: rgba(255,255,255,0.5);
+}
+
+.flow-item:hover {
+    background: #FFF;
+    border-color: #E03E52;
+}
+
+/* SELECTED STATE */
+.flow-item.selected {
+    background: #FFF0F0;
+    border: 1px solid #E03E52;
+    box-shadow: 0 4px 10px rgba(224, 62, 82, 0.1);
+}
+
+/* The Drops */
+.drop-container {
+    display: flex;
+    gap: 2px;
+    color: #E03E52; /* The bright red/pink from your "Period Start" button */
+}
+
+.drop-container .material-symbols-rounded {
+    font-size: 20px;
+    font-variation-settings: 'FILL' 1; /* Tries to force fill if font supports it */
+}
+
+.flow-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--c-text-body);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Change text color when selected */
+.flow-item.selected .flow-label {
+    color: #E03E52;
+}
+
+/* --- ACTIVITY MODAL STYLES --- */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 25px;
+    max-height: 400px; /* Just in case it gets too tall on small screens */
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Space between icon and text */
+    padding: 12px 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(142, 74, 78, 0.1);
+    cursor: pointer;
+    transition: 0.2s;
+    background: rgba(255,255,255,0.5);
+    color: var(--c-text-header); /* Deep Burgundy text */
+}
+
+.activity-item:hover {
+    background: #FFF;
+    border-color: #8E4A4E;
+}
+
+/* SELECTED STATE */
+.activity-item.selected {
+    background: #FFF0F0;
+    border: 1px solid #8E4A4E;
+    box-shadow: 0 4px 10px rgba(142, 74, 78, 0.1);
+}
+
+.icon-lg {
+    font-size: 24px;
+    color: #8E4A4E;
+}
+
+.activity-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex: 1; /* Pushes text to fill space */
+    text-align: left;
+}
+
+/* --- SYMPTOMS MODAL STYLES --- */
+.symptom-master-toggle {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: rgba(255,255,255,0.5);
+    padding: 15px; margin-bottom: 20px;
+    border-radius: 15px;
+    font-weight: 700; color: #8E4A4E; font-size: 12px; letter-spacing: 1px;
+    cursor: pointer; border: 1px solid transparent;
+    transition: 0.2s;
+}
+.symptom-master-toggle:hover { background: #FFF; border-color: #8E4A4E; }
+.symptom-master-toggle.selected { background: #8E4A4E; color: #FFF; }
+
+.symptoms-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.s-item {
+    font-size: 11px; font-weight: 600; color: var(--c-text-body);
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: 0.2s;
+    text-transform: uppercase;
+}
+.s-item:hover { background: rgba(255,255,255,0.8); color: #8E4A4E; }
+
+/* The Multi-Select Visual Logic */
+.s-item.selected {
+    color: #8E4A4E;
+    font-weight: 800;
+}
+.s-item.selected::before {
+    content: '• ';
+    color: #8E4A4E;
+}
+
+/* Specify Input */
+.specify-group {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 25px;
+    background: rgba(255,255,255,0.6);
+    padding: 10px 15px; border-radius: 12px;
+}
+.specify-group label {
+    font-size: 10px; font-weight: 700; color: #8E4A4E;
+}
+.specify-group input {
+    background: transparent; border: none; outline: none;
+    font-family: var(--font-main); font-size: 12px; color: var(--c-text-body);
+    width: 100%;
+}
+
+/* --- MEDICINE MODAL STYLES --- */
+.med-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.med-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(142, 74, 78, 0.1);
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 11px; font-weight: 700; 
+    color: var(--c-text-body);
+    text-transform: uppercase; letter-spacing: 1px;
+}
+
+.med-item .material-symbols-rounded {
+    color: #B07C80; /* Muted Rose by default */
+    font-size: 18px;
+    transform: rotate(-45deg); /* Angled pill looks better */
+}
+
+/* HOVER */
+.med-item:hover {
+    background: #FFF;
+    border-color: #E03E52;
+}
+
+/* SELECTED */
+.med-item.selected {
+    background: #FFF0F0; /* Pale Pink background */
+    border: 1px solid #E03E52;
+    color: #8E4A4E;
+}
+
+.med-item.selected .material-symbols-rounded {
+    color: #E03E52; /* Bright Red/Pink icon when selected */
+}
+
+/* --- DISCHARGE MODAL STYLES --- */
+.discharge-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 30px;
+    text-align: left; /* Aligns text to start, cleaner for lists */
+}
+
+.d-item {
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.5); /* Semi-transparent glass */
+    border: 1px solid rgba(142, 74, 78, 0.05);
+    cursor: pointer;
+    transition: 0.2s;
+    
+    /* Typography */
+    font-size: 11px; 
+    font-weight: 700; 
+    color: var(--c-text-body);
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+}
+
+/* Hover State */
+.d-item:hover {
+    background: #FFF;
+    color: #8E4A4E;
+    border-color: rgba(142, 74, 78, 0.2);
+    padding-left: 25px; /* Subtle slide effect */
+}
+
+/* Selected State */
+.d-item.selected {
+    background: #FFF;
+    border: 1px solid #8E4A4E; /* Burgundy Border */
+    color: #8E4A4E;
+    font-weight: 800;
+    box-shadow: 0 4px 10px rgba(142, 74, 78, 0.1);
+}
+
+/* --- NOTES MODAL STYLES --- */
+.notes-wrapper {
+    background: rgba(255,255,255,0.5); /* Glass container */
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(142, 74, 78, 0.1);
+    margin-bottom: 25px;
+    transition: 0.2s;
+}
+
+.notes-wrapper:focus-within {
+    background: #FFF;
+    border-color: #8E4A4E;
+    box-shadow: 0 5px 15px rgba(142, 74, 78, 0.05);
+}
+
+textarea {
+    width: 100%;
+    height: 180px; /* Generous writing space */
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none; /* Prevents dragging the box size */
+    
+    font-family: var(--font-main);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--c-text-body);
+}
+
+textarea::placeholder {
+    color: #B07C80;
+    opacity: 0.5;
+}
+
+/* --- CALENDAR V3 (THE WHITE GLASS DESIGN) --- */
+
+/* The Backdrop (Blurred Pink) */
+.view-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    
+    /* Using your IMGUR link */
+    background: url('https://i.imgur.com/sC3QkCu.png') no-repeat center center fixed;
+    background-size: cover;
+    
+    z-index: 3000;
+    display: flex; justify-content: center; align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+/* 2. THE MINI DROPS VISUALS */
+.flow-indicators {
+    position: absolute;
+    bottom: 6px; left: 0; right: 0;
+    display: flex; justify-content: center;
+    gap: 1px; /* Tight spacing */
+}
+
+.mini-drop {
+    font-size: 10px; /* Tiny icons */
+    color: #E03E52; /* The Flo Red */
+    font-variation-settings: 'FILL' 1; /* Solid filled drops */
+}
+
+/* Ensure the number in the tile shifts up slightly so drops fit */
+.clean-tile span {
+    margin-bottom: 5px; 
+}
+
+/* The Main White Card (True Glass Version) */
+.calendar-card-glass {
+    /* 1. The Glass Gradient: High opacity top-left -> Transparency bottom-right */
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.85) 0%, 
+        rgba(255, 255, 255, 0.5) 100%
+    );
+    
+    /* 2. The Blur: This creates the depth */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    
+    /* 3. The Refractive Borders: Bright top/left, subtle bottom/right */
+    border-top: 1px solid rgba(255, 255, 255, 0.9);
+    border-left: 1px solid rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+    
+    /* 4. The Shadow: Deep and soft to make it "float" */
+    box-shadow: 0 40px 60px rgba(0, 0, 0, 0.1);
+    
+    /* Layout Properties (Kept the same) */
+    width: 95%; max-width: 1200px;
+    height: 85vh; 
+    border-radius: 40px;
+    padding: 50px;
+    position: relative;
+    display: flex; flex-direction: column;
+}
+
+/* Header: Spaced out like the mockup */
+.cal-header-clean {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 40px; padding: 0 20px;
+}
+.cal-header-clean h2 {
+    font-size: 28px; 
+    font-weight: 400; /* Thinner font */
+    color: #4A4A4A;   /* Dark Grey, not Burgundy */
+    letter-spacing: 0.5px;
+}
+.btn-nav-arrow {
+    background: #FFF; 
+    border: 1px solid #EEE;
+    border-radius: 50%; width: 40px; height: 40px;
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; transition: 0.2s; color: #8E4A4E;
+}
+.btn-nav-arrow:hover { background: #8E4A4E; color: #FFF; }
+
+/* Close Button */
+.btn-close-cal {
+    position: absolute; top: 30px; right: 40px;
+    background: none; border: none; font-size: 30px; color: #B07C80;
+    cursor: pointer;
+}
+
+/* Body Split */
+.cal-body-split {
+    display: flex; height: 100%; gap: 60px;
+}
+
+/* LEFT: GRID */
+.cal-grid-section { flex: 2; display: flex; flex-direction: column; }
+
+.cal-week-names {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 20px; text-align: center;
+    font-size: 11px; font-weight: 700; color: #B07C80; letter-spacing: 1px;
+}
+
+.cal-days-container {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 1fr; /* Makes them fill the height */
+    gap: 15px; 
+    height: 100%;
+}
+
+/* THE BEIGE SQUIRCLE TILE */
+.clean-tile {
+    background: #FDF7F2; /* Very light beige/cream */
+    border-radius: 20px;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 15px; font-weight: 500; color: #6D5D5D;
+    cursor: pointer; transition: 0.2s;
+    position: relative;
+}
+.clean-tile:hover { background: #FFF; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+
+/* Selected/Today: White with Red Text */
+.clean-tile.is-today {
+    background: #FFF;
+    border: 1px solid #8E4A4E;
+    color: #8E4A4E; font-weight: 700;
+}
+
+/* Phase Colors - Applied via JS */
+.phase-menstrual { background: #FFD6D6 !important; color: #8E4A4E; }
+.phase-follicular { background: #FFE4E4 !important; }
+.phase-ovulation { background: #FFF0F5 !important; color: #D65A85; border: 1px solid #FFCce6; }
+.phase-luteal { background: #FFF5EB !important; }
+
+
+/* RIGHT: SIDEBAR */
+.cal-sidebar-clean {
+    flex: 0.8;
+    display: flex; flex-direction: column; justify-content: center; gap: 20px;
+}
+
+.toggle-row-clean {
+    display: flex; justify-content: space-between; align-items: center;
+}
+.t-text {
+    font-size: 11px; font-weight: 600; color: #6D5D5D; letter-spacing: 0.5px; text-transform: uppercase;
+}
+
+/* Sidebar Divider */
+.sidebar-divider {
+    height: 1px;
+    background: rgba(176, 124, 128, 0.3); /* Muted Rose, low opacity */
+    margin: 10px 0 20px 0; /* Breathing room top and bottom */
+    width: 100%;
+}
+
+/* The Custom Switch */
+.switch-clean {
+    position: relative; display: inline-block; width: 40px; height: 22px;
+}
+.switch-clean input { opacity: 0; width: 0; height: 0; }
+.slider-clean {
+    position: absolute; cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #E6E0E0; /* Grey when off */
+    transition: .4s; border-radius: 34px;
+}
+.slider-clean:before {
+    position: absolute; content: "";
+    height: 16px; width: 16px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .4s; border-radius: 50%;
+}
+/* Active Color: The Muted Burgundy/Red */
+input:checked + .slider-clean { background-color: #A65C62; }
+input:checked + .slider-clean:before { transform: translateX(18px); }
+
+
+/* --- CALENDAR PILL INDICATOR --- */
+.pill-badge {
+    position: absolute;
+    top: 5px; 
+    right: 5px;
+    font-size: 14px; /* Small but sharp */
+    font-variation-settings: 'FILL' 1; /* Solid icon */
+    z-index: 10;
+}
+
+/* 1. Success State (On Time / Late) */
+.pb-success {
+    color: #8E4A4E; /* Deep Burgundy - Matches the "Good" vibe */
+    opacity: 0.8;
+}
+
+/* 2. Danger State (Missed / No Stock) */
+.pb-danger {
+    color: #E03E52; /* Bright Warning Red */
+    filter: drop-shadow(0 0 2px rgba(224, 62, 82, 0.5)); /* Subtle glow to make it look IMPORTANT */
+    animation: pulseSlow 2s infinite; /* Gentle pulse */
+}
+
+@keyframes pulseSlow {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* --- CALENDAR MINI ICONS SYSTEM --- */
+
+/* 1. The Date Number (Now in Top Left) */
+.day-number-tl {
+    position: absolute; 
+    top: 6px; left: 8px;
+    font-size: 12px; font-weight: 700; 
+    color: #B07C80; /* Default Muted Rose */
+    z-index: 5;
+}
+
+/* If it is TODAY, make the number pop */
+.clean-tile.is-today .day-number-tl {
+    color: #E03E52; /* Flo Red */
+}
+
+/* 2. The Mood Icon (Now Center Stage) */
+.center-mood-icon {
+    font-size: 28px; /* Bigger, main focus */
+    color: #b84c65;  /* The Mood Color */
+    opacity: 0.9;
+    /* We removed 'position: absolute' so the Flexbox tile centers it automatically */
+}
+
+/* Remove the old .mini-icon-tl styles if you want, or just leave them unused */
+
+/* Top Center: Temp */
+.mini-text-tc {
+    position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+    font-size: 9px; font-weight: 700; color: #6D5D5D;
+    background: rgba(255,255,255,0.8);
+    padding: 0 4px; border-radius: 4px;
+}
+
+/* Bottom Left Group: Symptoms & Meds */
+.bl-group {
+    position: absolute; bottom: 6px; left: 6px;
+    display: flex; gap: 2px;
+}
+.mini-icon-bl { font-size: 15px; color: #8E4A4E; }
+
+/* Bottom Right Group: Activity & Notes */
+.br-group {
+    position: absolute; bottom: 6px; right: 6px;
+    display: flex; gap: 2px;
+}
+.mini-icon-br { font-size: 12px; color: #B07C80; }
+
+/* Discharge Indicator: A subtle colored border on the bottom edge */
+.discharge-line {
+    position: absolute; bottom: 4px; left: 25%; width: 50%; height: 2px;
+    background: #E03E52; border-radius: 2px; opacity: 0.5;
+}
+
+/* Activity Icon - Bottom Center */
+.mini-icon-activity {
+    position: absolute; 
+    bottom: 6px; 
+    left: 50%; 
+    transform: translateX(-50%); /* Perfectly centered */
+    font-size: 16px; 
+    color: #8E4A4E; /* Deep Burgundy to stand out */
+}
+
+/* Discharge Text - Replaces the 'line' */
+/* --- STATS MODAL (Porcelain Nuclear Option) --- */
+.modal-card.stats-card-wide {
+    /* 1. FORCE SOLID WHITE */
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    opacity: 1 !important;
+
+    /* 2. KILL THE BLUR (Double Tap) */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    
+    /* 3. REMOVE GLASS BORDERS */
+    border: 1px solid #E0E0E0 !important; /* Just a thin grey line, no glass shine */
+    
+    /* 4. CLEAN SHADOW */
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
+    
+    /* Layout */
+    max-width: 800px;
+    width: 95%;
+    border-radius: 30px;
+    padding: 40px;
+    text-align: center;
+    
+    /* Ensure it sits on top */
+    position: relative;
+    z-index: 5000 !important;
+}
+
+/* Note Icon - Bottom Center */
+.mini-icon-note {
+    position: absolute; 
+    bottom: 6px; 
+    left: 50%; 
+    transform: translateX(-50%);
+    font-size: 16px; 
+    color: #6D5D5D; /* Warm Grey - distinct from the Red medical icons */
+}
+
+/* --- STATS MODAL STYLES --- */
+.stats-card-wide {
+    max-width: 800px;
+    width: 95%;
+}
+
+.charts-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.chart-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.chart-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #8E4A4E;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* --- STATS & CHARTS --- */
+.stats-card-wide {
+    max-width: 800px; width: 95%;
+}
+.charts-container {
+    display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px;
+}
+.chart-wrapper {
+    display: flex; flex-direction: column; align-items: center; gap: 15px;
+}
+.chart-label {
+    font-size: 12px; font-weight: 700; color: #8E4A4E; letter-spacing: 1px; text-transform: uppercase;
+}
+
+/* Base Donut Shape */
+.donut {
+    width: 120px; height: 120px; border-radius: 50%;
+    position: relative; transition: 0.5s ease;
+}
+
+#donutMood {
+    background: conic-gradient(
+        #ffcd8a 0% var(--p1),          
+        #fff5eb var(--p1) var(--p2),   
+        #ffaa8a var(--p2) 100%         
+    );
+}
+
+#donutLibido {
+    background: conic-gradient(
+        #ff709f 0% var(--p1),          
+        #ffa4c5 var(--p1) var(--p2),   
+        #ffd6d8 var(--p2) 100%         
+    );
+}
+
+/* 3. FLOW GRADIENT (Blood Tones) */
+/* Heavy (#8E4A4E) -> Normal (#E03E52) -> Light (#FFC2CB) */
+#donutFlow {
+    background: conic-gradient(
+        #ff3131 0% var(--p1),          /* Normal */
+        #ff6c75 var(--p1) var(--p2),   /* Heavy */
+        #f7a6a6 var(--p2) 100%         /* Soft Pink */
+    );
+}
+
+.hole {
+    width: 70px; height: 70px; background: #FFF; border-radius: 50%;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+}
+
+.chart-legend { display: flex; gap: 10px; font-size: 9px; color: #B07C80; flex-wrap: wrap; justify-content: center; max-width: 150px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; border: 1px solid rgba(0,0,0,0.1); }
+
+/* Standard Legend Colors */
+.d-high { background: #FF6B8B; }
+.d-med { background: #8E4A4E; }
+.d-low { background: #FFC2CB; }
+
+/* --- DISCHARGE MICRO-TEXT --- */
+.mini-text-discharge {
+    position: absolute;
+    bottom: 4px;      /* Anchors it to the very bottom */
+    left: 0; right: 0; /* Forces full width for centering */
+    text-align: center;
+    
+    font-size: 9px;   /* Micro font size */
+    font-weight: 700;
+    color: #E03E52;   /* Flo Red */
+    opacity: 0.8;     /* Slightly subtle */
+    
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    
+    /* Safety net: If text is still too long, chop it with '...' */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 4px;
+    z-index: 15;
+}
+
+/* --- RESET TO TODAY LINK --- */
+.btn-reset-today {
+    font-size: 10px; 
+    font-weight: 700; 
+    color: #E03E52; /* Flo Red - Indicates Action */
+    cursor: pointer; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    transition: 0.2s;
+    border-bottom: 1px dashed transparent;
+}
+
+.btn-reset-today:hover {
+    opacity: 0.7;
+    border-bottom-color: #E03E52; /* Subtle underline on hover */
+}
+
+/* --- NEW: Mood Group (For 2 icons) --- */
+.mood-group-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: -2px; /* Negative gap pulls them closer for a 'grouped' look */
+    /* No position absolute needed, flex tile handles centering */
+}
+
+/* When 2 icons are present, make them slightly smaller so they fit elegantly */
+.mood-group-center .material-symbols-rounded {
+    font-size: 22px; 
+    color: #b84c65;
+    opacity: 0.9;
+}
+
+.back-nav { 
+    position: absolute; 
+    top: 30px; 
+    left: 40px; 
+    text-decoration: none; 
+    color: #fff; 
+    font-size: 12px; 
+    font-weight: 600; 
+    text-transform: uppercase; 
+    z-index: 10; 
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2); 
+}
+

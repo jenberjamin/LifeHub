@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>CinemaHub Collections</title>
+
+    <link rel="icon" type="image/png" href="css/files/CinemaHub.png">
+    <link rel="stylesheet" href="css/cinemahub-collections.css">
+    <link rel="manifest" href="manifest-cinemahub.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+    <meta name="theme-color" content="#050505">
+    <link rel="apple-touch-icon" href="icon_2.png">
+
+</head>
+<body>
+
+    <div class="top-nav">
+    <div class="nav-left" onclick="window.location.href='CinemaHub.html'">
+        <span class="material-symbols-outlined" style="font-size: 28px;">arrow_back</span>
+        <div class="brand-text">
+            <span>CINEMA</span>
+            <span>VAULT</span>
+        </div>
+    </div>
+    <div class="nav-right" style="color:white; opacity:0.7; font-size:12px; letter-spacing:2px; text-transform:uppercase;">
+        Jen's Collection
+    </div>
+</div>
+
+    <div class="cinema-container">
+        
+        <div class="hero-section">
+    <div class="hero-card" id="heroCard">
+        <div class="tag-badge" id="heroBadge" style="position:absolute; top:10px; right:10px; background:var(--color-accent-cyan); color:black; font-size:10px; font-weight:700; padding:2px 8px;">SELECTED</div>
+        
+        <div class="poster-frame" id="heroPoster" style="background-image: url('');">
+            <span id="heroPlaceholder">Select a Movie</span>
+        </div>
+        
+        <div class="movie-info" style="display:flex; flex-direction:column; margin-bottom: 5px;">
+            <h1 id="heroTitle">--</h1>
+            
+            <div class="movie-meta">
+                <span id="heroYear">--</span>
+                <span id="heroRuntime">--</span>
+                <span id="heroRating">--</span>
+            </div>
+            
+            <div class="movie-desc" id="heroPlot" style="margin-bottom: 20px;">
+                Select a movie from your list to view details here.
+            </div>
+
+            <button class="action-btn-main" onclick="openFullDetails()">
+                <span class="material-symbols-outlined">visibility</span> VIEW DETAILS
+            </button>
+        </div>
+
+        <div class="hero-interactions">
+    
+    <div class="interact-col">
+        <span class="interact-label">Favorite</span>
+        <span id="heroHeart" class="material-symbols-outlined heart-btn" onclick="toggleFavorite()">favorite_border</span>
+    </div>
+    
+    <div class="interact-col" style="align-items: center;">
+        <span class="interact-label">My Review</span>
+        <button class="btn-review-trigger" id="reviewTrigger" onclick="openReviewModal()">
+            <span class="material-symbols-outlined">edit_note</span>
+            REVIEW
+        </button>
+    </div>
+
+    <div class="interact-col" style="align-items: flex-end;">
+        <span class="interact-label">My Rating</span>
+        <div class="star-rating">
+            <span class="material-symbols-outlined star-icon" onclick="rateMovie(1)">star_border</span>
+            <span class="material-symbols-outlined star-icon" onclick="rateMovie(2)">star_border</span>
+            <span class="material-symbols-outlined star-icon" onclick="rateMovie(3)">star_border</span>
+            <span class="material-symbols-outlined star-icon" onclick="rateMovie(4)">star_border</span>
+            <span class="material-symbols-outlined star-icon" onclick="rateMovie(5)">star_border</span>
+        </div>
+    </div>
+
+</div>
+
+ </div>  </div>
+
+        <div class="list-section">
+            
+            <div class="list-header">
+                <div class="header-left">
+    <span class="main-title">Watch List</span>
+    
+    <span class="tab-btn active" onclick="switchCategory('movie', this)">Movies</span>
+    <span class="tab-btn" onclick="switchCategory('series', this)">Series</span>
+</div>
+
+                <div class="header-right">
+    
+    <div class="header-search-bar">
+        <span class="material-symbols-outlined" style="font-size: 16px; opacity: 0.5;">search</span>
+        <input type="text" id="vaultSearch" class="search-input-field" placeholder="Search Title, Director, Cast..." oninput="filterBySearch(this.value)">
+    </div>
+
+<div class="view-toggles">
+    <span class="material-symbols-outlined v-btn active" id="btnGrid" onclick="switchView('grid')">grid_view</span>
+    <span class="material-symbols-outlined v-btn" id="btnList" onclick="switchView('list')">view_list</span>
+</div>
+
+<div style="width:1px; height:20px; background:rgba(255,255,255,0.2); margin: 0 8px;"></div>
+
+    <span class="material-symbols-outlined filter-icon-btn" onclick="openFilterModal()">filter_list</span>
+
+
+<div class="custom-dropdown" tabindex="0" onblur="closeGenreMenu()">
+    <div class="dropdown-trigger" onclick="toggleGenreMenu()">
+        <span id="currentGenreLabel">ALL GENRES</span>
+        <span class="material-symbols-outlined arrow-icon" id="genreArrow">expand_more</span>
+    </div>
+    
+    <div class="dropdown-options" id="genreOptions">
+        <div class="d-option selected" onclick="selectCustomGenre('all', 'All Genres')">All Genres</div>
+        <div class="d-option" onclick="selectCustomGenre('Action', 'Action')">Action</div>
+        <div class="d-option" onclick="selectCustomGenre('Adventure', 'Adventure')">Adventure</div>
+        <div class="d-option" onclick="selectCustomGenre('Animation', 'Animation')">Animation</div>
+        <div class="d-option" onclick="selectCustomGenre('Biography', 'Biography')">Biography</div>
+        <div class="d-option" onclick="selectCustomGenre('Comedy', 'Comedy')">Comedy</div>
+        <div class="d-option" onclick="selectCustomGenre('Crime', 'Crime')">Crime</div>
+        <div class="d-option" onclick="selectCustomGenre('Documentary', 'Documentary')">Documentary</div>
+        <div class="d-option" onclick="selectCustomGenre('Drama', 'Drama')">Drama</div>
+        <div class="d-option" onclick="selectCustomGenre('Family', 'Family')">Family</div>
+        <div class="d-option" onclick="selectCustomGenre('Fantasy', 'Fantasy')">Fantasy</div>
+        <div class="d-option" onclick="selectCustomGenre('Film Noir', 'Film Noir')">Film Noir</div>
+        <div class="d-option" onclick="selectCustomGenre('History', 'History')">History</div>
+        <div class="d-option" onclick="selectCustomGenre('Horror', 'Horror')">Horror</div>
+        <div class="d-option" onclick="selectCustomGenre('Music', 'Music')">Music</div>
+        <div class="d-option" onclick="selectCustomGenre('Musical', 'Musical')">Musical</div>
+        <div class="d-option" onclick="selectCustomGenre('Mystery', 'Mystery')">Mystery</div>
+        <div class="d-option" onclick="selectCustomGenre('Romance', 'Romance')">Romance</div>
+        <div class="d-option" onclick="selectCustomGenre('Sci-Fi', 'Sci-Fi')">Sci-Fi</div>
+        <div class="d-option" onclick="selectCustomGenre('Short', 'Short')">Short</div>
+        <div class="d-option" onclick="selectCustomGenre('Sport', 'Sport')">Sport</div>
+        <div class="d-option" onclick="selectCustomGenre('Thriller', 'Thriller')">Thriller</div>
+        <div class="d-option" onclick="selectCustomGenre('War', 'War')">War</div>
+        <div class="d-option" onclick="selectCustomGenre('Western', 'Western')">Western</div>
+    </div>
+</div>
+
+    <span class="count-badge" id="movieCount" style="margin-left: 15px;">0 Items</span>
+</div>
+            </div>
+
+            <div class="movie-grid" id="movieListContainer">
+                </div>
+            
+            <div class="add-btn-float" onclick="openSearchModal()">
+                <span class="material-symbols-outlined">add</span> Add New Title
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="searchModal">
+        <div class="search-box">
+            <span class="material-symbols-outlined close-modal" onclick="closeSearchModal()">close</span>
+            <div class="search-title">SHOW FINDER</div>
+            
+            <div class="input-group">
+                <input type="text" class="c-input" id="movieSearchInput" placeholder="Enter title...">
+                <button class="c-btn" onclick="searchMovieAPI()">FIND</button>
+            </div>
+
+	<div class="search-list" id="searchListBlock">
+    </div>
+            <div class="search-result" id="searchResultBlock">
+                <div class="res-poster" id="resPoster"></div>
+                <div class="res-info">
+                    <div class="res-title" id="resTitle">--</div>
+                    <div class="res-meta" id="resMeta">--</div>
+                    <div class="res-plot" id="resPlot">--</div>
+                    <button class="save-btn" onclick="saveMovieToVault()">ADD TO COLLECTION</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reviewModal">
+        <div class="journal-box">
+            <div class="journal-header">
+                <span class="journal-title">My Review</span>
+                <span class="material-symbols-outlined close-btn" onclick="closeReviewModal()">close</span>
+            </div>
+            
+            <textarea id="reviewText" class="journal-input" placeholder="Write your critique here..."></textarea>
+            
+            <div class="journal-footer">
+                <button class="btn-journal-delete" onclick="deleteReview()" title="Delete Review">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+                <button class="btn-journal-save" onclick="saveReview()">
+                    SAVE ENTRY
+                </button>
+            </div>
+        </div>
+    </div>
+
+<div class="modal-overlay" id="filterModal">
+    <div class="filter-box">
+        <div class="filter-header">
+            <span class="filter-title">Advanced Filtering</span>
+            <span class="material-symbols-outlined close-btn" onclick="closeFilterModal()">close</span>
+        </div>
+
+        <div class="filter-scroll-area">
+           
+
+<div class="filter-group">
+    <label>My Collection</label>
+    <div class="chip-grid">
+        <div class="chip" onclick="toggleChip(this, 'special', 'Favorites')">
+            <span class="material-symbols-outlined" style="font-size:12px; margin-right:5px;">favorite</span>
+            Favorites Only
+        </div>
+        <div class="chip" onclick="toggleChip(this, 'special', 'Reviewed')">
+            <span class="material-symbols-outlined" style="font-size:12px; margin-right:5px;">edit_note</span>
+            Reviewed Only
+        </div>
+    </div>
+</div>
+
+            <div class="filter-group">
+                <label>Genre</label>
+                <div class="chip-grid" id="fg-genre">
+                    <div class="chip" onclick="toggleChip(this, 'genre', 'Action')">Action</div>
+                    <div class="chip" onclick="toggleChip(this, 'genre', 'Sci-Fi')">Sci-Fi</div>
+                    <div class="chip" onclick="toggleChip(this, 'genre', 'Drama')">Drama</div>
+                    <div class="chip" onclick="toggleChip(this, 'genre', 'Romance')">Romance</div>
+                    <div class="chip" onclick="toggleChip(this, 'genre', 'Comedy')">Comedy</div>
+                    <div class="chip" onclick="toggleChip(this, 'genre', 'Horror')">Horror</div>
+                    <div class="chip" onclick="toggleChip(this, 'genre', 'Thriller')">Thriller</div>
+                    <div class="chip" onclick="toggleChip(this, 'genre', 'Adventure')">Adventure</div>
+                    <div class="chip" onclick="toggleChip(this, 'genre', 'Animation')">Animation</div>
+                    <div class="chip" onclick="toggleChip(this, 'genre', 'Fantasy')">Fantasy</div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Decade</label>
+                <div class="chip-grid">
+                    <div class="chip" onclick="toggleChip(this, 'decade', '2020')">2020s</div>
+                    <div class="chip" onclick="toggleChip(this, 'decade', '2010')">2010s</div>
+                    <div class="chip" onclick="toggleChip(this, 'decade', '2000')">2000s</div>
+                    <div class="chip" onclick="toggleChip(this, 'decade', '1990')">1990s</div>
+                    <div class="chip" onclick="toggleChip(this, 'decade', '1980')">1980s</div>
+                    <div class="chip" onclick="toggleChip(this, 'decade', '1970')">1970s</div>
+                    <div class="chip" onclick="toggleChip(this, 'decade', '1960')">1960s</div>
+                    <div class="chip" onclick="toggleChip(this, 'decade', '1950')">1950s</div>
+                </div>
+            </div>
+
+            <div class="filter-split">
+                <div class="filter-group" style="flex:1">
+                    <label>IMDb Score</label>
+                    <div class="chip-grid">
+                        <div class="chip" onclick="toggleChip(this, 'imdb', '10')">10</div>
+                        <div class="chip" onclick="toggleChip(this, 'imdb', '9')">9</div>
+                        <div class="chip" onclick="toggleChip(this, 'imdb', '8')">8</div>
+                        <div class="chip" onclick="toggleChip(this, 'imdb', '7')">7</div>
+                        <div class="chip" onclick="toggleChip(this, 'imdb', '6')">6</div>
+                        <div class="chip" onclick="toggleChip(this, 'imdb', '5')">5</div>
+                        <div class="chip" onclick="toggleChip(this, 'imdb', '4')">&lt; 5</div>
+                    </div>
+                </div>
+                <div class="filter-group" style="flex:1">
+                    <label>My Rating</label>
+                    <div class="chip-grid">
+                        <div class="chip" onclick="toggleChip(this, 'user', '5')">5 Stars</div>
+                        <div class="chip" onclick="toggleChip(this, 'user', '4')">4 Stars</div>
+                        <div class="chip" onclick="toggleChip(this, 'user', '3')">3 Stars</div>
+                        <div class="chip" onclick="toggleChip(this, 'user', '2')">2 Stars</div>
+                        <div class="chip" onclick="toggleChip(this, 'user', '1')">1 Star</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Runtime</label>
+                <div class="chip-grid">
+                    <div class="chip" onclick="toggleChip(this, 'runtime', '60')">&lt; 1 Hr</div>
+                    <div class="chip" onclick="toggleChip(this, 'runtime', '60-120')">1-2 Hrs</div>
+                    <div class="chip" onclick="toggleChip(this, 'runtime', '120-180')">2-3 Hrs</div>
+                    <div class="chip" onclick="toggleChip(this, 'runtime', '180-240')">3-4 Hrs</div>
+                    <div class="chip" onclick="toggleChip(this, 'runtime', '240')">4+ Hrs</div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Language</label>
+                <div class="chip-grid">
+                    <div class="chip" onclick="toggleChip(this, 'language', 'English')">English</div>
+                    <div class="chip" onclick="toggleChip(this, 'language', 'Spanish')">Spanish</div>
+                    <div class="chip" onclick="toggleChip(this, 'language', 'French')">French</div>
+                    <div class="chip" onclick="toggleChip(this, 'language', 'Korean')">Korean</div>
+                    <div class="chip" onclick="toggleChip(this, 'language', 'Japanese')">Japanese</div>
+                </div>
+                <input type="text" id="filterLangInput" class="filter-ext-input" placeholder="Type Language...">
+            </div>
+
+            <div class="filter-group">
+                <label>Country</label>
+                <div class="chip-grid">
+                    <div class="chip" onclick="toggleChip(this, 'country', 'United States')">USA</div>
+                    <div class="chip" onclick="toggleChip(this, 'country', 'United Kingdom')">UK</div>
+                    <div class="chip" onclick="toggleChip(this, 'country', 'Philippines')">PH</div>
+                    <div class="chip" onclick="toggleChip(this, 'country', 'South Korea')">Korea</div>
+                    <div class="chip" onclick="toggleChip(this, 'country', 'Japan')">Japan</div>
+                    <div class="chip" onclick="toggleChip(this, 'country', 'France')">France</div>
+                </div>
+                <input type="text" id="filterCountryInput" class="filter-ext-input" placeholder="Type Country...">
+            </div>
+
+        </div>
+
+        <div class="filter-footer">
+            <button class="btn-filter-clear" onclick="clearAllFilters()">CLEAR ALL</button>
+            <button class="btn-filter-apply" onclick="applyAdvancedFilters()">SEE RESULTS</button>
+        </div>
+    </div>
+</div>
+
+
+    <div class="modal-overlay" id="fullDetailsModal">
+        <div class="details-stage">
+            <span class="material-symbols-outlined close-stage" onclick="closeFullDetails()">close</span>
+            
+            <div class="stage-content">
+                <div class="stage-poster" id="fdPoster"></div>
+
+                <div class="stage-info">
+                    
+		<div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <h1 id="fdTitle" style="margin-right: 20px;">Movie Title</h1>
+    <button class="btn-icon-small" onclick="toggleEditMode()" title="Edit Details">
+        <span class="material-symbols-outlined" id="editIcon">edit</span>
+    </button>
+</div>
+                    <div class="fd-meta-line">
+                        <span id="fdGenre">// Genre</span>
+                    </div>
+
+<div class="status-deck">
+    <button class="status-btn" id="btn-watchlist" onclick="updateStatus('watchlist')">
+        <span class="material-symbols-outlined">bookmark_add</span> TO WATCH
+    </button>
+    <button class="status-btn" id="btn-watching" onclick="updateStatus('watching')">
+        <span class="material-symbols-outlined">play_circle</span> WATCHING
+    </button>
+    <button class="status-btn" id="btn-watched" onclick="updateStatus('watched')">
+        <span class="material-symbols-outlined">check_circle</span> FINISHED
+    </button>
+</div>
+
+                    <div class="fd-grid">
+    <div class="fd-col">
+        <label>Director</label>
+        <span id="fdDirector">--</span>
+    </div>
+    <div class="fd-col">
+        <label>Writer</label>
+        <span id="fdWriter">--</span>
+    </div>
+    <div class="fd-col">
+        <label>Production</label>
+        <span id="fdProduction">--</span>
+    </div>
+    <div class="fd-col">
+        <label>Box Office</label>
+        <span id="fdBoxOffice">--</span>
+    </div>
+    
+    <div class="fd-col">
+        <label>Language</label>
+        <span id="fdLanguage">--</span>
+    </div>
+    <div class="fd-col">
+        <label>Country</label>
+        <span id="fdCountry">--</span>
+    </div>
+</div>
+
+                    <div class="fd-section">
+                        <label>Main Cast</label>
+                        <span id="fdCast">--</span>
+                    </div>
+
+                    <div class="fd-section">
+                        <label>Awards</label>
+                        <span id="fdAwards" style="color: var(--color-accent-cyan);">--</span>
+                    </div>
+
+                    <div class="fd-section">
+                        <label>Full Plot</label>
+                        <p id="fdPlot">--</p>
+                    </div>
+
+                    <div class="fd-section" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                        <label>Instant Stream Search</label>
+                        <div class="streaming-grid">
+                            <button class="stream-btn netflix" onclick="openStream('netflix')">NETFLIX</button>
+                            <button class="stream-btn disney" onclick="openStream('disney')">DISNEY+</button>
+                            <button class="stream-btn prime" onclick="openStream('prime')">PRIME</button>
+                            <button class="stream-btn youtube" onclick="openStream('youtube')">YOUTUBE</button>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="btn-delete" onclick="deleteCurrentMovie()">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+                            Remove from Collection
+                        </button>
+                    </div>
+
+                </div> 
+            </div>
+        </div>
+    </div>
+
+
+<div class="modal-overlay" id="addOptionsModal">
+    <div class="usher-box">
+        <div class="usher-header">
+            <span class="usher-title">Add to Collection</span>
+            <span class="material-symbols-outlined close-btn" onclick="closeAddOptions()">close</span>
+        </div>
+
+        <div class="usher-question">What is your current status?</div>
+
+        <div class="status-selector">
+            <div class="s-option" id="opt-watchlist" onclick="selectAddStatus('watchlist')">
+                <span class="material-symbols-outlined">bookmark</span>
+                TO WATCH
+            </div>
+            <div class="s-option" id="opt-watching" onclick="selectAddStatus('watching')">
+                <span class="material-symbols-outlined">play_circle</span>
+                WATCHING
+            </div>
+            <div class="s-option" id="opt-watched" onclick="selectAddStatus('watched')">
+                <span class="material-symbols-outlined">check_circle</span>
+                FINISHED
+            </div>
+        </div>
+
+        <div class="usher-extras" id="usherExtras">
+            
+            <div class="extra-row">
+                <label>Your Rating</label>
+                <div class="star-rating" id="usherStars">
+                    <span class="material-symbols-outlined star-icon" onclick="setUsherRating(1)">star_border</span>
+                    <span class="material-symbols-outlined star-icon" onclick="setUsherRating(2)">star_border</span>
+                    <span class="material-symbols-outlined star-icon" onclick="setUsherRating(3)">star_border</span>
+                    <span class="material-symbols-outlined star-icon" onclick="setUsherRating(4)">star_border</span>
+                    <span class="material-symbols-outlined star-icon" onclick="setUsherRating(5)">star_border</span>
+                </div>
+            </div>
+
+            <div class="extra-row">
+                <label>Favorite?</label>
+                <span id="usherHeart" class="material-symbols-outlined heart-btn" onclick="toggleUsherFavorite()">favorite_border</span>
+            </div>
+
+            <textarea id="usherReview" class="usher-input" placeholder="Quick review (optional)..."></textarea>
+        </div>
+
+        <button class="btn-usher-confirm" onclick="finalizeAdd()">CONFIRM & SAVE</button>
+    </div>
+</div>
+
+        <script src="js/cinema-core.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('✅ LifeHub Worker Registered'))
+                    .catch(err => console.log('❌ Worker Failed:', err));
+            });
+        }
+	</script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="js/cinema-sync.js"></script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+  </body>
+</html>
+

@@ -1,0 +1,228 @@
+ /* --- CORE VARIABLES --- */
+        :root {
+            --font-main: 'Red Hat Display', sans-serif;
+            --font-serif: 'Cinzel', serif;
+            --font-mono: 'Red Hat Mono', monospace; /* Tech/Receipt look */
+            
+            --color-text-muted: #8b857e; 
+            --color-gold: #D4AF37;       
+            --color-gold-dim: #8a7846;   
+            
+            --bg-image: url('files/LifeHub_Prestige-Bank_BG.webp'); 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            /* Darker overlay to kill the "muddy" look */
+            background-blend-mode: multiply;
+            background-color: rgba(0,0,0,0.2);  
+            
+            display: flex; 
+        }
+
+        /* --- 1. SIDEBAR --- */
+        .sidebar-container {
+            width: 25%; 
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding-left: 80px; 
+            padding-top: 60px; 
+        }
+
+        .logo {
+            width: 160px;   
+            margin-bottom: 80px; 
+            opacity: 0.9;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 45px; 
+        }
+
+        .nav-item {
+            color: var(--color-text-muted);
+            text-decoration: none;
+            font-size: 13px; 
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        /* --- NOT BUILT YET --- */
+        /* Dimmed and inert links to pages that don't exist yet.
+           pointer-events:none also kills the hover state below.
+           See LifeHub-prestige-bank.html for the full note. */
+        .nav-item.is-unbuilt {
+            opacity: 0.28;
+            cursor: default;
+            pointer-events: none;
+            filter: grayscale(0.6);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #ffffff;
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active .arrow { color: var(--color-gold); } 
+        .arrow { font-size: 14px; opacity: 0.7; }
+
+        .add-btn {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            color: var(--color-text-muted);
+            font-size: 24px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .add-btn:hover { color: #fff; transform: rotate(90deg); }
+
+
+        /* --- 2. MAIN STAGE --- */
+        .main-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-right: 50px; 
+            padding-left: 20px;
+        }
+
+        /* --- THE GLASS LEDGER (New Design) --- */
+        .ledger-container {
+            width: 90%;
+            height: 85%;
+            
+            /* GLASSMORPHISM: The key to "Premium" */
+            background: rgba(20, 20, 20, 0.6); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 4px; /* Sharp corners = Corporate */
+            
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+        }
+
+        .ledger-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--color-gold); /* The gold accent line */
+        }
+
+        .page-title {
+            font-family: var(--font-serif);
+            font-size: 28px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .ledger-id {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--color-text-muted);
+            letter-spacing: 1px;
+        }
+
+        /* --- TABLE HEADERS --- */
+        .table-headers {
+            display: grid;
+            grid-template-columns: 1.5fr 3fr 2fr 1.5fr; /* Grid Layout */
+            padding: 0 20px 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 10px;
+        }
+        
+        .th-item {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--color-text-muted);
+            font-weight: 500;
+        }
+        .th-right { text-align: right; }
+
+        /* --- TRANSACTION LIST --- */
+        .transaction-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scrollbar */
+        .transaction-list::-webkit-scrollbar { width: 4px; }
+        .transaction-list::-webkit-scrollbar-track { background: transparent; }
+        .transaction-list::-webkit-scrollbar-thumb { background: #444; }
+
+        /* --- THE ROW (Clean, Receipt Style) --- */
+        .t-row {
+            display: grid;
+            grid-template-columns: 1.5fr 3fr 2fr 1.5fr; /* Matches Header */
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Thin divider */
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .t-row:hover {
+            background: rgba(255, 255, 255, 0.03); /* Subtle highlight */
+        }
+
+        .t-date {
+            color: var(--color-text-muted);
+            font-family: var(--font-mono);
+            font-size: 11px;
+        }
+
+        .t-desc {
+            color: #e0e0e0;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .t-source {
+            color: var(--color-gold-dim);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(138, 120, 70, 0.3);
+            padding: 4px 8px;
+            width: fit-content;
+            border-radius: 4px;
+        }
+
+        .t-amount {
+            color: var(--color-gold);
+            font-family: var(--font-mono);
+            font-size: 15px;
+            text-align: right;
+            font-weight: 500;
+        }
+        
+        /* Green/Red logic can be added later, for now everything is Gold/Deposit */

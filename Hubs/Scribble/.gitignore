@@ -1,0 +1,30 @@
+# ── Scribble ────────────────────────────────────────
+# The icons in icons/ ARE committed on purpose — they are
+# build output, but regenerating them needs make-icons.js
+# to have been run, and a deploy should never depend on
+# that. Do not add icons/ here.
+
+# OS noise
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Node — nothing here needs it today, but if you ever add
+# a dependency this stops it landing in the repo.
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Vercel
+.vercel/
+
+# Local scratch
+*.local
+*.log

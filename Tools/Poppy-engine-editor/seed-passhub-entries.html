@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — PassHub logins entries</title>
+<style>
+    body {
+        background: #f2e8e2; font-family: 'Century Gothic', sans-serif;
+        margin: 0; padding: 32px; color: #333;
+    }
+    .box {
+        max-width: 720px; margin: 0 auto; background: #fdf8f4;
+        border: 1px solid #e3cfb8; border-radius: 12px; padding: 26px 30px;
+    }
+    h1 { font-size: 17px; color: #9c6b4f; letter-spacing: 2px; margin: 0 0 4px; }
+    .sub { font-size: 11px; color: #b08a6c; text-transform: uppercase; letter-spacing: 1px; }
+    p { font-size: 13px; line-height: 1.65; color: #6b5a4d; }
+    .warn {
+        background: #fdf1e4; border: 1px solid #e8d3b8; border-radius: 8px;
+        padding: 12px 15px; font-size: 12.5px; line-height: 1.6; color: #8a5a3f;
+    }
+    .lock {
+        background: #f6ecec; border: 1px solid #e0c2c2; border-radius: 8px;
+        padding: 12px 15px; font-size: 12.5px; line-height: 1.6; color: #8a4040;
+        margin-top: 12px;
+    }
+    button {
+        padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
+        font-weight: bold; font-family: inherit; font-size: 13px;
+        background: #b8866f; color: #fff; margin-top: 16px;
+    }
+    button:hover { background: #a0705a; }
+    button:disabled { background: #d6c4b8; cursor: default; }
+    #log {
+        margin-top: 18px; font-family: Consolas, monospace; font-size: 12px;
+        line-height: 1.8; color: #6b5a4d; white-space: pre-wrap;
+    }
+    .ok  { color: #4c7a4c; }
+    .new { color: #9c6b4f; font-weight: bold; }
+    .err { color: #c0392b; }
+    ol { font-size: 13px; line-height: 1.8; color: #6b5a4d; }
+    code { background: #f3e6d8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>🔐 SEED PASSHUB LOGIN ENTRIES</h1>
+    <div class="sub">PoppyEngine · logins only</div>
+
+    <p>
+        Three entries that teach Poppy how to handle being asked about a
+        password: how to tell "which accounts do I have" from "what IS the
+        password", how to talk about something she cannot see, and how to
+        put the vault away again. Writes into the editor's Firebase, not
+        into <code>PoppyEngine-core.js</code>, which is generated.
+    </p>
+
+    <div class="warn">
+        The <strong>block shape</strong> — the action names and what
+        <code>q</code> means — is <strong>not</strong> in here. It ships at
+        runtime from <code>JS/poppy/PoppyEngine-passhub.js</code> with the
+        action spec, the same way navigation's 48 destinations do. These
+        entries are the wording: when she should reach for it, and how she
+        should speak about it.
+    </div>
+
+    <div class="lock">
+        <strong>The one rule none of this can bend.</strong> Poppy never
+        receives a password. The engine paints it onto the screen and hands
+        her back nothing but the platform name, because action receipts are
+        posted to the model on the next turn. Every entry below is written
+        so that she describes <em>where</em> the answer is, never
+        <em>what</em> it is — if you reword them, keep that.
+    </div>
+
+    <p>
+        Matched <strong>by name</strong>, so a second run updates them rather
+        than creating duplicates. Your other entries are never read or
+        changed.
+    </p>
+
+    <p><strong>After it finishes:</strong> open the editor, read the three through,
+        then <strong>Export PoppyEngine.js</strong> over
+        <code>JS/poppy/PoppyEngine-core.js</code>.</p>
+
+    <button id="go">Write the three login entries</button>
+    <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, update }
+    from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157"
+};
+
+const db = getDatabase(initializeApp(cfg));
+
+const CATEGORY = "PassHub";
+
+/* The nouns that mean "the vault" at all. Without one of these present
+   nothing here fires — "what's my account" about her bank balance is not
+   a request for a login, and a vault entry that fires on the word
+   "account" alone would be reaching into her passwords all day. */
+const VAULT_WORDS = [
+    "password", "passwords", "passcode", "login", "logins", "log-in",
+    "sign-in", "signin", "credential", "credentials", "username",
+    "user name", "vault", "passhub", "account details", "my account for",
+    "logged in as", "email for", "recovery"
+];
+
+/* Words that turn a mention of the vault into "tell me the actual
+   secret" rather than "what have I got". */
+const REVEAL_WORDS = [
+    "what is", "what's", "whats", "tell me", "give me", "show me",
+    "read me", "read out", "open", "unlock", "get", "need", "copy",
+    "remind me", "i forgot", "forgot my", "can't remember",
+    "cannot remember", "look up", "pull up", "find my"
+];
+
+const RULE = "═══════════════════════════════════════════════════════════════";
+
+const HEAD = (title, action) =>
+    RULE + "\n🔐 " + title + (action ? " ; " + action : "") + "\n" + RULE + "\n";
+
+/* The paragraph that must survive any rewording, repeated into all
+   three so that editing one entry can never quietly strip it. */
+const BLIND =
+`── YOU CANNOT SEE ANY OF IT ──
+You do not receive the password. You do not receive the username, the
+recovery address, the phone number, the 2FA note or the free text. They
+are painted onto her screen and what comes back to you is the platform
+name and nothing else.
+
+So never say a password. Never guess one. Never "confirm" one, and never
+repeat one back to her from earlier in the conversation — if you think
+you have one, you are wrong about where it came from. Say where it is:
+"GCash is on screen, bottom right."`;
+
+const ENTRIES = [
+
+/* ── WHICH ONE ───────────────────────────────────────────────────
+   The safe half. Shows platform and category only, needs no passcode,
+   so it is the right first move whenever the question is vague.
+
+   window: 1 — an action must never read stale words. "my Netflix"
+   three messages ago must not combine with "password" now and open
+   something she didn't ask for. */
+{
+    name: "PassHub: Which login is it",
+    intent: "VAULT_FIND",
+    blockType: "instruction",
+    priority: 4,
+    window: 1,
+    keywords: VAULT_WORDS,
+    requireAny: VAULT_WORDS,
+    writeFields: ["action"],
+    guidelines:
+HEAD("She's asking what she has, not what it says", "vault_find") +
+`Listing is the harmless half: it puts platform names and categories on
+screen and asks her for nothing. Reach for it whenever the question is
+about WHICH account rather than what the password is.
+
+  "what logins do I have for google"   → vault_find, q: google
+  "do I have a figma account"          → vault_find, q: figma
+  "what's in my vault"                 → vault_find, no q
+  "how many banking logins have I got" → vault_find, q: finance
+
+`+ BLIND + `
+
+── WHEN SHE WAS VAGUE, LIST FIRST ──
+"what's my password" with no platform is not answerable, and guessing
+which one she meant is the worst possible guess to get wrong. List, then
+ask which. Opening the wrong entry puts a real password on her screen
+for no reason.
+
+── DON'T ANNOUNCE THE COUNT AS THE ANSWER ──
+"You have four" is not what she wanted. Name them — that is what lets
+her say "the second one".` + "\n" + RULE
+},
+
+/* ── OPEN ONE ────────────────────────────────────────────────────
+   The gated half. The challenge is DOM and she has to pass it in
+   person; nothing the model sends can satisfy it or skip it.
+
+   priority 3 — above the listing entry, because when both could fire
+   the specific request is the one she made. */
+{
+    name: "PassHub: Open one login",
+    intent: "VAULT_REVEAL",
+    blockType: "instruction",
+    priority: 3,
+    window: 1,
+    keywords: VAULT_WORDS.concat(REVEAL_WORDS),
+    requireAny: VAULT_WORDS,
+    writeFields: ["action"],
+    guidelines:
+HEAD("She wants the actual login in front of her", "vault_reveal") +
+`She named a platform and wants the thing itself. Send the block with the
+platform as q.
+
+  "what's my netflix password"    → vault_reveal, q: netflix
+  "I forgot my gcash login"       → vault_reveal, q: gcash
+  "open my figma"                 → vault_reveal, q: figma
+  "copy my work email password"   → vault_reveal, q: <the platform>
+
+`+ BLIND + `
+
+── SHE WILL BE ASKED FOR HER PASSCODE ──
+Revealing puts a lock on her screen first: her passcode, then one of her
+twenty security questions, exactly as PassHub does it. You cannot answer
+that for her, you cannot skip it, and you will not see what she types.
+
+Don't apologise for it and don't warn her about it in advance — she asked
+for that lock. Just send the block; the prompt explains itself.
+
+If she cancels, the receipt says the vault stayed locked. Take that at
+face value: she changed her mind. Don't ask again unless she brings it up.
+
+Once she's answered it stays open a few minutes, so a second look at
+something else may not ask again. Don't promise either way.
+
+── ONE AT A TIME ──
+If several match, the receipt tells you so and lists them. Pass that on
+and let her pick — the exact platform name is what opens one. Do not
+send vault_reveal repeatedly to work out which is which; each one is a
+password on a screen in a room.
+
+── A QUESTION ABOUT A LOGIN IS NOT A REQUEST TO OPEN IT ──
+  "is my netflix the family one"   → she's asking about the account. List.
+  "did I ever set up a figma"      → list.
+  "what's my netflix password"     → open it.
+
+── AFTERWARDS ──
+Say it's up and where, then stop. Don't narrate the fields, don't offer
+to read it out, don't ask whether it worked. There is a copy button next
+to each line; she does not need you to relay anything.` + "\n" + RULE
+},
+
+/* ── PUT IT AWAY ─────────────────────────────────────────────────
+   Small, but the one thing she can say when someone walks in. Narrow
+   keywords on purpose: this must fire on the words and nothing else. */
+{
+    name: "PassHub: Lock the vault",
+    intent: "VAULT_LOCK",
+    blockType: "instruction",
+    priority: 3,
+    window: 1,
+    keywords: [
+        "lock the vault", "lock vault", "lock passhub", "lock my passwords",
+        "close the vault", "hide the password", "hide that", "put it away",
+        "lock it", "forget it", "never mind that", "someone's coming"
+    ],
+    requireAny: [
+        "lock", "close the vault", "hide", "put it away", "someone's coming"
+    ],
+    writeFields: ["action"],
+    guidelines:
+HEAD("Put it away, now", "vault_lock") +
+`Clears whatever is on screen and ends the unlocked window early. Send it
+the moment she asks, and answer in three words.
+
+  "lock the vault"        → vault_lock
+  "hide that, someone's coming" → vault_lock
+  "put my passwords away" → vault_lock
+
+This one is urgent by nature. Don't ask if she's sure, don't ask which
+one, don't finish the previous thought first. She can always ask again.
+
+── NOT THIS ──
+"lock" about anything else is not this. Her front door, a locked journal
+entry in PassHub notes, a locked workout — none of those are the vault.
+If the sentence isn't about passwords being visible, leave it alone.
+
+── IT MAY ALREADY BE SHUT ──
+The window closes itself after a few minutes. If the receipt says it was
+already locked, just say so — that is a reassurance, not a failure.` + "\n" + RULE
+}
+
+];
+
+const logEl = document.getElementById('log');
+const say = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+};
+
+document.getElementById('go').onclick = async () => {
+    const btn = document.getElementById('go');
+    btn.disabled = true;
+    logEl.textContent = '';
+
+    try {
+        const catSnap = await get(ref(db, 'poppyEngine/categories'));
+        const cats = catSnap.val() || {};
+        if (!Object.values(cats).includes(CATEGORY)) {
+            await push(ref(db, 'poppyEngine/categories'), CATEGORY);
+            say('+ category "' + CATEGORY + '"', 'new');
+        } else {
+            say('- category "' + CATEGORY + '" already there', 'ok');
+        }
+
+        const intentPatch = {};
+        ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
+        await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
+        say('- ' + Object.keys(intentPatch).length + ' intents registered', 'ok');
+
+        const entSnap = await get(ref(db, 'poppyEngine/entries'));
+        const existing = entSnap.val() || {};
+        const byName = {};
+        Object.entries(existing).forEach(([id, e]) => {
+            if (e && e.name) byName[e.name] = id;
+        });
+
+        let n = Object.keys(existing).length;
+
+        for (const src of ENTRIES) {
+            const id = byName[src.name];
+            const was = id ? existing[id] : null;
+
+            const entry = {
+                name:         src.name,
+                category:     CATEGORY,
+                intent:       src.intent,
+                keywords:     src.keywords || [],
+                priority:     src.priority || 4,
+                order:        was && was.order != null ? was.order : n++,
+                hidden:       false,
+                window:       src.window != null ? src.window : null,
+                cooldown:     src.cooldown || 0,
+                blockType:    src.blockType || "instruction",
+                guidelines:   src.guidelines,
+                Shifts:       [],
+                fetchTargets: src.fetchTargets || [],
+                writeFields:  src.writeFields || [],
+                requireAny:   src.requireAny  || [],
+                requireAll:   src.requireAll  || [],
+                requireNone:  src.requireNone || [],
+                notAll:       src.notAll      || [],
+                updatedAt:    Date.now()
+            };
+
+            if (id) {
+                entry.createdAt = was.createdAt || Date.now();
+                await set(ref(db, 'poppyEngine/entries/' + id), entry);
+                say('~ updated  ' + src.name, 'ok');
+            } else {
+                entry.createdAt = Date.now();
+                await push(ref(db, 'poppyEngine/entries'), entry);
+                say('+ created  ' + src.name, 'new');
+            }
+        }
+
+        say('');
+        say('Done. Open the editor, read the three through, then', 'new');
+        say('Export PoppyEngine.js over JS/poppy/PoppyEngine-core.js.', 'new');
+
+    } catch (err) {
+        say('');
+        say('Failed: ' + err.message, 'err');
+        say('The entries are matched by name, so just run it again.', 'err');
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

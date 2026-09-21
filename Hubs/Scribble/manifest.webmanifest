@@ -1,0 +1,52 @@
+{
+  "name": "Scribble — LifeHub Workshop",
+  "short_name": "Scribble",
+  "description": "Project workshop and writing archive.",
+
+  "id": "./",
+  "start_url": "./Scribble.html",
+  "scope": "./",
+
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+
+  "background_color": "#F6F5F2",
+  "theme_color": "#5C5C52",
+
+  "icons": [
+    {
+      "src": "./icons/scribble-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/scribble-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/scribble-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "Archive",
+      "short_name": "Archive",
+      "url": "./Scribble-archive.html",
+      "icons": [{ "src": "./icons/scribble-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Recycle Bin",
+      "short_name": "Bin",
+      "url": "./Scribble-recycle-bin.html",
+      "icons": [{ "src": "./icons/scribble-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

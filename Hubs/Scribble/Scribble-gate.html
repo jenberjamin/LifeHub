@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Scribble | Enter</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;600;700&family=Helvetica+Neue&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Free -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#5C5C52">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+    <!-- Scribble Gate Styles -->
+    <link rel="stylesheet" href="css/scribble-gate.css">
+</head>
+<body>
+
+<div class="card" id="card">
+
+    <div class="brand">
+        <h1>Scribble</h1>
+        <div class="tagline">LifeHub Workshop</div>
+    </div>
+
+    <!-- STEP 0: Firebase session.
+         Shown only when this device has no stored session — which
+         is once, then effectively never. This is the account
+         Firestore checks; the two steps after it are the gate. -->
+    <div id="step-0" class="step hidden">
+        <div class="step-row">
+            <span class="step-tag">Connect this device</span>
+            <span class="step-line"></span>
+        </div>
+        <!-- #sess-note is still written to by js/scribble-gate.js when a
+             sign-in fails or a session expires, so the element stays —
+             it just starts empty instead of explaining itself. -->
+        <p class="question-text" id="sess-note"></p>
+        <div class="field">
+            <label for="inp-email">Email</label>
+            <input id="inp-email" type="email"
+                   autocomplete="username" spellcheck="false" />
+        </div>
+        <div class="field">
+            <label for="inp-secret">Account password</label>
+            <input id="inp-secret" type="password" placeholder="••••••••"
+                   autocomplete="current-password" />
+        </div>
+        <button class="btn" id="btn-connect">Connect →</button>
+        <div class="err" id="err-0"></div>
+    </div>
+
+    <!-- STEP 1: Identity -->
+    <div id="step-1" class="step hidden">
+        <div class="step-row">
+            <span class="step-tag">Step 1 — Identity</span>
+            <span class="step-line"></span>
+        </div>
+        <div class="field">
+            <label for="inp-name">Name</label>
+            <input id="inp-name" type="text" placeholder="your name" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="field">
+            <label for="inp-pass">Passcode</label>
+            <input id="inp-pass" type="password" placeholder="••••••••" />
+        </div>
+        <button class="btn" id="btn-verify">Verify →</button>
+        <div class="err" id="err-1"></div>
+    </div>
+
+    <!-- STEP 2: Security Confirm -->
+    <div id="step-2" class="step hidden">
+        <div class="step-row">
+            <span class="step-tag">Step 2 — Confirm</span>
+            <span class="step-line"></span>
+        </div>
+        <!-- Filled at runtime with one of your twenty, picked at random -->
+        <p class="question-text" id="question-text">Loading…</p>
+        <div class="field">
+            <label for="inp-ans">Answer</label>
+            <input id="inp-ans" type="text" placeholder="your answer" autocomplete="off" spellcheck="false" />
+        </div>
+        <button class="btn" id="btn-unlock">Open Workshop →</button>
+        <button class="btn-ghost" id="btn-another">↻ Ask me a different question</button>
+        <button class="btn-ghost" id="btn-back">← Back</button>
+        <div class="err" id="err-2"></div>
+    </div>
+
+</div>
+
+<script src="js/scribble-sw-register.js"></script>
+<!-- A module now: it imports the hashing + Firestore lookup -->
+<script type="module" src="js/scribble-gate.js"></script>
+<!-- PASSAGE, added 2026-09-17 — the gate is where a session is born
+     and where sign-out lands, so this is where a copy is made for the
+     homescreen and where every copy is destroyed again. It does NOT
+     import scribble-boot.js, so it cannot bounce this page to itself.
+     See js/scribble-passage.js. -->
+<script type="module" src="js/scribble-passage.js"></script>
+</body>
+</html>

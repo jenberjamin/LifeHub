@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Scribble | Setup</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#5C5C52">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+
+    <!-- Reuses the gate's look; the extras below are setup-only -->
+    <link rel="stylesheet" href="css/scribble-gate.css">
+
+    <style>
+        /* The gate stylesheet pins body to 100vh and centres it — right for
+           a two-field prompt, wrong for twenty rows, which would overflow
+           past the top edge with no way to scroll to them. */
+        body {
+            height: auto;
+            min-height: 100vh;
+            align-items: flex-start;
+            padding: 34px 16px;
+            overflow-y: auto;
+        }
+
+        /* Wider than the gate — this form is a page, not a prompt. */
+        .card.setup { width: 560px; max-width: 94vw; padding: 40px 36px 32px; }
+
+        .intro {
+            font-size: 11.5px; line-height: 1.65; color: var(--sub);
+            text-align: center; margin-bottom: 26px;
+        }
+        .intro strong { color: var(--text); font-weight: 600; }
+
+        .qgrid { display: grid; gap: 10px; margin-bottom: 6px; }
+
+        .qrow {
+            display: grid; grid-template-columns: 22px 1fr 190px; gap: 8px;
+            align-items: center;
+        }
+        .qnum {
+            font-size: 9px; color: var(--sub); text-align: right;
+            letter-spacing: 1px; padding-top: 1px;
+        }
+        .qrow input {
+            width: 100%; padding: 9px 11px;
+            background: rgba(255,255,255,.6);
+            border: 1px solid rgba(0,0,0,.09);
+            border-radius: 6px; font-size: 12.5px; color: var(--text);
+            outline: none; font-family: inherit;
+            transition: background .2s, border-color .2s;
+        }
+        .qrow input:focus { background: #fff; border-color: var(--accent); }
+        .qrow input.bad   { border-color: var(--danger); background: #fff; }
+
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .note {
+            font-size: 10px; color: var(--sub); line-height: 1.6;
+            background: rgba(255,255,255,.45);
+            border-left: 2px solid rgba(0,0,0,.12);
+            padding: 10px 12px; border-radius: 4px; margin: 20px 0 4px;
+        }
+        .note b { color: var(--danger); font-weight: 600; }
+
+        .ok {
+            text-align: center; font-size: 12px; color: var(--text);
+            line-height: 1.7;
+        }
+        .ok .big { font-size: 26px; display: block; margin-bottom: 12px; }
+
+        .busy { opacity: .55; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div class="card setup" id="card">
+
+    <div class="brand">
+        <span class="material-symbols-outlined brand-icon">key</span>
+        <h1>Scribble</h1>
+        <div class="tagline">First-time setup</div>
+    </div>
+
+    <!-- ── Blocked: already configured ─────────────── -->
+    <div id="state-locked" class="step hidden">
+        <p class="ok">
+            <span class="big">🔒</span>
+            Scribble is already configured.<br>
+            This page only runs once.
+        </p>
+        <!-- The instructions for starting over used to sit here. They were
+             removed deliberately: this page is reachable by anyone who gets
+             as far as the browser, and a sign explaining how to wipe the
+             gate's credentials is help for the wrong reader. The escape
+             hatch itself still exists — see js/scribble-auth.js — it is
+             just no longer advertised. -->
+        <button class="btn-ghost" onclick="location.href='Scribble-gate.html'">← Go to the gate</button>
+    </div>
+
+    <!-- ── Blocked: no crypto ──────────────────────── -->
+    <div id="state-nocrypto" class="step hidden">
+        <p class="ok">
+            <span class="big">⚠️</span>
+            <span id="nocrypto-msg"></span>
+        </p>
+    </div>
+
+    <!-- ── Loading ─────────────────────────────────── -->
+    <div id="state-loading" class="step">
+        <p class="ok">Checking…</p>
+    </div>
+
+    <!-- ── Needs a Firebase session first ──────────── -->
+    <div id="state-session" class="step hidden">
+        <div class="step-row">
+            <span class="step-tag">Connect this device</span>
+            <span class="step-line"></span>
+        </div>
+        <p class="intro">
+            Setup writes to your Firestore, so this device has to be linked
+            to the account first. You only do this once per device.
+        </p>
+        <div class="field">
+            <label for="inp-email">Email</label>
+            <input id="inp-email" type="email" placeholder="you@example.com"
+                   autocomplete="username" spellcheck="false" />
+        </div>
+        <div class="field">
+            <label for="inp-secret">Account password</label>
+            <input id="inp-secret" type="password" placeholder="••••••••"
+                   autocomplete="current-password" />
+        </div>
+        <button class="btn" id="btn-connect">Connect →</button>
+        <div class="err" id="err-session"></div>
+    </div>
+
+    <!-- ── The form ────────────────────────────────── -->
+    <div id="state-form" class="step hidden">
+
+        <p class="intro">
+            Everything below is hashed in your browser before it is sent.
+            Firestore stores <strong>only the question text</strong> — never your
+            passcode, never your answers.
+        </p>
+
+        <div class="step-row">
+            <span class="step-tag">Identity</span>
+            <span class="step-line"></span>
+        </div>
+
+        <div class="field">
+            <label for="inp-name">Name</label>
+            <input id="inp-name" type="text" autocomplete="off" spellcheck="false"
+                   placeholder="what you'll type at the gate" />
+        </div>
+
+        <div class="row2">
+            <div class="field">
+                <label for="inp-pass">Passcode</label>
+                <input id="inp-pass" type="password" autocomplete="new-password" placeholder="••••••••" />
+            </div>
+            <div class="field">
+                <label for="inp-pass2">Confirm passcode</label>
+                <input id="inp-pass2" type="password" autocomplete="new-password" placeholder="••••••••" />
+            </div>
+        </div>
+
+        <div class="step-row" style="margin-top:26px">
+            <span class="step-tag">Twenty questions — you'll be asked one at random</span>
+            <span class="step-line"></span>
+        </div>
+
+        <div class="qgrid" id="qgrid"><!-- rows injected by scribble-setup.js --></div>
+
+        <div class="note">
+            Answers are matched loosely — case and extra spaces are ignored — but
+            they are stored as one-way hashes and <b>cannot be recovered</b>.
+            At the gate you get three rerolls and three tries, so pick answers
+            you will still know in a year.
+        </div>
+
+        <button class="btn" id="btn-save">Save &amp; lock it in →</button>
+        <div class="err" id="err"></div>
+    </div>
+
+    <!-- ── Done ────────────────────────────────────── -->
+    <div id="state-done" class="step hidden">
+        <p class="ok">
+            <span class="big">✓</span>
+            Saved. <span id="sync-note"></span><br>
+            Scribble will ask for one of your twenty questions from now on.
+        </p>
+        <button class="btn" onclick="location.href='Scribble-gate.html'">Go to the gate →</button>
+    </div>
+
+</div>
+
+<script type="module" src="js/scribble-setup.js"></script>
+</body>
+</html>

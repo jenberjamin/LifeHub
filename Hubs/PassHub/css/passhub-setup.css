@@ -1,0 +1,284 @@
+/* ═══════════════════════════════════════════════════
+   PASSHUB — SETUP
+   passhub-setup.css
+
+   Same room as passhub-verification.css, wider walls.
+   The gate is a 340px card because it asks two things;
+   this asks forty-two, so it gets a proper sheet.
+═══════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;600;700&display=swap');
+
+:root {
+    --text:        #4A4A4A;
+    --sub:         #9A9A9A;
+    --border:      rgba(0, 0, 0, 0.06);
+    --radius:      8px;
+    --shadow-md:   0 4px 20px rgba(0,0,0,0.11);
+    --accent:      #5C5C52;
+    --canvas:      #EEEDE9;
+    --canvas-deep: #E4E2DC;
+    --panel:       #FCFCFB;
+    --danger:      #C0392B;
+    --ok:          #5F8A5F;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    min-height: 100%;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--text);
+    padding: 54px 20px 60px;
+    background:
+        radial-gradient(ellipse at 50% 0%, #F4F3F0 0%, var(--canvas) 45%, var(--canvas-deep) 100%);
+    background-attachment: fixed;
+}
+
+.back-nav {
+    position: fixed;
+    top: 18px;
+    left: 22px;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    font-weight: 700;
+    color: var(--sub);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 5px;
+    transition: color .18s, background .18s;
+    z-index: 10;
+}
+.back-nav:hover { color: var(--text); background: rgba(0,0,0,.035); }
+
+/* ═══════════════════════════════════════════════════
+   SHEET
+═══════════════════════════════════════════════════ */
+.sheet {
+    width: 100%;
+    max-width: 660px;
+    margin: 0 auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 36px 34px 30px;
+    transition: opacity .3s ease;
+}
+.sheet.busy { opacity: .55; pointer-events: none; }
+
+.sheet h1 {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+}
+.sheet h1::after {
+    content: '';
+    display: block;
+    width: 28px;
+    height: 2px;
+    background: var(--accent);
+    opacity: .5;
+    margin: 12px auto 0;
+    border-radius: 2px;
+}
+
+.lede {
+    margin: 18px auto 28px;
+    max-width: 460px;
+    text-align: center;
+    font-size: 11.5px;
+    line-height: 1.75;
+    color: var(--sub);
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTIONS
+═══════════════════════════════════════════════════ */
+.sec-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 28px 0 16px;
+}
+.sec-tag {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--sub);
+    white-space: nowrap;
+}
+.sec-line { flex: 1; height: 1px; background: var(--border); }
+
+/* ═══════════════════════════════════════════════════
+   FIELDS
+═══════════════════════════════════════════════════ */
+.field { margin-bottom: 14px; }
+
+.field label {
+    display: block;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--sub);
+    margin-bottom: 6px;
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    height: 34px;
+    padding: 0 12px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--text);
+    background: #FAFAF9;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    outline: none;
+    transition: border-color .15s, background .15s;
+}
+input:focus {
+    border-color: rgba(92, 92, 82, .35);
+    background: #FFFFFF;
+}
+input::placeholder { color: #C6C4C0; }
+input.bad { border-color: rgba(192, 57, 43, .5); background: rgba(192, 57, 43, .04); }
+
+.two-up { display: flex; gap: 12px; }
+.two-up .field { flex: 1; }
+
+/* ═══════════════════════════════════════════════════
+   THE TWENTY
+═══════════════════════════════════════════════════ */
+.qgrid { display: flex; flex-direction: column; gap: 8px; }
+
+.qrow {
+    display: grid;
+    grid-template-columns: 22px 1fr 190px;
+    gap: 8px;
+    align-items: center;
+}
+
+.qnum {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: #C6C4C0;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════ */
+.btn {
+    width: 100%;
+    height: 36px;
+    margin-top: 22px;
+    background: var(--accent);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+}
+.btn:hover  { background: #4A4A42; }
+.btn:active { transform: translateY(1px); }
+
+.btn-link {
+    display: inline-block;
+    margin-top: 16px;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--sub);
+    text-decoration: none;
+    cursor: pointer;
+}
+.btn-link:hover { color: var(--text); }
+
+/* ═══════════════════════════════════════════════════
+   STATES
+═══════════════════════════════════════════════════ */
+.hidden { display: none; }
+
+.state-note {
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--sub);
+    padding: 20px 10px;
+}
+.state-note strong { color: var(--text); font-weight: 600; }
+.state-note code {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    background: rgba(0,0,0,.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text);
+}
+
+.big-tick {
+    font-size: 30px;
+    color: var(--ok);
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#err {
+    margin-top: 14px;
+    min-height: 14px;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--danger);
+}
+
+/* ═══════════════════════════════════════════════════
+   MOTION
+═══════════════════════════════════════════════════ */
+.shake { animation: shake .4s cubic-bezier(.36,.07,.19,.97) both; }
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .shake { animation: none; }
+    * { transition-duration: .01ms !important; }
+}
+
+/* ═══════════════════════════════════════════════════
+   SMALL SCREENS
+   The answer column collapses under the question rather
+   than squeezing both into unusable slivers.
+═══════════════════════════════════════════════════ */
+@media (max-width: 560px) {
+    body { padding: 46px 12px 40px; }
+    .sheet { padding: 26px 18px 22px; }
+    .qrow { grid-template-columns: 18px 1fr; grid-template-areas: "n q" ". a"; }
+    .qnum { grid-area: n; }
+    .qrow input:nth-of-type(1) { grid-area: q; }
+    .qrow input:nth-of-type(2) { grid-area: a; }
+    .two-up { flex-direction: column; gap: 0; }
+}

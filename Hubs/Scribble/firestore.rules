@@ -1,0 +1,222 @@
+﻿rules_version = '2';
+
+/* ═══════════════════════════════════════════════════
+   SCRIBBLE — FIRESTORE SECURITY RULES
+
+   Paste this into:
+     Firebase console → Firestore Database → Rules → Publish
+
+   ── BEFORE YOU PUBLISH ────────────────────────────
+   Replace PASTE-YOUR-UID-HERE in signedIn() below with
+   your own uid. Find it by signing in at the gate and
+   running this in the browser console:
+
+       SCRIBBLE_SESSION.whoami()
+
+   Publishing with the placeholder still in place locks
+   you out of your own archive.
+
+   ── WHAT THIS ACTUALLY DOES ───────────────────────
+   Every rule routes through signedIn(), which asks one
+   question: is the caller THE account that owns this
+   archive? It never inspects document contents, which is
+   why turning this on needed no data migration — not one
+   existing document had to change.
+
+   Your data is now unreadable to anyone but you, even
+   though the Firebase config in js/scribble-db.js is
+   public. That config was never the secret; the session
+   is.
+
+   ── THE TWO LAYERS ────────────────────────────────
+   Firebase session  → what the SERVER trusts.
+   Scribble gate     → what the SCREEN shows.
+
+   The gate does not protect the data — it protects an
+   already-signed-in browser from whoever walks past it.
+   These rules are what protect the data.
+
+   ── OFFLINE STILL WORKS ───────────────────────────
+   Rules are evaluated on the server only. Reads served
+   from the local Firestore cache never consult them, and
+   queued writes are sent after the SDK refreshes the
+   token on reconnect. Nothing here interferes with
+   working offline.
+═══════════════════════════════════════════════════ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ── The one switch ────────────────────────────
+       Everything below routes through this.
+
+       Pinned to a single uid rather than "any signed-in
+       user", because anyone can create an account in a
+       Firebase project with signup enabled. `!= null`
+       alone would let a stranger's fresh account read
+       your archive. */
+    function signedIn() {
+      return request.auth != null
+          && request.auth.uid == 'H2NZosmEQFbW85v2hF12W6bLoP03';
+    }
+
+    /* A shape check, not a size check.
+
+       Firestore rules cannot measure a document in bytes
+       — request.resource.data.size() counts FIELDS, not
+       kilobytes, and there is no byte equivalent. The 1MB
+       document ceiling is enforced by Firestore itself
+       regardless of what is written here, so trying to
+       restate it in rules only produces a condition that
+       is always true and reads like protection.
+
+       What this does catch is a write with a wildly wrong
+       shape — a malformed loop appending hundreds of
+       fields to one document. Scribble's widest document
+       is a bin entry at roughly twenty. */
+    function saneShape() {
+      return request.resource.data.keys().size() <= 60;
+    }
+
+    /* The access log is the one collection anyone may
+       append to (see the note on it below), so it gets
+       real limits. String size() IS measurable — it is
+       the character count. */
+    function saneLogEntry() {
+      let d = request.resource.data;
+      return d.keys().size() <= 10
+          && d.event is string && d.event.size() <= 40
+          && (!('detail'  in d) || d.detail  == null || (d.detail  is string && d.detail.size()  <= 400))
+          && (!('agent'   in d) || d.agent   == null || (d.agent   is string && d.agent.size()   <= 260))
+          && (!('surface' in d) || d.surface == null || (d.surface is string && d.surface.size() <= 80));
+    }
+
+    /* ══════════════════════════════════════════════
+       PROJECTS  + every subcollection
+       modules / sections / files / logs, and the
+       versions living under each file.
+    ══════════════════════════════════════════════ */
+    match /projects/{projectId} {
+      allow read:         if signedIn();
+      allow create, update: if signedIn() && saneShape();
+      allow delete:       if signedIn();
+
+      match /{document=**} {
+        allow read:           if signedIn();
+        allow create, update: if signedIn() && saneShape();
+        allow delete:         if signedIn();
+      }
+    }
+
+    /* ══════════════════════════════════════════════
+       RECYCLE BIN
+       Soft-deleted items and their restore snapshots.
+    ══════════════════════════════════════════════ */
+    match /bin/{entryId} {
+      allow read:           if signedIn();
+      allow create, update: if signedIn() && saneShape();
+      allow delete:         if signedIn();
+    }
+
+    /* ══════════════════════════════════════════════
+       ARCHIVE
+       Shelved projects and items.
+    ══════════════════════════════════════════════ */
+    match /archive/{entryId} {
+      allow read:           if signedIn();
+      allow create, update: if signedIn() && saneShape();
+      allow delete:         if signedIn();
+    }
+
+    /* ══════════════════════════════════════════════
+       GLOBAL ACTIVITY FEED
+       The sidebar's "last 7 days" list.
+    ══════════════════════════════════════════════ */
+    match /logs/{logId} {
+      allow read:           if signedIn();
+      allow create, update: if signedIn() && saneShape();
+      allow delete:         if signedIn();
+    }
+
+    /* ══════════════════════════════════════════════
+       GATE CREDENTIALS
+       One document: scribble-auth/credentials.
+
+       It holds only hashes and a salt — no passcode and
+       no answer is recoverable from it — so reading it
+       gives an attacker a PBKDF2 digest at 120k
+       iterations, not your password.
+
+       Delete stays allowed because SCRIBBLE_AUTH.reset()
+       is the only way back in after a setup typo. Taking
+       that away would make a mistyped passcode
+       permanent.
+    ══════════════════════════════════════════════ */
+    match /scribble-auth/{docId} {
+      allow read:           if signedIn();
+      allow create, update: if signedIn() && saneShape();
+      allow delete:         if signedIn();
+    }
+
+    /* ══════════════════════════════════════════════
+       ACCESS LOG
+       Sign-ins, failed attempts, locks.
+
+       Deliberately append-only: entries can be created
+       and read, never edited. A log you can quietly
+       rewrite is not evidence of anything.
+
+       ── THE ONE OPEN RULE, AND WHY ──────────────
+       create does NOT require signedIn(). That is
+       deliberate and it is the point of the log.
+
+       A failed sign-in is, by definition, made by
+       somebody who is not authenticated. If writing
+       here needed a session, the only attempts you
+       could ever see would be your own — the log would
+       record every time you fumbled your own passcode
+       and stay silent about everyone else.
+
+       Reading still requires you, so the log is private.
+       The cost is that a stranger could append noise to
+       it; the size cap keeps that cheap, and noise in an
+       access log is itself worth seeing.
+    ══════════════════════════════════════════════ */
+    match /scribble-access-log/{entryId} {
+      allow read:   if signedIn();
+      allow create: if saneLogEntry();
+      allow update: if false;
+      allow delete: if signedIn();
+    }
+
+    /* ══════════════════════════════════════════════
+       DEVICE REGISTER
+       One document per device that has opened Scribble
+       while signed in: js/scribble-devices.js.
+
+       Unlike the access log, this one is NOT open to
+       write. A row here is a claim about who has access,
+       so only the account may make one — otherwise a
+       stranger could add rows and the list would stop
+       meaning anything.
+
+       Delete stays allowed so a device you no longer
+       own can be dropped from the list.
+    ══════════════════════════════════════════════ */
+    match /scribble-devices/{deviceId} {
+      allow read:           if signedIn();
+      allow create, update: if signedIn() && saneShape();
+      allow delete:         if signedIn();
+    }
+
+    /* ══════════════════════════════════════════════
+       EVERYTHING ELSE
+       Explicit denial. Firestore denies by default, but
+       saying so means a future collection has to be
+       added here on purpose rather than by accident.
+    ══════════════════════════════════════════════ */
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

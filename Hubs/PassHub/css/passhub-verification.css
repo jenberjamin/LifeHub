@@ -1,0 +1,252 @@
+/* ═══════════════════════════════════════════════════
+   PASSHUB — IDENTITY VERIFICATION
+   passhub-verification.css
+
+   Rebuilt in Scribble's design language:
+   warm neutral canvas, one restrained accent, small
+   uppercase micro-labels, barely-there borders.
+
+   Deliberately NOT identical to Scribble. The vault
+   reads darker and quieter — you should be able to tell
+   at a glance that you're looking at credentials and not
+   at notes. Same family, different room.
+═══════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;600;700&display=swap');
+
+:root {
+    /* ── Inherited from Scribble ── */
+    --text:         #4A4A4A;
+    --sub:          #9A9A9A;
+    --border:       rgba(0, 0, 0, 0.06);
+    --radius:       8px;
+    --shadow-sm:    0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:    0 4px 20px rgba(0,0,0,0.11);
+
+    /* ── PassHub's own note: deeper, cooler than Scribble's olive ── */
+    --accent:       #5C5C52;
+    --accent-soft:  rgba(92, 92, 82, 0.08);
+    --canvas:       #EEEDE9;
+    --canvas-deep:  #E4E2DC;
+    --panel:        #FCFCFB;
+    --danger:       #C0392B;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    height: 100%;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--text);
+    overflow: hidden;
+    /* A flat, quiet field — the old 135° gradient read as a login
+       template. This is closer to Scribble's --main-bg with just
+       enough depth to sit the panel on. */
+    background:
+        radial-gradient(ellipse at 50% 0%, #F4F3F0 0%, var(--canvas) 45%, var(--canvas-deep) 100%);
+}
+
+/* ═══════════════════════════════════════════════════
+   BACK NAV
+═══════════════════════════════════════════════════ */
+.back-nav {
+    position: fixed;
+    top: 18px;
+    left: 22px;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    font-weight: 700;
+    color: var(--sub);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 5px;
+    transition: color .18s, background .18s;
+    z-index: 10;
+}
+.back-nav:hover { color: var(--text); background: rgba(0,0,0,.035); }
+
+/* ═══════════════════════════════════════════════════
+   STAGE
+═══════════════════════════════════════════════════ */
+.main-stage {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* ═══════════════════════════════════════════════════
+   PANEL
+   Solid, not glass. Frosted panels read as consumer
+   software; Scribble's surfaces are flat white cards
+   with a hairline border.
+═══════════════════════════════════════════════════ */
+.glass-panel {
+    width: 100%;
+    max-width: 340px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 34px 30px 30px;
+    transition: transform .4s ease, opacity .4s ease;
+}
+
+.glass-panel h2 {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text);
+    text-align: center;
+    margin-bottom: 26px;
+}
+
+/* A hairline rule under the title, matching Scribble's
+   section dividers. */
+.glass-panel h2::after {
+    content: '';
+    display: block;
+    width: 28px;
+    height: 2px;
+    background: var(--accent);
+    opacity: .5;
+    margin: 12px auto 0;
+    border-radius: 2px;
+}
+
+/* ═══════════════════════════════════════════════════
+   INPUTS
+═══════════════════════════════════════════════════ */
+.input-group { margin-bottom: 16px; }
+
+.input-group label {
+    display: block;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--sub);
+    margin-bottom: 6px;
+}
+
+.input-group input {
+    width: 100%;
+    height: 34px;
+    padding: 0 12px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--text);
+    background: #FAFAF9;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    outline: none;
+    transition: border-color .15s, background .15s;
+}
+.input-group input:focus {
+    border-color: rgba(92, 92, 82, .35);
+    background: #FFFFFF;
+}
+.input-group input::placeholder { color: #C6C4C0; }
+
+/* The passcode field gets tracking so dots read as discrete
+   characters rather than a smear. */
+#entry-pass { letter-spacing: 4px; }
+#entry-pass::placeholder { letter-spacing: 2px; }
+
+/* ═══════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════ */
+#verify-btn,
+#unlock-btn {
+    width: 100%;
+    height: 34px;
+    margin-top: 6px;
+    background: var(--accent);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+}
+#verify-btn:hover,
+#unlock-btn:hover { background: #4A4A42; }
+#verify-btn:active,
+#unlock-btn:active { transform: translateY(1px); }
+
+.secondary-link {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--sub);
+    cursor: pointer;
+    transition: color .15s;
+}
+.secondary-link:hover { color: var(--text); }
+
+/* ═══════════════════════════════════════════════════
+   STEP 2  (security question)
+═══════════════════════════════════════════════════ */
+#step-2 { transition: opacity .3s ease; }
+#step-1 { transition: opacity .3s ease; }
+.hidden { display: none; }
+
+/* The question text — overrides the inline style in the HTML
+   so it matches everything else. */
+#step-2 > p {
+    font-size: 11px !important;
+    line-height: 1.6 !important;
+    color: var(--text) !important;
+    text-align: center;
+    margin-bottom: 20px !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   ERROR
+═══════════════════════════════════════════════════ */
+#error-msg {
+    margin-top: 14px;
+    min-height: 14px;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--danger);
+}
+
+/* ═══════════════════════════════════════════════════
+   MOTION
+═══════════════════════════════════════════════════ */
+.shake { animation: shake .4s cubic-bezier(.36,.07,.19,.97) both; }
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .shake { animation: none; }
+    * { transition-duration: .01ms !important; }
+}
+
+/* ═══════════════════════════════════════════════════
+   SMALL SCREENS
+═══════════════════════════════════════════════════ */
+@media (max-width: 420px) {
+    .glass-panel { padding: 28px 22px 24px; }
+    .back-nav { top: 12px; left: 14px; }
+}

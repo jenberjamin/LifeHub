@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>PassHub | Lobby</title>
+
+    <link rel="icon" type="image/png" href="css/files/PassHub.png">
+    <link rel="stylesheet" href="css/passhub-landing_page.css">
+
+    <!-- ── SECURITY SENSOR ──
+         Moved from the bottom of <body> into <head>. Down there, the whole
+         lobby painted first — so an unauthorised visitor got a clear look at
+         every category name before being bounced. Up here it runs before
+         anything renders.
+
+         location.replace, not .href, so the bounce doesn't leave an entry in
+         history that the back button can land on. -->
+    <script>
+    if (!sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+        window.location.replace('PassHub.html');
+    }
+    </script>
+
+</head>
+<body>
+
+    <header>
+        <h1>PassHub</h1>
+        <div class="subtitle">Secure Data Sanctuary</div>
+    </header>
+
+    <div class="hub-grid">
+        
+        <a href="PassHub-logins.html" class="hub-card">
+            <svg class="card-icon" viewBox="0 0 24 24">
+                <path d="M7 10C7 7.23858 9.23858 5 12 5C14.7614 5 17 7.23858 17 10H19V21H5V10H7ZM9 10V19H15V10H9ZM12 7C10.3431 7 9 8.34315 9 10H15C15 8.34315 13.6569 7 12 7Z"/>
+            </svg>
+            <div class="card-title">Logins</div>
+            <div class="card-desc">Credentials & Access Keys</div>
+        </a>
+
+        <a href="PassHub-docs.html" class="hub-card">
+            <svg class="card-icon" viewBox="0 0 24 24">
+                <path d="M4 5V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V7L14 1H6C4.89543 1 4 1.89543 4 3V5ZM13 3V8H18L13 3Z"/>
+            </svg>
+            <div class="card-title">Documents</div>
+            <div class="card-desc">References & IDs</div>
+        </a>
+
+        <a href="PassHub-connections.html" class="hub-card">
+            <svg class="card-icon" viewBox="0 0 24 24">
+                <path d="M14 16H18V12H14V16ZM15 13H17V15H15V13ZM6 16H10V12H6V16ZM7 13H9V15H7V13ZM12 4L16 8H8L12 4ZM12 2L6 8H10V11H14V8H18L12 2Z"/> 
+                <circle cx="12" cy="18" r="3" />
+            </svg>
+            <div class="card-title">Connections</div>
+            <div class="card-desc">Identity & App Links</div>
+        </a>
+
+        <a href="PassHub-notes.html" class="hub-card">
+            <svg class="card-icon" viewBox="0 0 24 24">
+                <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83ZM3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Z"/>
+            </svg>
+            <div class="card-title">Secure Notes</div>
+            <div class="card-desc">Memos & Thoughts</div>
+        </a>
+
+        <a href="PassHub-entry.html" class="hub-card">
+            <svg class="card-icon" viewBox="0 0 24 24">
+                <path d="M19 3H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 8C12 8 13.5 6.5 15 8C16.5 9.5 15 11 15 11L12 14L9 11C9 11 7.5 9.5 9 8C10.5 6.5 12 8 12 8Z" fill="currentColor"/>
+                <path d="M5 5H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="card-title">Entry</div>
+            <div class="card-desc">Logbook</div>
+        </a>
+
+<a href="PassHub-subscriptions.html" class="hub-card">
+            <svg class="card-icon" viewBox="0 0 24 24">
+               <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM15.05 16.46L16.46 15.05L13 11.59V7H11V12.41L15.05 16.46Z"/>
+            </svg>
+            <div class="card-title">Subscriptions</div>
+            <div class="card-desc">Recurring & Bills</div>
+        </a>
+
+<a href="PassHub-hubs.html" class="hub-card">
+            <svg class="card-icon" viewBox="0 0 24 24">
+                <path d="M4 4H10V10H4V4ZM14 4H20V10H14V4ZM4 14H10V20H4V14ZM14 14H20V20H14V14Z"/>
+            </svg>
+            <div class="card-title">Hubs</div>
+            <div class="card-desc">Projects & Platforms</div>
+        </a>
+
+        <a href="PassHub-about.html" class="hub-card">
+            <svg class="card-icon" viewBox="0 0 24 24">
+                <path d="M12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12ZM12 14C8.13401 14 5 16.2386 5 19V20H19V19C19 16.2386 15.866 14 12 14Z"/>
+            </svg>
+            <div class="card-title">About Me</div>
+            <div class="card-desc">Profile & Context</div>
+        </a>
+
+    </div>
+
+    <div class="bottom-bar">
+        <a href="#" onclick="lockVault()" class="back-nav">← Lock &amp; Return to LifeHub</a>
+        <!-- Every sign-in and every failed attempt. The modal builds
+             itself from js/passhub-access-log.js — nothing to style
+             here, and nothing to load until it's clicked. -->
+        <button type="button" class="bar-btn" onclick="openAccessLog()">⏱ Access History</button>
+    </div>
+
+<script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-database-compat.js"></script>
+<script src="js/passhub-firebase.js"></script>
+<script src="js/passhub-access-log.js"></script>
+
+<script>
+    function lockVault() {
+        // Drop the session token
+        sessionStorage.removeItem('PH_ACCESS_TOKEN');
+        // And the shared unlock record the gate now writes. Removing
+        // only the token would leave the hub unlocked for any tab
+        // that has moved onto the new check.
+        try { localStorage.removeItem('PH_LOCK'); } catch (e) {}
+
+        // Worth a line in the history: "locked at 11pm" is the thing
+        // that makes an entry at 3am stand out.
+        try { PH_ACCESS_LOG.record('manual-lock', 'Locked from the lobby'); } catch (e) {}
+
+        // The write is fired at the socket, not awaited — navigating
+        // this instant can cut it off, so give it a moment. The gate
+        // now auto-skips when a token exists, so ?lock=1 is
+        // belt-and-braces: even if removeItem were to fail, the gate
+        // clears the token itself rather than waving you through.
+        setTimeout(function () {
+            window.location.replace("../../LifeHub-trackers.html");
+        }, 250);
+    }
+</script>
+
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

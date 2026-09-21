@@ -1,0 +1,109 @@
+# Images where the original was already smaller than WebP.
+# The optimizer skips these. Format: path|size-in-bytes
+# If you replace one of these images, it is tried again.
+CSS\files\slides\Anime\41105.jpg|191032
+CSS\files\slides\Anime\41111.jpg|427509
+CSS\files\slides\Anime\925523.jpg|435000
+CSS\files\slides\Anime\925545.jpg|492247
+CSS\files\slides\Architecture\1793402.jpg|408829
+CSS\files\slides\Architecture\4188988.jpg|120414
+CSS\files\slides\Architecture\4908184.jpg|402685
+CSS\files\slides\Café\8912610.jpg|160675
+CSS\files\slides\Café\9524756.jpg|176473
+CSS\files\slides\Cities\1495259.jpg|487588
+CSS\files\slides\Cities\1495285.jpg|511431
+CSS\files\slides\Cities\19269.jpg|477159
+CSS\files\slides\Cities\1968784.jpg|225259
+CSS\files\slides\Cities\1968839.jpg|561452
+CSS\files\slides\Cities\1968918.jpg|305170
+CSS\files\slides\Cities\26374.jpg|657907
+CSS\files\slides\Cities\26385.jpg|162784
+CSS\files\slides\Cities\4188995.jpg|560907
+CSS\files\slides\Cities\4189025.jpg|515107
+CSS\files\slides\Cities\44190.jpg|227987
+CSS\files\slides\Cities\528553.jpg|555857
+CSS\files\slides\Cities\528587.jpg|414286
+CSS\files\slides\Cities\528631.jpg|544556
+CSS\files\slides\Cities\688646.jpg|298054
+CSS\files\slides\Cities\807591.jpg|333387
+CSS\files\slides\Cities\825150.jpg|369154
+CSS\files\slides\Fantasy\11399752.gif|837722
+CSS\files\slides\Fantasy\160373.jpg|515569
+CSS\files\slides\Fantasy\2037483.jpg|474354
+CSS\files\slides\Fantasy\2037484.jpg|344229
+CSS\files\slides\Fantasy\2037493.jpg|276509
+CSS\files\slides\Fantasy\2665150.jpg|205302
+CSS\files\slides\Fantasy\30014.jpg|357152
+CSS\files\slides\Fantasy\416262.jpg|407534
+CSS\files\slides\Fantasy\8168083.jpg|197657
+CSS\files\slides\Fantasy\823107.jpg|450576
+CSS\files\slides\Lo-fi\1470596.jpg|114741
+CSS\files\slides\Lo-fi\2223429.jpg|122985
+CSS\files\slides\Lo-fi\2641082.gif|1002600
+CSS\files\slides\Lo-fi\2825810.gif|4075888
+CSS\files\slides\Lo-fi\3565668.jpg|572060
+CSS\files\slides\Lo-fi\5759689.jpg|133981
+CSS\files\slides\Lo-fi\5759693.jpg|168451
+CSS\files\slides\Lo-fi\5759698.jpg|217396
+CSS\files\slides\Lo-fi\5759719.jpg|130268
+CSS\files\slides\Lo-fi\9226845.gif|2765704
+CSS\files\slides\Mountains\1968883.jpg|514794
+CSS\files\slides\Mountains\265691.jpg|449372
+CSS\files\slides\Mountains\4k-mountain-514o15v7mw0ycwpg.jpg|338480
+CSS\files\slides\Mountains\4k-mountain-8fcudhh2u319cqhq.jpg|138267
+CSS\files\slides\Mountains\4k-mountain-v8jdc2ax9bdhtx6k.jpg|166488
+CSS\files\slides\Mountains\5923231.jpg|481407
+CSS\files\slides\Mountains\5923232.jpg|279777
+CSS\files\slides\Nature\13291732.jpg|541637
+CSS\files\slides\Nature\13291838.jpg|940607
+CSS\files\slides\Nature\13292208.jpg|163430
+CSS\files\slides\Nature\1968773.jpg|441832
+CSS\files\slides\Nature\1969004.jpg|274585
+CSS\files\slides\Nature\22986.jpg|490289
+CSS\files\slides\Nature\22990.jpg|506114
+CSS\files\slides\Nature\384652.jpg|585275
+CSS\files\slides\Nature\414307.jpg|274571
+CSS\files\slides\Nature\414337.jpg|449063
+CSS\files\slides\Nature\414515.jpg|478306
+CSS\files\slides\Nature\42041.jpg|494786
+CSS\files\slides\Nature\423956.jpg|334534
+CSS\files\slides\Nature\424036.jpg|382168
+CSS\files\slides\Nature\453041.jpg|441677
+CSS\files\slides\Nature\461991.jpg|453400
+CSS\files\slides\Nature\4908382.jpg|610192
+CSS\files\slides\Nature\4k-mountain-vha2l6dphabw0tuj.jpg|144341
+CSS\files\slides\Nature\5343553.jpg|252614
+CSS\files\slides\Nature\6215685.jpg|175727
+CSS\files\slides\Nature\7022182.jpg|346865
+CSS\files\slides\Nature\854740.jpg|349586
+CSS\files\slides\Nature\98935.jpg|393853
+CSS\files\slides\Nature\98938.jpg|382939
+CSS\files\slides\Nature\99814.jpg|503056
+CSS\files\slides\Nature\99834.jpg|473967
+CSS\files\slides\Nature\99926.jpg|213733
+CSS\files\slides\New York\112187.jpg|355861
+CSS\files\slides\New York\1674921.jpg|169151
+CSS\files\slides\New York\2739955.jpg|469481
+CSS\files\slides\New York\2740118.jpg|286953
+CSS\files\slides\New York\2740136.jpg|268304
+CSS\files\slides\New York\4193719.jpg|305520
+CSS\files\slides\Shire\122605.jpg|337104
+CSS\files\slides\Shire\424491.jpg|293231
+CSS\files\slides\Shire\823025.jpg|286174
+CSS\files\slides\Space\1325364.jpg|508791
+CSS\files\slides\Space\1325370.jpg|546189
+CSS\files\slides\Space\1325427.jpg|357095
+CSS\files\slides\Space\191051.jpg|368031
+CSS\files\slides\Space\29307.jpg|361595
+CSS\files\slides\Space\29310.jpg|463544
+CSS\files\slides\Space\45416.jpg|148801
+CSS\files\slides\Studio Ghibli\23661598.gif|653436
+CSS\files\slides\Studio Ghibli\400694.jpg|652179
+CSS\files\slides\Studio Ghibli\8642963.gif|976341
+CSS\files\slides\Trippy\367570.jpg|304771
+Hubs\LibraryHub\book-covers\The-Conference-Of-The-Birds.jpg|26145
+Hubs\LibraryHub\book-covers\The-Desolations-Of-Devils-Acre.jpg|26514
+Hubs\LibraryHub\css\files\LibraryHub_BG.jpg|387878
+Standalone\SEE-YOU-LATTE\css\files\8912610.jpg|160675
+Standalone\SEE-YOU-LATTE\css\files\9524756.jpg|176473
+Standalone\Sims4-HQ\Backgrounds\5bc6f71fae653af39e6b27d2.jpg|35404

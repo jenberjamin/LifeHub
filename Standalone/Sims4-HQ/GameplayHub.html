@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>LifeHub | Gameplay Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Icons">
+    
+    <style>
+        @import url('https://fonts.cdnfonts.com/css/century-gothic');
+
+        body, html {
+            font-family: 'Century Gothic', sans-serif;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f7f7f5; /* Muted beige base */
+            color: #333333;
+        }
+
+        /* The "Quiet Luxury" Blueprint Grid */
+        .blueprint-grid {
+            background-image: 
+                linear-gradient(rgba(180, 180, 175, 0.25) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(180, 180, 175, 0.25) 1px, transparent 1px);
+            background-size: 40px 40px;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-link.active {
+            background: rgba(0, 0, 0, 0.05);
+            border-right: 3px solid #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="relative flex">
+    
+    <div class="blueprint-grid"></div>
+
+    <aside class="w-64 glass-panel h-full flex flex-col pt-10 pb-6 z-10">
+        <div class="px-8 mb-12">
+            <h1 class="text-2xl font-bold tracking-widest uppercase text-gray-900">Gameplay</h1>
+            <p class="text-xs text-gray-500 tracking-wider mt-1">ARCHITECTURE</p>
+        </div>
+
+        <nav class="flex-1 flex flex-col gap-2">
+            <a href="#" class="nav-link active px-8 py-3 text-sm tracking-wider text-gray-700 hover:bg-black/5 transition-all">GENERATION</a>
+            <a href="#" class="nav-link px-8 py-3 text-sm tracking-wider text-gray-700 hover:bg-black/5 transition-all">GENEALOGY</a>
+            <a href="#" class="nav-link px-8 py-3 text-sm tracking-wider text-gray-700 hover:bg-black/5 transition-all">SIMS PROFILE</a>
+            <a href="#" class="nav-link px-8 py-3 text-sm tracking-wider text-gray-700 hover:bg-black/5 transition-all">SIMS ROLES</a>
+            <a href="#" class="nav-link px-8 py-3 text-sm tracking-wider text-gray-700 hover:bg-black/5 transition-all">CAREER SYSTEM</a>
+            <a href="#" class="nav-link px-8 py-3 text-sm tracking-wider text-gray-700 hover:bg-black/5 transition-all">ASPIRATION SYSTEM</a>
+            <a href="#" class="nav-link px-8 py-3 text-sm tracking-wider text-gray-700 hover:bg-black/5 transition-all">VENUE DETAILS</a>
+        </nav>
+
+        <div class="px-8 mt-auto">
+            <a href="Sims 4 Gallery - Version 9 - Lot Gallery + Smart hashtag filter.html" class="text-xs tracking-widest text-gray-400 hover:text-gray-800 transition-colors flex items-center gap-2">
+                <span class="material-icons" style="font-size: 14px;">arrow_back</span>
+                RETURN TO LOBBY
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-10 h-full overflow-y-auto z-10">
+        <header class="mb-10 flex justify-between items-end">
+            <div>
+                <h2 class="text-3xl font-light tracking-wide text-gray-800">Generation</h2>
+                <p class="text-sm text-gray-500 tracking-wide mt-2">The bird's-eye view of your legacy.</p>
+            </div>
+            
+            <button class="px-6 py-2 bg-gray-900 text-white text-sm tracking-wider font-medium hover:bg-gray-800 transition-colors rounded-sm shadow-md">
+                + NEW ENTRY
+            </button>
+        </header>
+
+        <div class="glass-panel w-full min-h-[60vh] rounded-xl p-8 flex items-center justify-center">
+            <p class="text-gray-400 tracking-widest text-sm uppercase">Awaiting Data Population</p>
+        </div>
+    </main>
+
+</body>
+</html>

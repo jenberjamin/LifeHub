@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flo Lite</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+
+<link rel="manifest" href="/manifest-mobile-flo.json">
+<meta name="theme-color" content="#5A6B5D">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js') // This looks at root, which is correct
+                .then(reg => console.log('LifeHub Service Worker registered'))
+                .catch(err => console.log('Service Worker failed:', err));
+        });
+    }
+</script>
+
+    <style>
+        :root {
+            --bg-body: #FFF0F0;
+            --text-header: #8E4A4E;
+            --text-body: #6D5D5D;
+            --card-bg: rgba(255,255,255,0.8);
+            --btn-bg: #FFFFFF;
+        }
+
+        /* --- PHASE THEMES (Linked to JS) --- */
+        body.theme-menstrual { background-color: #FFD6D6; --text-header: #A63A40; }
+        body.theme-follicular { background-color: #FFF0F0; }
+        body.theme-ovulation { background-color: #FFF5FA; --text-header: #D65A85; }
+        body.theme-luteal { background-color: #FFF8F0; --text-header: #B08C7C; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Red Hat Display', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            transition: background-color 0.6s ease;
+            padding-bottom: 40px;
+        }
+
+        /* --- HEADER --- */
+        .app-header {
+            padding: 30px 25px 20px 25px;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .date-sub { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.7; }
+        .phase-title { font-size: 32px; font-weight: 700; color: var(--text-header); letter-spacing: -0.5px; }
+        .cycle-day { font-size: 16px; font-weight: 500; opacity: 0.8; }
+
+        /* --- MAIN ACTION --- */
+        .main-action-area { padding: 0 25px 20px 25px; }
+        .btn-main-log {
+            width: 100%; padding: 20px;
+            background: #fff; border: none; border-radius: 20px;
+            font-family: inherit; font-size: 14px; font-weight: 700;
+            color: var(--text-header); letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 5px 20px rgba(142, 74, 78, 0.1);
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            transition: 0.2s;
+        }
+        .btn-main-log:active { transform: scale(0.98); }
+        .btn-main-log.active-period {
+            border: 2px solid #8E4A4E; color: #8E4A4E;
+        }
+
+        /* --- SECTIONS --- */
+        .section-title {
+            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-header); margin: 25px 25px 10px 25px; opacity: 0.8;
+        }
+
+        /* --- PILL CONTROL --- */
+        .pill-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+            padding: 0 25px;
+        }
+        .btn-pill {
+            padding: 15px 5px; border-radius: 12px; border: none;
+            background: rgba(255,255,255,0.6);
+            font-size: 11px; font-weight: 600; color: var(--text-body);
+            text-align: center; cursor: pointer;
+        }
+        /* JS Toggles these classes */
+        .active-success { background: #FFC2CB !important; color: #fff !important; font-weight: 700; }
+        .active-warn { background: #FFC2CB !important; color: #fff !important; }
+        .active-danger { background: #8E4A4E !important; color: #fff !important; }
+
+
+        /* --- LOGGER GRID --- */
+        .logger-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            padding: 0 25px;
+        }
+        .btn-logger {
+            background: #fff; padding: 15px; border-radius: 15px; border: none;
+            text-align: left; font-size: 12px; font-weight: 600; color: var(--text-body);
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .btn-logger span { opacity: 0.5; font-size: 16px; }
+
+        /* --- DAILY LOG (READ ONLY) --- */
+        .log-container {
+            margin: 20px 25px; background: rgba(255,255,255,0.5);
+            border-radius: 20px; padding: 20px;
+        }
+        .log-row {
+            display: flex; justify-content: space-between;
+            padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 12px;
+        }
+        .log-row:last-child { border-bottom: none; }
+        .key { font-weight: 600; color: var(--text-header); opacity: 0.7; }
+        .val { text-align: right; }
+        .val.accent { color: var(--text-header); font-weight: 700; }
+
+        /* --- MODALS (Hidden by default) --- */
+        .hidden { display: none !important; }
+        
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(62, 56, 49, 0.4); backdrop-filter: blur(5px);
+            z-index: 999; display: flex; align-items: end; /* Bottom sheet feel */
+        }
+        
+        .modal-card {
+            width: 100%; background: #fff;
+            border-top-left-radius: 30px; border-top-right-radius: 30px;
+            padding: 30px 25px 50px 25px;
+            max-height: 85vh; overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .modal-header-text {
+            font-size: 18px; font-weight: 700; color: var(--text-header);
+            margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .close-icon { background: none; border: none; font-size: 24px; color: #aaa; padding: 5px; }
+
+        /* Shared Modal Item Styles */
+        .mood-grid, .symptoms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .flow-list, .activity-list, .med-list, .discharge-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+
+        .mood-item, .s-item, .flow-item, .activity-item, .med-item, .d-item {
+            padding: 12px; background: #f4f4f4; border-radius: 12px;
+            font-size: 12px; font-weight: 600; text-transform: uppercase;
+            color: #555; display: flex; align-items: center; gap: 10px;
+        }
+        
+        /* Selected State */
+        .selected { background: var(--text-header) !important; color: #fff !important; }
+        
+        .full-width-btn {
+            width: 100%; padding: 18px; background: var(--text-header); color: #fff;
+            border: none; border-radius: 15px; font-weight: 700; font-size: 13px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        /* Input helpers */
+        .specify-group input, textarea {
+            width: 100%; padding: 15px; background: #f9f9f9; border: none;
+            border-radius: 10px; margin-bottom: 20px; font-family: inherit;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="date-sub" id="dateDisplay">LOADING...</div>
+        <div class="phase-title" id="phaseTitle">...</div>
+        <div class="cycle-day" id="cycleDaySubtitle">Day --</div>
+    </div>
+
+    <div class="main-action-area">
+        <button class="btn-main-log">LOG PERIOD START</button>
+    </div>
+
+    <div class="section-title">Althea Pill</div>
+    <div class="pill-grid">
+        <button class="btn-pill" id="btnPillOntime" onclick="setPill('ontime')">On Time</button>
+        <button class="btn-pill" id="btnPillLate" onclick="setPill('late')">Late</button>
+        <button class="btn-pill" id="btnPillStock" onclick="setPill('nostock')">No Stock</button>
+    </div>
+
+    <div class="section-title">Log Details</div>
+    <div class="logger-grid">
+        <button class="btn-logger" onclick="openMoodModal()">Mood <span>+</span></button>
+        <button class="btn-logger" onclick="openFlowModal()">Flow <span>+</span></button>
+        <button class="btn-logger" onclick="openSymptomsModal()">Symptoms <span>+</span></button>
+        <button class="btn-logger" onclick="openActivityModal()">Activity <span>+</span></button>
+        <button class="btn-logger" onclick="openMedicineModal()">Medicine <span>+</span></button>
+        <button class="btn-logger" onclick="openDischargeModal()">Discharge <span>+</span></button>
+        <button class="btn-logger" onclick="openTempModal()">Temp <span>+</span></button>
+        <button class="btn-logger" onclick="openNotesModal()">Notes <span>+</span></button>
+    </div>
+
+    <div class="section-title">Today's Entry</div>
+    <div class="log-container">
+        <div class="log-row"><span class="key">MOOD:</span> <span class="val accent">--</span></div>
+        <div class="log-row"><span class="key">FLOW:</span> <span class="val accent">--</span></div>
+        <div class="log-row"><span class="key">SYMPTOMS:</span> <span class="val">--</span></div>
+        <div class="log-row"><span class="key">ACTIVITY:</span> <span class="val">--</span></div>
+        <div class="log-row"><span class="key">MEDICINE:</span> <span class="val">--</span></div>
+        <div class="log-row"><span class="key">DISCHARGE:</span> <span class="val">--</span></div>
+        <div class="log-row"><span class="key">BASAL TEMP:</span> <span class="val">--</span></div>
+        <div class="log-row"><span class="key">NOTES:</span> <span class="val">--</span></div>
+    </div>
+
+
+    <div id="periodModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <h2 id="modalTitle" class="modal-header-text">Cycle Check</h2>
+            <p id="modalMessage" style="margin-bottom:20px; line-height:1.5;">...</p>
+            <button class="full-width-btn" onclick="confirmPeriodStart()">Confirm Start</button>
+            <br><br>
+            <div style="text-align:center; opacity:0.6;" onclick="closeModal()">Cancel</div>
+        </div>
+    </div>
+
+    <div id="moodModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header-text">Mood <button class="close-icon" onclick="closeMoodModal()">×</button></div>
+            <div class="mood-grid">
+                <div class="mood-item" onclick="selectMood(this, 'HAPPY')">HAPPY</div>
+                <div class="mood-item" onclick="selectMood(this, 'CALM')">CALM</div>
+                <div class="mood-item" onclick="selectMood(this, 'SAD')">SAD</div>
+                <div class="mood-item" onclick="selectMood(this, 'ANXIOUS')">ANXIOUS</div>
+                <div class="mood-item" onclick="selectMood(this, 'IRATE')">IRATE</div>
+                <div class="mood-item" onclick="selectMood(this, 'TIRED')">TIRED</div>
+                <div class="mood-item" onclick="selectMood(this, 'SICK')">SICK</div>
+                <div class="mood-item" onclick="selectMood(this, 'NEUTRAL')">NEUTRAL</div>
+                <div class="mood-item" onclick="selectMood(this, 'HORNY')">HORNY</div>
+                <div class="mood-item" onclick="selectMood(this, 'CONFUSED')">CONFUSED</div>
+            </div>
+            <button class="full-width-btn" onclick="saveMoodEntry()">Save Mood</button>
+        </div>
+    </div>
+
+    <div id="flowModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header-text">Flow <button class="close-icon" onclick="closeFlowModal()">×</button></div>
+            <div class="flow-list">
+                <div class="flow-item" onclick="selectFlow(this, 'SPOTTING')">SPOTTING</div>
+                <div class="flow-item" onclick="selectFlow(this, 'LIGHT')">LIGHT</div>
+                <div class="flow-item" onclick="selectFlow(this, 'NORMAL')">NORMAL</div>
+                <div class="flow-item" onclick="selectFlow(this, 'HEAVY')">HEAVY</div>
+                <div class="flow-item" onclick="selectFlow(this, 'VERY HEAVY')">VERY HEAVY</div>
+            </div>
+            <button class="full-width-btn" onclick="saveFlowEntry()">Save Flow</button>
+        </div>
+    </div>
+
+    <div id="symptomsModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header-text">Symptoms <button class="close-icon" onclick="closeSymptomsModal()">×</button></div>
+            <div class="symptom-master-toggle s-item" style="margin-bottom:20px; justify-content:center;" onclick="toggleSymptom(this, 'EVERYTHING IS FINE')">EVERYTHING IS FINE</div>
+            <div class="symptoms-grid">
+                <div class="s-item" onclick="toggleSymptom(this, 'CRAMPS')">CRAMPS</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'HEADACHE')">HEADACHE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'ACNE')">ACNE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'BLOATING')">BLOATING</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'FATIGUE')">FATIGUE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'NAUSEA')">NAUSEA</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'BACKACHE')">BACKACHE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'TENDER BREAST')">TENDER BREAST</div>
+            </div>
+            <div class="specify-group">
+                <input type="text" id="symptomSpecify" placeholder="Other symptoms...">
+            </div>
+            <button class="full-width-btn" onclick="saveSymptomsEntry()">Save Symptoms</button>
+        </div>
+    </div>
+
+    <div id="activityModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header-text">Activity <button class="close-icon" onclick="closeActivityModal()">×</button></div>
+            <div class="activity-list">
+                <div class="activity-item" onclick="selectActivity(this, 'LOW DRIVE')">LOW DRIVE</div>
+                <div class="activity-item" onclick="selectActivity(this, 'NEUTRAL DRIVE')">NEUTRAL DRIVE</div>
+                <div class="activity-item" onclick="selectActivity(this, 'HIGH DRIVE')">HIGH DRIVE</div>
+                <div class="activity-item" onclick="selectActivity(this, 'PROTECTED SEX')">PROTECTED SEX</div>
+                <div class="activity-item" onclick="selectActivity(this, 'UNPROTECTED SEX')">UNPROTECTED SEX</div>
+                <div class="activity-item" onclick="selectActivity(this, 'SELF-LOVING')">SELF-LOVING</div>
+            </div>
+            <button class="full-width-btn" onclick="saveActivityEntry()">Save Activity</button>
+        </div>
+    </div>
+
+    <div id="medicineModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header-text">Medicine <button class="close-icon" onclick="closeMedicineModal()">×</button></div>
+            <div class="med-list">
+                <div class="med-item" onclick="toggleMedicine(this, 'BIOGESIC')">BIOGESIC</div>
+                <div class="med-item" onclick="toggleMedicine(this, 'BIOFLU')">BIOFLU</div>
+                <div class="med-item" onclick="toggleMedicine(this, 'MEFENAMIC')">MEFENAMIC</div>
+                <div class="med-item" onclick="toggleMedicine(this, 'PROPAN WITH IRON')">PROPAN W/ IRON</div>
+                <div class="med-item" onclick="toggleMedicine(this, 'DECOLGEN')">DECOLGEN</div>
+            </div>
+            <div class="specify-group">
+                <input type="text" id="medSpecify" placeholder="Other meds...">
+            </div>
+            <button class="full-width-btn" onclick="saveMedicineEntry()">Save Medicine</button>
+        </div>
+    </div>
+
+    <div id="dischargeModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header-text">Discharge <button class="close-icon" onclick="closeDischargeModal()">×</button></div>
+            <div class="discharge-list">
+                <div class="d-item" onclick="selectDischarge(this, 'NORMAL DISCHARGE')">NORMAL</div>
+                <div class="d-item" onclick="selectDischarge(this, 'CREAMY')">CREAMY</div>
+                <div class="d-item" onclick="selectDischarge(this, 'WATERY')">WATERY</div>
+                <div class="d-item" onclick="selectDischarge(this, 'EGG WHITE')">EGG WHITE</div>
+                <div class="d-item" onclick="selectDischarge(this, 'STICKY')">STICKY</div>
+            </div>
+            <button class="full-width-btn" onclick="saveDischargeEntry()">Save Discharge</button>
+        </div>
+    </div>
+
+    <div id="tempModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header-text">Basal Temp <button class="close-icon" onclick="closeTempModal()">×</button></div>
+            <div class="specify-group">
+                <input type="number" step="0.01" id="tempInput" placeholder="e.g. 36.5" style="font-size: 24px; text-align: center;">
+            </div>
+            <button class="full-width-btn" onclick="saveTempEntry()">Save Temperature</button>
+        </div>
+    </div>
+
+    <div id="notesModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header-text">Notes <button class="close-icon" onclick="closeNotesModal()">×</button></div>
+            <textarea id="dailyNoteInput" placeholder="How was your day?" rows="5"></textarea>
+            <button class="full-width-btn" onclick="saveNotesEntry()">Save Note</button>
+        </div>
+    </div>
+
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+
+<!-- js/lifehub-core-prestige-system.js used to be here. There is no
+     such file in this folder — it 404'd on every load, so nothing on
+     the mobile page was ever paid either.
+
+     These four are what tracker-flo.js actually needs, in order:
+     the ledger it now writes through, the cycle maths, the pill's
+     wage table, and the daily-log vocabularies. Without them the
+     page still renders but the pill streak reads zero, the phase
+     stays unlogged and spoken values go in unmatched. -->
+    <script src="../../JS/lifehub-prestige-ledger.js"></script>
+    <script src="js/flo-cycle-analysis.js"></script>
+    <script src="../../JS/lifehub-pill-rules.js"></script>
+    <script src="../../JS/lifehub-flo-vocab.js"></script>
+    <script src="js/tracker-flo.js"></script>
+
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('LifeHub SW Registered!', reg.scope))
+                    .catch(err => console.log('LifeHub SW Failed:', err));
+            });
+        }
+    </script>
+
+</body>
+</html>

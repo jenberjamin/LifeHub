@@ -1,0 +1,687 @@
+  /* --- CORE VARIABLES --- */
+        :root {
+            --font-display: 'Oswald', sans-serif; 
+            --font-body: 'Red Hat Display', sans-serif; 
+            --font-serif: 'Cambria', serif; 
+            
+            --color-white: #ffffff;
+            --color-white-muted: rgba(255, 255, 255, 0.7);
+            --color-accent-blue: #00e5ff; 
+            --color-gold: #FFD700;
+            --color-grace: #d63384;
+            
+            --glass-border: 1px solid rgba(255, 255, 255, 0.15);
+            --bg-image: url('files/FitnessCentre_landing_page-bg.webp');
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            height: 100vh;
+            height: 100dvh; /* Mobile: excludes the browser chrome, so nothing gets cut off */
+            width: 100vw;
+            overflow: hidden;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            font-family: var(--font-body);
+            background-color: #1a1a1a; 
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.3); 
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- TOP NAVIGATION --- */
+        .top-nav {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            padding: 40px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 10;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--color-white);
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+        .nav-left:hover { opacity: 1; }
+
+        /* The pair sits tighter to each other than to the wordmark, so they
+           read as one control rather than two unrelated icons. */
+        .nav-exits {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .exit-btn {
+            cursor: pointer;
+            font-size: 28px !important;
+            font-weight: 300;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            /* Anchors now, not click-handling spans — so they need the link
+               styling stripped back to what the old <span> looked like. */
+            color: inherit;
+            text-decoration: none;
+            opacity: 0.75;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .exit-btn:hover { opacity: 1; transform: translateY(-2px); }
+
+        .brand-text {
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 14px;
+            line-height: 1;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: flex;
+            flex-direction: column;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .nav-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 35px; 
+        }
+        .logo-img {
+            width: 112px;   /* 20% down from 140px */
+            opacity: 0.9;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
+        }
+
+        .nav-right {
+            display: flex;
+            color: var(--color-white);
+            margin-right: 50px; 
+        }
+        .icon-btn {
+            cursor: pointer;
+            font-size: 28px !important;
+            font-weight: 300;
+            opacity: 0.7;
+            transition: all 0.3s;
+        }
+        .icon-btn:hover { opacity: 1; transform: translateY(-2px); }
+
+        /* --- CENTER STAGE --- */
+        .center-stage {
+            position: absolute;
+            top: 50%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 5;
+            width: 100%;
+            padding: 0 20px;
+        }
+
+        /* --- QUOTATION STYLES --- */
+        .fade-text {
+            transition: opacity 0.8s ease, filter 0.8s ease;
+            opacity: 1;
+            filter: blur(0);
+        }
+        .fade-text.hidden {
+            opacity: 0;
+            filter: blur(8px); 
+        }
+
+        .quote-upper {
+            font-family: var(--font-body);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 4px; 
+            text-transform: uppercase;
+            color: var(--color-white-muted);
+            margin-bottom: 20px; 
+            cursor: help; 
+        }
+
+        .main-title {
+            font-family: var(--font-display);
+            font-size: 100px; 
+            font-weight: 700;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255,255,255,0.9); 
+            text-transform: uppercase;
+            line-height: 1;
+            margin-bottom: 40px;
+            letter-spacing: 15px; 
+            transition: all 0.5s ease;
+        }
+        .main-title:hover {
+            color: white;
+            text-shadow: 0 0 30px rgba(255,255,255,0.3);
+        }
+
+        /* --- BUTTONS --- */
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .action-btn {
+            border: var(--glass-border);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px); 
+            color: var(--color-white);
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.4s ease;
+            padding: 20px 60px;
+            min-width: 300px;
+        }
+
+        .btn-start {
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+        .btn-start:hover {
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            box-shadow: 0 0 30px rgba(255,255,255,0.2);
+        }
+
+        /* THE SIGNAL */
+        .btn-start.mission-ready:hover {
+            background: var(--color-accent-blue); 
+            color: #000;
+            border-color: var(--color-accent-blue);
+            box-shadow: 0 0 40px var(--color-accent-blue); 
+            text-shadow: none;
+        }
+
+        .btn-dashboard {
+            border: none;
+            font-size: 12px;
+            opacity: 0.7;
+            background: transparent;
+            backdrop-filter: none;
+        }
+        .btn-dashboard:hover {
+            opacity: 1;
+            letter-spacing: 5px; 
+        }
+
+        /* --- BOTTOM AREA --- */
+        .bottom-area {
+            position: absolute;
+            bottom: 60px; 
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .quote-line {
+            width: 60px;
+            height: 1px;
+            background: var(--color-white-muted);
+            margin-bottom: 20px;
+        }
+
+        .quote-lower {
+            font-family: var(--font-serif); 
+            font-size: 14px;
+            color: var(--color-white-muted);
+            font-style: italic; 
+            letter-spacing: 1px;
+            cursor: help; 
+        }
+
+        /* --- SIDE DOCK --- */
+        .right-dock {
+            position: absolute;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%); 
+            display: flex;
+            flex-direction: column;
+            gap: 45px; 
+            z-index: 20;
+        }
+
+        .dock-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.85); 
+        }
+
+        .dock-icon {
+            font-size: 24px !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: rgba(255, 255, 255, 0.8); 
+        }
+
+        .dock-label {
+            font-family: var(--font-body);
+            font-weight: 300;     
+            font-size: 11px;
+            letter-spacing: 4px;  
+            text-transform: uppercase;
+            writing-mode: vertical-rl; 
+            text-orientation: mixed;
+            transform: rotate(180deg); 
+            transition: all 0.3s ease;
+        }
+
+        .dock-item:hover .dock-icon {
+            color: var(--color-accent-blue);
+            filter: drop-shadow(0 0 10px var(--color-accent-blue));
+            transform: scale(1.1) translateY(-2px); 
+        }
+
+        .dock-item:hover .dock-label {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+
+        /* =========================================
+           SAM BENNETT PATCH: HUD VISUAL OVERHAUL 
+           ========================================= */
+        
+        /* 1. THE MAIN CONTAINER (Prevents cutoff) */
+        .hud-overlay {
+            position: absolute; top: 80px; right: 60px; 
+            width: 400px; 
+            background: #1a1a1a; 
+            border: 1px solid var(--color-white-muted);
+            border-radius: 20px; 
+            /* REDUCED PADDING: Saves space so 3rd box isn't cut off */
+            padding: 20px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            z-index: 100; display: none; opacity: 0;
+            transform: translateY(-20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hud-overlay.active { display: block; opacity: 1; transform: translateY(0); }
+        
+        .hud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .hud-title { color: #fff; font-family: var(--font-body); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+        .hud-name { color: #fff; font-family: var(--font-display); font-size: 14px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+        
+        .hud-grid-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 25px; }
+
+        /* 2. THE BOXES (Force Vertical Stacking) */
+        .hud-box {
+            background: rgba(255,255,255,0.05); 
+            border-radius: 15px; 
+            padding: 15px 10px; 
+            /* THIS IS KEY: Stacks items Top-to-Bottom */
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            justify-content: center;
+            /* Was aspect-ratio: 1/1. A square left ~83px of usable height and
+               the icon + number + label already ate 81 of it, so the best-streak
+               line had nowhere to go. A min-height holds the same proportions
+               (the tiles land ~113px wide) but lets the row grow instead of
+               spilling its content. Grid stretches all three to match. */
+            min-height: 112px;
+            position: relative;
+        }
+
+        /* 3. BARBELL ICON (Standardized Size & Rotation) */
+        .box-icon.fixed-barbell {
+            display: block; 
+            transform: rotate(-45deg) !important; /* Forces it flat */
+            font-size: 32px !important; /* MATCHING SIZE */
+            margin-bottom: 5px; 
+            color: #00ff9d;
+        }
+
+        /* 4. FIRE ICON (Matched Size & Spacing) */
+        .fire-icon { 
+            font-size: 32px !important; /* Matched to barbell */
+            margin-bottom: 5px; 
+            color: #ff3d3d; 
+            filter: drop-shadow(0 0 10px rgba(255, 61, 61, 0.4)); 
+            display: block;
+        }
+
+        /* 5. THE NUMBER (Centered) */
+        .box-val { 
+            font-family: var(--font-display);
+            font-size: 28px;
+            color: #fff;
+            line-height: 1;
+            margin: 0; 
+        }
+
+        /* 6. THE LABEL (Sessions/Streak - Always at bottom) */
+        .box-label { 
+            font-size: 9px; 
+            color: rgba(255,255,255,0.5); 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-top: 5px; 
+        }
+
+        /* 6b. THE RECORD (Best streak, under the live one) */
+        .box-sub {
+            font-size: 8px;
+            color: rgba(255, 61, 61, 0.75); /* tied to the fire icon */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 3px;
+            white-space: nowrap;
+        }
+
+        /* 7. THE CALENDAR (Back to Grid, but tighter) */
+        .week-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); /* 3 Columns */
+            gap: 4px; /* Tight gap */
+            width: 100%; 
+            justify-items: center;
+            align-content: center;
+        }
+
+        .day-bubble { 
+            width: 20px; height: 20px; 
+            border-radius: 50%; 
+            background: #222; color: #666; 
+            font-size: 8px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.3s; border: 1px solid transparent;
+        }
+
+        /* STATUS COLORS */
+        .day-bubble.b-cyan { /* WORKOUT DONE */
+            background: var(--color-accent-blue); color: #000; 
+            box-shadow: 0 0 8px var(--color-accent-blue); 
+        }
+        .day-bubble.b-pink { /* GRACE - NEON MODE */
+            border: 1px solid var(--color-grace); 
+            color: #fff; 
+            background: rgba(214, 51, 132, 0.6); 
+            box-shadow: 0 0 10px var(--color-grace), 0 0 20px var(--color-grace); 
+            text-shadow: 0 0 5px #fff;
+            z-index: 10; 
+        }
+        .day-bubble.b-yellow { /* REST (Safe) */
+            border-color: var(--color-gold); color: var(--color-gold);
+            background: rgba(255, 215, 0, 0.1);
+        }
+        .day-bubble.b-red { /* MISSED (Buffer Broken) */
+            background: rgba(255, 61, 61, 0.2); color: #ff3d3d;
+            border: 1px solid #ff3d3d;
+        }
+        .day-bubble.future { opacity: 0.3; border: 1px solid #444; }
+        .day-bubble.active { background: var(--color-accent-blue); color: #000; box-shadow: 0 0 5px var(--color-accent-blue); }
+        .day-bubble.pulse { border: 1px solid var(--color-white); color: #fff; animation: pulseDay 1.5s infinite; }
+        
+        @keyframes pulseDay { 0% { opacity: 0.5; } 50% { opacity: 1; box-shadow: 0 0 8px #fff; } 100% { opacity: 0.5; } }
+
+        .hud-section-title { font-size: 10px; color: #fff; font-style: italic; margin-bottom: 5px; }
+        .hud-bar-track { width: 100%; height: 6px; background: #333; border-radius: 3px; overflow: hidden; margin-bottom: 5px; }
+        .hud-bar-fill { height: 100%; background: #fff; width: 0%; border-radius: 3px; }
+        .hud-pct { text-align: right; font-size: 10px; color: #fff; font-weight: 700; }
+
+        .hud-weight-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin: 20px 0;
+        }
+        .hw-left { display: flex; gap: 10px; align-items: center; }
+        .hw-icon { color: var(--color-accent-blue); font-size: 20px !important; }
+        .hw-text { display: flex; flex-direction: column; }
+        .hw-label { font-size: 10px; color: #888; }
+        .hw-main { font-size: 12px; color: #fff; font-weight: 700; }
+        
+        .hw-right { text-align: right; }
+        .hw-big { font-family: var(--font-display); font-size: 20px; color: #fff; }
+        .hw-sub { font-size: 12px; color: #888; }
+
+        /* Weekly Stats Container */
+        .weekly-stats { 
+            display: flex; flex-direction: column; gap: 8px; margin-bottom: 25px; 
+        }
+
+        /* The Row (Text is now White) */
+        .ws-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            font-size: 11px; 
+            color: #ffffff; /* PLAIN WHITE TEXT */
+        }
+
+        /* The Icon (Gold & Fixed) */
+        .ws-icon { 
+            font-size: 16px !important; 
+            color: #FFD700; /* GOLD */
+            width: 24px; 
+            text-align: center; 
+            margin-right: 10px;
+            text-transform: lowercase !important; 
+            font-feature-settings: 'liga'; 
+            vertical-align: middle;
+        }
+
+        /* The Value (Number on the right) */
+        .ws-val { color: #fff; font-weight: 700; }
+
+        .hud-actions { display: flex; flex-direction: column; gap: 10px; }
+        
+        /* Updated Button Style */
+        .hud-btn { 
+            background: rgba(0, 229, 255, 0.05); 
+            border: 1px solid rgba(0, 229, 255, 0.3); 
+            color: #fff; 
+            padding: 15px 5px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 9px; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            display: flex; 
+            flex-direction: row; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 6px; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            text-decoration: none;
+            white-space: nowrap; 
+        }
+        .hud-btn:hover { 
+            background: var(--color-accent-blue); 
+            color: #000; 
+            box-shadow: 0 0 15px var(--color-accent-blue); 
+            transform: translateY(-2px);
+        }
+        .hud-btn span { font-size: 14px !important; margin: 0; }
+
+        /* --- LEVEL & PRESTIGE BLOCK (The Upgrade) --- */
+        .hud-level-block { margin: 25px 0; }
+        
+        .hud-level-header { 
+            display: flex; justify-content: space-between; align-items: flex-end; 
+            margin-bottom: 8px; 
+        }
+        
+        .hud-lvl-text { 
+            font-family: var(--font-display); font-size: 24px; color: #fff; 
+            text-transform: uppercase; letter-spacing: 1px; line-height: 1; 
+        }
+        .hud-lvl-text span { color: var(--color-accent-blue); font-size: 32px; margin-left: 2px; }
+
+        .hud-prestige-tag { 
+            text-align: right; border-right: 3px solid var(--color-gold); 
+            padding-right: 10px; line-height: 0.9; 
+        }
+        .hud-p-val { color: var(--color-gold); font-family: var(--font-display); font-size: 20px; display: block; letter-spacing: 1px; }
+        .hud-p-lbl { color: rgba(255,255,255,0.4); font-size: 8px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* The Neon Bar */
+        .hud-neon-track { 
+            width: 100%; height: 10px; /* Thicker */
+            background: rgba(255,255,255,0.05); position: relative; 
+        }
+        .hud-neon-fill { 
+            height: 100%; background: var(--color-accent-blue); 
+            width: 0%; 
+            box-shadow: 0 0 15px var(--color-accent-blue); /* The Glow */
+            transition: width 1s ease;
+        }
+
+        /* --- LINK BEHAVIOR --- */
+        a.hud-link, a.hud-level-link { 
+            text-decoration: none; 
+            color: inherit; 
+            cursor: pointer; 
+            display: block; 
+            transition: all 0.3s ease;
+        }
+        
+	    a.hud-box {
+            display: flex !important;
+        }
+
+        a.hud-link:hover { 
+            background: rgba(255,255,255,0.1); 
+            transform: translateY(-5px); 
+            border-color: var(--color-accent-blue);
+        }
+        
+        a.hud-level-link:hover .hud-lvl-text {
+            text-shadow: 0 0 15px var(--color-accent-blue);
+        }
+
+        /* =========================================
+           RESPONSIVE LAYER
+           Desktop layout above is untouched.
+           ========================================= */
+
+        /* --- TABLET / SMALL LAPTOP --- */
+        @media (max-width: 900px) {
+            .top-nav { padding: 25px 30px; }
+            .nav-right { margin-right: 0; }
+            .logo-img { width: 88px; }    /* 20% down from 110px */
+            .nav-center { top: 28px; }
+
+            .main-title { font-size: 64px; letter-spacing: 8px; margin-bottom: 30px; }
+
+            .right-dock { right: 25px; gap: 30px; }
+            .dock-label { letter-spacing: 3px; }
+
+            /* Pull the HUD in so it stops hanging off the edge */
+            .hud-overlay { right: 25px; width: min(400px, calc(100vw - 50px)); }
+        }
+
+        /* --- PHONE --- */
+        @media (max-width: 640px) {
+            .top-nav { padding: 18px 18px; }
+            .exit-btn, .icon-btn { font-size: 24px !important; }
+            .brand-text { font-size: 12px; }
+            .logo-img { width: 68px; }    /* 20% down from 85px */
+            .nav-center { top: 20px; }
+
+            /* Center stage lifts to make room for the docked bar */
+            .center-stage { top: 44%; padding: 0 24px; }
+            .quote-upper { font-size: 10px; letter-spacing: 2px; margin-bottom: 14px; }
+            .main-title {
+                font-size: clamp(30px, 11vw, 52px);
+                letter-spacing: 4px;
+                margin-bottom: 28px;
+            }
+
+            .action-btn {
+                min-width: 0;
+                width: 100%;
+                max-width: 320px;
+                padding: 16px 20px;
+                font-size: 13px;
+                letter-spacing: 2px;
+            }
+            .btn-container { gap: 14px; }
+
+            /* THE DOCK: vertical rail becomes a bottom bar */
+            .right-dock {
+                right: auto; top: auto; transform: none;
+                left: 0; bottom: 0;
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: flex-end;
+                gap: 0;
+                padding: 10px 6px;
+                padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+                background: rgba(10, 10, 10, 0.85);
+                backdrop-filter: blur(12px);
+                border-top: 1px solid rgba(255, 255, 255, 0.12);
+            }
+            .dock-item { flex: 1; gap: 5px; }
+            .dock-icon { font-size: 21px !important; }
+            .dock-label {
+                /* Undo the vertical rail typography */
+                writing-mode: horizontal-tb;
+                text-orientation: mixed;
+                transform: none;
+                font-size: 8px;
+                letter-spacing: 1px;
+            }
+
+            /* Lower quote sits above the new bar */
+            .bottom-area { bottom: 88px; padding: 0 24px; }
+            .quote-lower { font-size: 12px; text-align: center; }
+            .quote-line { margin-bottom: 14px; }
+
+            /* THE HUD: full-width sheet that can actually scroll */
+            .hud-overlay {
+                position: fixed;
+                top: 70px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                max-height: calc(100vh - 100px);
+                max-height: calc(100dvh - 100px);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+                padding: 18px;
+            }
+            .hud-grid-row { gap: 8px; margin-bottom: 18px; }
+            .hud-box { padding: 12px 6px; min-height: 102px; }
+            .box-val { font-size: 24px; }
+            .box-sub { font-size: 7px; letter-spacing: 0.5px; }
+            .hud-level-block, .hud-weight-row { margin: 18px 0; }
+            .weekly-stats { margin-bottom: 18px; }
+            .hud-btn { padding: 13px 5px; }
+        }
+
+        /* --- LANDSCAPE PHONE / VERY SHORT VIEWPORT --- */
+        @media (max-height: 520px) {
+            .main-title { font-size: 40px; letter-spacing: 4px; margin-bottom: 18px; }
+            .quote-upper { margin-bottom: 10px; }
+            .action-btn { padding: 12px 20px; }
+            .btn-container { gap: 10px; }
+            /* Not enough vertical room for the lower quote */
+            .bottom-area { display: none; }
+            .hud-overlay { top: 60px; max-height: calc(100vh - 75px); }
+        }

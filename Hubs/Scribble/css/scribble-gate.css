@@ -1,0 +1,221 @@
+/* ═══════════════════════════════════════════
+   SCRIBBLE — GATE STYLES
+   scribble-gate.css
+═══════════════════════════════════════════ */
+
+:root {
+    --bg:           linear-gradient(135deg, #E8E6E1 0%, #D8D4CD 100%);
+    --glass:        rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.85);
+    --text:         #4A4A4A;
+    --sub:          #8C8C8C;
+    --accent:       #5C5C52;
+    --danger:       #B05C5C;
+    --shadow:       0 8px 40px rgba(0, 0, 0, 0.07);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    height: 100vh;
+    background: var(--bg);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Card ─────────────────────────────────── */
+.card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 16px;
+    padding: 48px 40px 40px;
+    width: 360px;
+    box-shadow: var(--shadow);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* ── Brand ────────────────────────────────── */
+.brand {
+    text-align: center;
+    margin-bottom: 38px;
+}
+
+.brand-icon {
+    font-size: 26px;
+    color: var(--accent);
+    opacity: 0.5;
+    display: block;
+    margin-bottom: 14px;
+}
+
+/* The wordmark face. Declared again rather than imported
+   because the gate does not load css/scribble.css — it is
+   deliberately standalone, so a broken stylesheet can never
+   be what locks you out. Same file, same family name: see
+   the long note in css/scribble.css. */
+@font-face {
+    font-family: 'Pixie Title';
+    src: url('/CSS/fonts/Tinker_Bell_Font.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+.brand h1 {
+    font-family: 'Pixie Title', 'Roboto Condensed', sans-serif;
+    font-size: 40px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    text-transform: none;
+    color: var(--accent);
+    line-height: 1.1;
+}
+
+.brand .tagline {
+    margin-top: 6px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--sub);
+}
+
+/* ── Step label ───────────────────────────── */
+.step-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.step-tag {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--sub);
+    white-space: nowrap;
+}
+
+.step-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.07);
+}
+
+/* ── Form ─────────────────────────────────── */
+.field {
+    margin-bottom: 14px;
+}
+
+.field label {
+    display: block;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--sub);
+    margin-bottom: 7px;
+}
+
+.field input {
+    width: 100%;
+    padding: 11px 13px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.09);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.field input:focus {
+    background: white;
+    border-color: var(--accent);
+}
+
+/* ── Buttons ──────────────────────────────── */
+.btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 6px;
+    font-family: inherit;
+    transition: opacity 0.2s;
+}
+
+.btn:hover { opacity: 0.88; }
+
+.btn-ghost {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background: none;
+    border: none;
+    color: var(--sub);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 10px;
+    transition: color 0.2s;
+}
+
+.btn-ghost:hover { color: var(--text); }
+
+/* ── Error ────────────────────────────────── */
+.err {
+    min-height: 18px;
+    margin-top: 14px;
+    font-size: 10px;
+    color: var(--danger);
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+/* ── Security question text ───────────────── */
+.question-text {
+    font-size: 12px;
+    color: var(--sub);
+    text-align: center;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+/* ── Step transition ──────────────────────── */
+.step {
+    transition: opacity 0.25s ease;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ── Shake animation ──────────────────────── */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    15%       { transform: translateX(-7px); }
+    40%       { transform: translateX(7px); }
+    65%       { transform: translateX(-4px); }
+    85%       { transform: translateX(4px); }
+}
+
+.shake {
+    animation: shake 0.38s ease;
+}

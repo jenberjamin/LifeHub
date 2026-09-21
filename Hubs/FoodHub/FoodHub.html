@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>LifeHub | FoodHub </title>
+
+    <link rel="icon" type="image/png" href="css/files/FoodHub.png">
+    <link rel="stylesheet" href="css/foodhub.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <meta name="theme-color" content="#1A3C34">
+</head>
+<body>
+
+    <!-- Two ways out: the wallpaper, or the interior. -->
+    <nav class="nav-dock" aria-label="Leave the tracker">
+      <a href="../../LifeHub-HomeScreen.html" class="nav-btn" title="Home Screen" aria-label="Home Screen">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+        <span>Home Screen</span>
+      </a>
+      <a href="../../LifeHub.html" class="nav-btn" title="LifeHub Lobby" aria-label="LifeHub Lobby">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 20V8.2l8-4.2 8 4.2V20"/>
+          <path d="M2.6 20h18.8"/>
+          <path d="M9.9 20v-5.1a2.1 2.1 0 0 1 4.2 0V20"/>
+        </svg>
+        <span>Lobby</span>
+      </a>
+    </nav>
+    <main class="main-stage">
+
+    <div class="main-grid">
+        
+        <div class="left-panel">
+    
+    <div class="header-group">
+        <h4 id="currentDateDisplay">Sunday, December 14, 2025</h4>
+        <h1>FOOD HUB</h1>
+        <div class="subtitle-divider">
+            <span>H E A L T H I E R &nbsp; J E N</span>
+            <div class="line"></div>
+        </div>
+    </div>
+
+    <div class="stats-container">
+    <span>Calories</span>
+    <div class="progress-bg"><div id="bar_cal" class="progress-fill" style="width: 0%;"></div></div>
+    <span id="txt_cal" class="percent-text">0%</span>
+
+    <span>Protein</span>
+    <div class="progress-bg"><div id="bar_prot" class="progress-fill" style="width: 0%;"></div></div>
+    <span id="txt_prot" class="percent-text">0%</span>
+
+    <span>Carbs</span>
+    <div class="progress-bg"><div id="bar_carb" class="progress-fill" style="width: 0%;"></div></div>
+    <span id="txt_carb" class="percent-text">0%</span>
+
+    <span>Fats</span>
+    <div class="progress-bg"><div id="bar_fat" class="progress-fill" style="width: 0%;"></div></div>
+    <span id="txt_fat" class="percent-text">0%</span>
+
+    <span>Sugar </span>
+    <div class="progress-bg"><div id="bar_sugar" class="progress-fill" style="width: 0%;"></div></div>
+    <span id="txt_sugar" class="percent-text">0g</span>
+</div>
+
+    <!-- The flexible block: everything above it in the column is a fixed
+         height, so this is what absorbs whatever the viewport has left. -->
+    <div class="consumed-block">
+        <div class="input-label">I consumed:</div>
+        
+        <div class="input-group" style="position: relative;"> <div class="input-wrapper">
+                <input type="text" id="foodSearchInput" class="food-input" placeholder="Search food..." autocomplete="off">
+                <span class="material-symbols-rounded input-icon">restaurant</span> 
+            </div>
+            
+            <a href="food-list.html" class="btn-log" style="text-decoration: none; display: flex; align-items: center;">
+                <span class="material-symbols-rounded" style="font-size: 1.8rem;">room_service</span>
+            </a>
+
+            <div id="searchResults" class="hidden" style="position: absolute; top: 100%; left: 0; width: 350px; background: #FFFBF7; border: 1px solid var(--primary-green); border-radius: 0 0 8px 8px; z-index: 10; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                </div>
+        </div>
+
+        <!-- max-height was 300px here. It's now driven by the space the
+             column actually has (see .consumed-block in foodhub.css), so a
+             short window shrinks the list instead of pushing the page. -->
+        <div id="dailyLogList" class="recent-logs" style="margin-top: 1rem; overflow-y: auto;">
+            </div>
+    </div>
+
+    <div id="quantityModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
+        <div style="background: #FFFBF7; padding: 2rem; border-radius: 12px; width: 300px; text-align: center; border: 1px solid var(--primary-green); box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <h3 style="font-weight: 300; margin-bottom: 0.5rem;" id="q_foodName">Food Name</h3>
+            <p style="font-size: 0.8rem; color: #666; margin-bottom: 1.5rem;" id="q_servingSize">Standard: 50g</p>
+            
+            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">How many servings?</label>
+            <input type="number" id="q_multiplier" value="1" style="width: 80px; padding: 8px; text-align: center; font-size: 1.2rem; border: 1px solid var(--primary-green); background: transparent; margin-bottom: 1.5rem; outline: none;">
+            
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button onclick="confirmLog()" style="background: var(--primary-green); color: white; border: none; padding: 10px 20px; cursor: pointer; font-family: 'Montserrat'; font-weight: 600;">LOG IT</button>
+                <button onclick="closeQuantityModal()" style="background: transparent; color: #666; border: none; padding: 10px 20px; cursor: pointer; font-family: 'Montserrat';">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="right-panel">
+        <button class="btn-outline" onclick="window.location.href='food-statistics.html'">Statistics</button>
+        <button class="btn-outline" onclick="window.location.href='food-history.html'">History</button>
+    </div>
+
+</div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<!-- The daily targets, the wage rubric and the one shared way of
+     reading a logged item's macros. Must load first. -->
+<script src="../../JS/lifehub-food-rules.js"></script>
+
+<!-- What prestige is, and the Food Protocol built on the rules above —
+     the weekly trophies that sit on top of the daily wage. Both are
+     pure logic, and both must load before food-tracker.js, which
+     settles the protocol every time a meal is logged. -->
+<script src="../../JS/lifehub-prestige-ledger.js"></script>
+<script src="../../JS/lifehub-food-protocol.js"></script>
+
+<script src="js/food-tracker.js"></script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker registered!', reg))
+                .catch(err => console.log('Service Worker failed:', err));
+        });
+    }
+</script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

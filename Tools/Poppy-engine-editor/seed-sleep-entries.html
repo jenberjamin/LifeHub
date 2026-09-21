@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — Sleep entries</title>
+<style>
+    body {
+        background: #f2e8e2; font-family: 'Century Gothic', sans-serif;
+        margin: 0; padding: 32px; color: #333;
+    }
+    .box {
+        max-width: 720px; margin: 0 auto; background: #fdf8f4;
+        border: 1px solid #e3cfb8; border-radius: 12px; padding: 26px 30px;
+    }
+    h1 { font-size: 17px; color: #9c6b4f; letter-spacing: 2px; margin: 0 0 4px; }
+    .sub { font-size: 11px; color: #b08a6c; text-transform: uppercase; letter-spacing: 1px; }
+    p { font-size: 13px; line-height: 1.65; color: #6b5a4d; }
+    .warn {
+        background: #fdf1e4; border: 1px solid #e8d3b8; border-radius: 8px;
+        padding: 12px 15px; font-size: 12.5px; line-height: 1.6; color: #8a5a3f;
+    }
+    button {
+        padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
+        font-weight: bold; font-family: inherit; font-size: 13px;
+        background: #b8866f; color: #fff; margin-top: 16px;
+    }
+    button:hover { background: #a0705a; }
+    button:disabled { background: #d6c4b8; cursor: default; }
+    #log {
+        margin-top: 18px; font-family: Consolas, monospace; font-size: 12px;
+        line-height: 1.8; color: #6b5a4d; white-space: pre-wrap;
+    }
+    .ok  { color: #4c7a4c; }
+    .new { color: #9c6b4f; font-weight: bold; }
+    .err { color: #c0392b; }
+    ol { font-size: 13px; line-height: 1.8; color: #6b5a4d; }
+    code { background: #f3e6d8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>🌙 SEED SLEEP ENTRIES</h1>
+    <div class="sub">PoppyEngine · one-time setup</div>
+
+    <p>
+        This writes the seven Sleep entries into the PoppyEngine editor's Firebase —
+        the same place the editor saves to when you add an entry by hand. It does
+        <strong>not</strong> touch <code>PoppyEngine-core.js</code>: that file is
+        generated, so anything typed into it directly is lost on the next export.
+    </p>
+
+    <div class="warn">
+        Nothing else is modified. Entries are matched <strong>by name</strong>, so
+        running this twice updates the seven rather than creating fourteen — and any
+        edits you have since made to them in the editor are overwritten by the
+        versions in this file. Your other entries are never read or changed.
+    </div>
+
+    <p><strong>After it finishes:</strong></p>
+    <ol>
+        <li>Open <code>PoppyEngine-Editor.html</code> — the entries appear under a new
+            <em>Sleep &amp; Rest</em> category.</li>
+        <li>Read them, adjust the wording to sound like you.</li>
+        <li>Press <strong>Export PoppyEngine.js</strong> and paste the result over
+            <code>JS/poppy/PoppyEngine-core.js</code>.</li>
+    </ol>
+    <p>
+        Poppy can't act on sleep until that export is pasted in — the engine is what
+        unlocks the action field, and it only knows what the generated file tells it.
+    </p>
+
+    <button id="go">Write the seven entries</button>
+    <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, update }
+    from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+/* The PoppyEngine editor's own project — the entries have to land where
+   the editor reads them, or the export won't contain them. */
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157"
+};
+
+const db = getDatabase(initializeApp(cfg));
+
+const CATEGORY = "Sleep & Rest";
+
+/* Shared by every sleep entry. The gate is what decides the message is
+   ABOUT sleep at all; the keywords then decide which of the seven it is.
+   Kept in one place so a word added here reaches all of them. */
+const ABOUT_SLEEP = [
+    "sleep", "sleeping", "slept", "asleep", "bedtime", "bed",
+    "woke", "wake", "waking", "nap", "napped", "rested", "night",
+    "last night", "insomnia", "overslept"
+];
+
+const RULE = "═══════════════════════════════════════════════════════════════";
+
+const HEAD = (title, action) =>
+    RULE + "\n🌙 " + title + (action ? " ; " + action : "") + "\n" + RULE + "\n";
+
+const FOOT = RULE;
+
+const ENTRIES = [
+
+/* ── 0. LIVE: GOING TO BED / WAKING UP ────────────────────────────── */
+{
+    name: "Sleep: Going to bed / just woke up",
+    intent: "SLEEP_LIVE",
+    priority: 5,
+    window: 2,
+    keywords: ["goodnight", "good night", "night night", "off to", "going",
+               "heading", "turning in", "bed now", "sleep now", "crashing",
+               "just woke", "woke up", "im up", "i m up", "awake", "good morning",
+               "morning", "just got up", "rise"],
+    requireAny: ABOUT_SLEEP.concat(["goodnight", "good night", "good morning",
+                                    "morning", "awake", "up", "turning in"]),
+    fetchTargets: ["sleep/today"],
+    writeFields: ["action", "quality", "feeling", "factors"],
+    guidelines:
+HEAD("Jen is going to bed, or has just woken up, RIGHT NOW", "sleep_goodnight / sleep_wake") +
+`These two are the pair. Bedtime is stamped when she says goodnight; the whole night is written when she says she's up. Neither takes a time from you — the time IS this moment, which is the entire point of them.
+
+FOUR RULES.
+
+1. NOW, not a report. "I'm going to bed" is sleep_goodnight. "I went to bed at 11" is her telling you about a time that has passed — that's sleep_log, and it belongs to the other entry. Same on the other side: "I just woke up" is sleep_wake; "I woke at 7 yesterday" is sleep_log. If you can't tell which she means, ask — one of them stamps the clock and the other doesn't.
+2. Goodnight logs nothing. No hours, no prestige, no sealed date — just a marker. Don't tell her you've logged her sleep, because you haven't yet. Say goodnight properly and leave her alone; she's going to bed, not starting a conversation.
+3. sleep_wake saves the night immediately, on the times alone. Don't ask about quality first and then send it — the times are only true at this moment, and a chat that wanders off would lose them. Let it save, tell her the hours, THEN ask how she slept. HOW SHE SLEPT, below, is that conversation.
+4. If she volunteers quality, feeling or factors in the same breath as "I'm up", send them with sleep_wake and don't ask again. Don't ask for what she just told you.
+
+LIVE DATA gives you the Sleep — today block, which says whether a bedtime marker is set and how long ago. Read it before you speak:
+  · a fresh marker, and she says she's up: send sleep_wake, no questions.
+  · no marker, and she says she's up: the action comes back asking what time she went to bed. Pass that on, get the time, then use sleep_log with both times.
+  · a stale marker, over 16 hours: same thing. A night was started and never closed out; don't measure from it.
+  · a marker already set, and she says goodnight again: fine. She got up and went back. The new one replaces it and the receipt says so.
+
+Alexa shares this marker. She may well have said goodnight to the Echo and good morning to you — that works, and it's why you must never keep a bedtime of your own.
+
+After sleep_wake lands, the receipt has the hours and the prestige. Say it warmly and briefly. She has just opened her eyes; this is not the moment for the weekly average.
+
+HOW SHE SLEPT — ONE QUESTION, NOT THREE.
+
+Once the night is saved, ask how it was. ONE question, in your own words. "How was it?" is plenty at six in the morning — do not march her through a form.
+
+Three things are worth having, and a single sentence usually carries all three:
+  quality   a number, 1 to 10
+  feeling   Deep & Restored, Adequate, or Inadequate
+  factors   Caffeine, Alcohol, Deadline, Sickness, Late Workout, Events, FLO
+
+"Rough honestly, maybe a 4 — had coffee pretty late" is all three: quality 4, Inadequate, Caffeine. Put them on with ONE sleep_amend and say back what you wrote down, briefly.
+
+FOUR RULES FOR READING HER ANSWER.
+
+1. Record only what she actually said. Mood but no number? Send the mood alone. A 6 inferred from "not bad" is a number she never gave, and it will sit in her averages for good as though she did. Leaving a field out is free — the tracker's own defaults cover it.
+2. Map her words onto the nearest feeling; never read her the list. restored / great / refreshed → Deep & Restored. fine / okay / decent → Adequate. awful / rough / exhausted / wrecked → Inadequate. If a word genuinely lands on none of the three, ask which she meant — don't default to the middle one because it's the safe-looking option.
+3. Factors are only those seven, and only ones she raised. Anything else is refused by the action, so don't send it. "Coffee at ten" is Caffeine; "was up finishing the deck" is Deadline. If you are inferring rather than hearing, leave it off — a factor she didn't mention is a tag she'll later read as fact.
+4. ONE follow-up at most, and only for something clearly missing. If she gave a mood and a number would help, you may ask once. If she doesn't answer, or moves on, let it go. The night is already logged; none of this is worth nagging for.
+
+Never ask any of this BEFORE sending sleep_wake. The times are the perishable part; opinions keep.
+` + FOOT
+},
+
+/* ── 1. LOGGING A NIGHT ───────────────────────────────────────────── */
+{
+    name: "Sleep: Log a night",
+    intent: "SLEEP_LOG",
+    priority: 5,
+    window: 3,
+    keywords: ["log", "logged", "record", "save", "track", "add", "enter",
+               "note", "put in", "write down", "book"],
+    requireAny: ABOUT_SLEEP,
+    /* "redo it" and "replace last night" are a rewrite of a night that
+       exists, not a new one — they belong to SLEEP_AMEND, which can send
+       both actions. Blocked here so the two entries don't compete. */
+    requireNone: ["delete", "remove", "erase", "undo", "scrap",
+                  "redo", "re-log", "relog", "replace", "start over",
+                  "do over", "from scratch"],
+    fetchTargets: ["sleep/today", "poppy/surface"],
+    writeFields: ["action", "date", "bedtime", "waketime", "quality", "feeling", "factors"],
+    guidelines:
+HEAD("Jen wants a night written into the sleep tracker", "sleep_log") +
+`FOUR RULES. These outrank anything below.
+
+1. Both times or nothing. bedtime and waketime are the only required fields, and you may not infer either. If she gave one, ask for the other and send no action.
+2. Never invent quality, feeling or factors. Leave them out and the tracker's own defaults apply — 5/10 and Adequate. A number she didn't say is worse than no number.
+3. sleep_log never overwrites. The tracker seals a date, and this action refuses one that's already logged rather than writing over it. LIVE DATA tells you whether today is already saved; if it is, don't send sleep_log — say what's on it and let her choose: change part of it, or do the whole night again. Both are the amend entry's job, not this one's.
+4. The date is the morning she WOKE UP on, not the evening she went to bed. "I slept at 11 last night and woke at 7" is logged under today. Leave date empty for today, which is nearly always right.
+
+THIS ENTRY IS FOR TIMES THAT HAVE PASSED. If she is telling you something is happening right now — "I'm going to bed", "I just woke up" — that is sleep_goodnight and sleep_wake, which stamp the clock themselves. Don't read the current time off anything and put it in here.
+
+LIVE DATA gives you the Sleep — today block: whether today and last night are already sealed, whether a bedtime marker is pending, the Manila hour right now, and which dates this week are taken.
+
+STEP 1 — Read the two times out of what she said.
+Both there: go to Step 2.
+One there: ask for the other in a few words. "And what time did you wake up?" Wait.
+Neither: "What time did you go to bed, and what time did you wake?" Wait.
+
+STEP 2 — Check the date against LIVE DATA.
+Already sealed: say so, quote what's on it, and ask which she wants — one or two things corrected, or the night done over from scratch. Send nothing until she's said.
+Free: send the action.
+
+STEP 3 — Extras, only if she volunteered them.
+quality — a number 1 to 10.
+feeling — Deep & Restored, Adequate, or Inadequate. Map her words onto the nearest one; don't quote the list at her.
+factors — only from: Caffeine, Alcohol, Deadline, Sickness, Late Workout, Events, FLO. Anything else is refused, so don't send it.
+
+STEP 4 — After it lands.
+The receipt tells you the hours and the prestige. Say it back short. If a streak bonus fired, that's worth a word — it only happens at 3, 7 and 30 nights.
+Don't lecture her about the hours here. She asked you to log it, not to grade it.
+
+If the action comes back refused, read the reason and pass it on plainly. Don't retry it.
+` + FOOT
+},
+
+/* ── 2. CHANGING ONE ──────────────────────────────────────────────── */
+{
+    name: "Sleep: Change a logged night",
+    intent: "SLEEP_AMEND",
+    priority: 5,
+    window: 3,
+    keywords: ["change", "amend", "edit", "fix", "correct", "adjust", "actually",
+               "wrong", "mistake", "meant", "update", "instead", "make it",
+               /* Redoing a night whole. These used to sit on the delete
+                  entry, back when deleting was the only way to rewrite
+                  one — they land here now, where both actions live. */
+               "redo", "re-log", "relog", "replace", "start over",
+               "do over", "from scratch", "all wrong"],
+    requireAny: ABOUT_SLEEP,
+    requireNone: ["delete", "remove", "erase"],
+    fetchTargets: ["sleep/today", "sleep/recent"],
+    writeFields: ["action", "date", "bedtime", "waketime", "quality", "feeling", "factors"],
+    guidelines:
+HEAD("Jen wants to change a night already on the record", "sleep_amend / sleep_replace") +
+`TWO ACTIONS HERE, and picking between them is most of the job.
+
+sleep_amend   patches the fields she named. Everything else keeps its value.
+sleep_replace rewrites the whole night from scratch and re-pays it.
+
+FOUR RULES.
+
+1. AMEND IS THE DEFAULT. If she's correcting one or two things — "quality was more like a 4", "I actually woke at 7" — that's sleep_amend, every time. It's the smaller edit and it can't lose anything she didn't mention.
+2. REPLACE ONLY WHEN THE NIGHT AS A WHOLE IS WRONG. "Scrap that, it was 11 to 6", "redo last night", "that's all wrong". It needs BOTH times, because everything you leave out goes back to the tracker's defaults — 5/10 and Adequate — rather than keeping its old value. If she hasn't given you both times, ask; don't fall back to the ones on the old log, because she may be correcting exactly those.
+3. ASK BEFORE REPLACING. Say what's currently on that date and get a yes. Amend needs no such ceremony — replace does, because it drops the fields she didn't mention. Never pick replace just because it's fewer questions for you.
+4. Send ONLY the fields she is changing when you amend. Re-sending a field at its current value is how a correction quietly becomes an overwrite.
+
+WHICH NIGHT. Default is today. If she says "Tuesday" or "the other night", find it in LIVE DATA and use that date — don't guess at one that isn't listed.
+THERE HAS TO BE A LOG. LIVE DATA lists what's on record. If the night she means was never logged, neither of these is right — offer to log it instead.
+
+LIVE DATA gives you Sleep — recent nights: every night on record with its times, hours, quality, feeling and factors.
+
+This is also where quality and feeling go after a sleep_wake. She woke up, the night saved on its times alone, and then she told you how it was — that answer belongs here, as an amend.
+
+THE THREE SCALES, whichever way the answer reaches you:
+  quality   a number, 1 to 10
+  feeling   Deep & Restored, Adequate, or Inadequate — map her words onto the nearest.
+            restored / great / refreshed → Deep & Restored. fine / okay / decent → Adequate.
+            awful / rough / exhausted / wrecked → Inadequate.
+  factors   only Caffeine, Alcohol, Deadline, Sickness, Late Workout, Events, FLO
+
+Take all three from one sentence if she gave all three — "a 4, rough, coffee too late" is one amend, not three. Record ONLY what she said: a number you inferred from "not bad" is a number she never gave, and it stays in her averages as though she did. If a word lands on none of the three feelings, ask rather than settling for the middle one.
+
+PRESTIGE. Amending the times adjusts the payment by the difference. Replacing takes back everything the old entry paid and pays the new night fresh — so the receipt gives you a net figure, and that net is the number worth saying. Don't announce the gross as though it all just arrived. Mention either only if it moved.
+
+An empty factors array clears them. That's a real instruction, not a mistake — send it when she says to take them off.
+
+Neither of these deletes anything. If she wants the night gone rather than corrected, that's the delete entry.
+
+Read back what changed in a few words. Don't recite the whole log.
+` + FOOT
+},
+
+/* ── 3. DELETING ONE ──────────────────────────────────────────────── */
+{
+    name: "Sleep: Delete a logged night",
+    intent: "SLEEP_DELETE",
+    priority: 5,
+    window: 2,
+    /* "redo" and "start over" have moved to the amend entry: redoing a
+       night is sleep_replace now, and it keeps the date in her streak.
+       What's left here is only the vocabulary of removal. */
+    keywords: ["delete", "remove", "erase", "undo", "scrap",
+               "get rid", "wipe", "take it out", "shouldn't be there",
+               "never slept"],
+    requireAny: ABOUT_SLEEP,
+    fetchTargets: ["sleep/recent", "sleep/today"],
+    writeFields: ["action", "date"],
+    guidelines:
+HEAD("Jen wants a night taken off the record", "sleep_delete") +
+`THREE RULES. These outrank anything below.
+
+1. ASK FIRST. Send no action until she has answered yes to a direct question. This is the one sleep action with no undo.
+2. Say what goes. The log itself and the prestige it paid — both come back out. Name the night and the hours so she knows which one she's agreeing to.
+3. Never offer this on your own, and DON'T USE IT TO FIX A LOG. A night that's wrong gets corrected or rewritten in place — that's the amend entry, sleep_amend or sleep_replace. Deleting is for a night that shouldn't be on the record at all: logged on the wrong date, or one she never slept.
+
+WHY IT MATTERS WHICH. A deleted night leaves a hole in her streak, and the streak bonuses only pay at 3, 7 and 30 consecutive nights. Rewriting the night keeps the date. So if she says "redo last night" she almost certainly means replace, not delete — and if you're not sure which she's after, ask before you reach for the one that can't be undone.
+
+LIVE DATA gives you Sleep — recent nights, so you can name the one she means.
+
+STEP 1 — Work out which night. Not listed: say so and stop.
+STEP 2 — Check she means gone, not corrected. If there's any sign she wants that date logged differently rather than removed, say so and offer to rewrite it instead.
+STEP 3 — "That's {date}, {hours}. Deleting it takes back {prestige} too, and it doesn't come back. Sure?" Wait.
+STEP 4 — Yes: send it. Anything else: "Left it alone." Transaction over.
+
+Once it's gone, she can log that date again fresh — but the gap in the streak is already done.
+` + FOOT
+},
+
+/* ── 4. ASKING ABOUT IT ───────────────────────────────────────────── */
+{
+    name: "Sleep: How have I been sleeping",
+    intent: "SLEEP_REVIEW",
+    priority: 4,
+    window: 3,
+    keywords: ["how", "what", "when", "average", "debt", "streak", "stats",
+               "history", "pattern", "much", "many", "been", "worst", "best",
+               "this week", "lately", "trend"],
+    requireAny: ABOUT_SLEEP,
+    fetchTargets: ["sleep/summary", "sleep/recent"],
+    writeFields: [],
+    guidelines:
+HEAD("Jen is asking about her sleep record") +
+`This is a question, not an instruction. Send no action.
+
+LIVE DATA gives you two blocks:
+  Sleep — recent nights   every night on record, with times, hours, quality, feeling, factors
+  Sleep                   the averages, the weekly debt, the streak, the nights under 6h and what was tagged on them
+
+FOUR RULES.
+
+1. Answer from LIVE DATA only. If she asks something it doesn't cover — a month ago, a night that isn't listed — say you can only see the recent stretch. Never estimate a number and never fill a gap with a plausible one.
+2. Answer the question she asked. "How did I sleep last night" wants one night, not a report on the week.
+3. A missing log is a missing log, not a zero. Nights she never logged aren't nights she didn't sleep, and the debt figure is measured only against the nights on record.
+4. Numbers plainly. "6.2 hours average this week, about two short of your goal" — not a table, not a list of every night unless she asked for the list.
+
+If the record is empty, say so in one line and leave it there.
+` + FOOT
+},
+
+/* ── 5. ADVICE ────────────────────────────────────────────────────── */
+{
+    name: "Sleep: Advice",
+    intent: "SLEEP_ADVICE",
+    priority: 4,
+    window: 4,
+    keywords: ["advice", "advise", "tips", "help", "should", "improve", "better",
+               "why", "tired", "exhausted", "drained", "struggling", "wrecked",
+               "insomnia", "restless", "groggy", "fix this", "what do i do"],
+    requireAny: ABOUT_SLEEP.concat(["tired", "exhausted", "groggy", "drained", "knackered"]),
+    fetchTargets: ["sleep/summary", "sleep/recent"],
+    writeFields: [],
+    guidelines:
+HEAD("Jen wants your read on her sleep, not just the numbers") +
+`Send no action. This is you talking.
+
+LIVE DATA gives you the summary block — averages, weekly debt, streak, the nights under 6h and which factors were logged on them — and the recent nights themselves.
+
+FIVE RULES.
+
+1. Point at HER data. "Three of your four short nights had Caffeine on them" is worth something. "Try to get eight hours" is worth nothing and she has heard it.
+2. One thing at a time. The single change most likely to help, said once. A list of six is a list she'll ignore.
+3. A correlation is a correlation. The factors are tags she ticked, not a diagnosis. Say "these keep showing up together" — never "this is causing it".
+4. Stay out of medicine. Persistent insomnia, sleep that doesn't improve, anything she describes as frightening — that's a doctor, and say so once without drama. Don't suggest supplements or doses.
+5. Read the room. If she's telling you she's exhausted, she wants to be heard first. Sympathy, then the observation, and only if it's welcome.
+
+Look for the things a chart can't say: bedtimes drifting later across the week, quality dropping while the hours stay the same, the good nights having something in common. If nothing in the data stands out, say that honestly rather than manufacturing a pattern.
+
+If she hasn't logged much, the honest advice is that there isn't enough on record to see anything yet.
+` + FOOT
+},
+
+/* ── 6. THE TRACKER SCREEN ────────────────────────────────────────── */
+{
+    name: "Sleep: Tracker screen",
+    intent: "SLEEP_UI",
+    priority: 4,
+    window: 2,
+    keywords: ["open", "show", "pull up", "display", "fill", "fill in", "type",
+               "set up", "punch in", "archive", "full history", "the form"],
+    requireAny: ABOUT_SLEEP.concat(["tracker", "archive", "form"]),
+    fetchTargets: ["poppy/surface", "sleep/today"],
+    writeFields: ["action", "date", "bedtime", "waketime", "quality", "feeling", "factors"],
+    guidelines:
+HEAD("Jen wants something done on the sleep tracker page itself", "sleep_fill / sleep_open_history") +
+`Both of these need the sleep tracker to be the screen in front of her. LIVE DATA's Active surface line says whether it is. If it isn't, say which app she's actually on rather than sending an action that will come back refused.
+
+sleep_fill — types into the form and stops. Nothing is saved; she presses LOG SLEEP herself.
+sleep_open_history — opens the Sleep Archive panel.
+
+THREE RULES.
+
+1. Fill is not log. "Fill it in", "set it up", "put 11 and 7 in there" is sleep_fill. "Log it", "save it", "record it" is sleep_log, which writes the database whether the page is open or not. When it's genuinely ambiguous, ask which she wants — one of them is permanent and the other isn't.
+2. Opening the archive is the whole job. She asked to LOOK at it. Don't also summarise what's in it.
+3. Fill takes the same values as a log — the times, quality 1-10, one of the three feelings, factors from the fixed list. Same rule: don't invent any of them.
+
+She can still edit everything on screen after you've filled it. Say what you put in, briefly, so she knows what to check.
+` + FOOT
+}
+
+];
+
+const logEl = document.getElementById('log');
+const say = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+};
+
+document.getElementById('go').onclick = async () => {
+    const btn = document.getElementById('go');
+    btn.disabled = true;
+    logEl.textContent = '';
+
+    try {
+        /* ── The category ──────────────────────────────────────────
+           Stored as { pushId: "Name" }, so an existing one is found by
+           its value. Adding a second row with the same name would show
+           the category twice in the sidebar. */
+        const catSnap = await get(ref(db, 'poppyEngine/categories'));
+        const cats = catSnap.val() || {};
+        if (!Object.values(cats).includes(CATEGORY)) {
+            await push(ref(db, 'poppyEngine/categories'), CATEGORY);
+            say('+ category "' + CATEGORY + '"', 'new');
+        } else {
+            say('- category "' + CATEGORY + '" already there', 'ok');
+        }
+
+        /* ── The intents ───────────────────────────────────────────
+           Keyed by category, then by intent name. The editor's dropdown
+           reads this; an entry whose intent isn't registered still works
+           but can't be picked from the list. */
+        const intentPatch = {};
+        ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
+        await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
+        say('- ' + ENTRIES.length + ' intents registered', 'ok');
+
+        /* ── The entries ───────────────────────────────────────────
+           Matched by name so a second run updates rather than duplicates.
+           order lands them at the end of the manual sort; hidden:false
+           keeps them in the export. */
+        const entSnap = await get(ref(db, 'poppyEngine/entries'));
+        const existing = entSnap.val() || {};
+        const byName = {};
+        Object.entries(existing).forEach(([id, e]) => {
+            if (e && e.name) byName[e.name] = id;
+        });
+
+        let n = Object.keys(existing).length;
+
+        for (const src of ENTRIES) {
+            const id = byName[src.name];
+            const was = id ? existing[id] : null;
+
+            const entry = {
+                name:         src.name,
+                category:     CATEGORY,
+                intent:       src.intent,
+                keywords:     src.keywords || [],
+                priority:     src.priority || 4,
+                order:        was && was.order != null ? was.order : n++,
+                hidden:       false,
+                window:       src.window != null ? src.window : null,
+                cooldown:     src.cooldown || 0,
+                blockType:    "instruction",
+                guidelines:   src.guidelines,
+                Shifts:       [],
+                fetchTargets: src.fetchTargets || [],
+                writeFields:  src.writeFields || [],
+                requireAny:   src.requireAny  || [],
+                requireAll:   src.requireAll  || [],
+                requireNone:  src.requireNone || [],
+                notAll:       src.notAll      || [],
+                updatedAt:    Date.now()
+            };
+
+            if (id) {
+                entry.createdAt = was.createdAt || Date.now();
+                await set(ref(db, 'poppyEngine/entries/' + id), entry);
+                say('~ updated  ' + src.name, 'ok');
+            } else {
+                entry.createdAt = Date.now();
+                await push(ref(db, 'poppyEngine/entries'), entry);
+                say('+ created  ' + src.name, 'new');
+            }
+        }
+
+        say('');
+        say('Done. Open the editor, then Export PoppyEngine.js and paste it', 'new');
+        say('over JS/poppy/PoppyEngine-core.js.', 'new');
+
+    } catch (err) {
+        say('');
+        say('Failed: ' + err.message, 'err');
+        say('Nothing partial is left behind that a second run won\'t fix —', 'err');
+        say('entries are matched by name, so just run it again.', 'err');
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

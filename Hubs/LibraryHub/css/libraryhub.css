@@ -1,0 +1,320 @@
+  /* --- CORE VARIABLES (DARK ACADEMIA) --- */
+        :root {
+            --font-display: 'Cinzel', serif; 
+            --font-body: 'Red Hat Display', sans-serif;
+            --font-num: 'Oswald', sans-serif;
+            
+            --color-gold: #d4af37; 
+            --color-gold-dim: rgba(212, 175, 55, 0.4);
+            --color-white: #e0e0e0;
+            
+            /* Glass Effect Variables */
+            --glass-bg: rgba(20, 20, 20, 0.4);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(12px);
+        }
+
+.top-nav-dock {
+    position: absolute;
+    top: 30px; left: 40px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+}
+
+.top-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    text-decoration: none;
+    color: var(--color-white);
+    padding: 9px;
+    border-radius: 12px;
+    background: rgba(20, 20, 20, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0.75;
+    transition: opacity .25s ease, background .25s ease, gap .25s ease, border-color .25s ease, color .25s ease;
+}
+.top-nav-btn svg {
+    width: 17px; height: 17px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.top-nav-btn span {
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    transition: max-width .3s ease;
+}
+
+.top-nav-btn:hover,
+.top-nav-btn:focus-visible {
+    opacity: 1;
+    background: rgba(212, 175, 55, 0.15);
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+    gap: 8px;
+}
+.top-nav-btn:hover span,
+.top-nav-btn:focus-visible span { max-width: 130px; }
+
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: var(--font-body);
+            color: var(--color-white);
+        }
+
+        /* --- BACKGROUND LAYER --- */
+        .bg-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('files/LibraryHub_BG.jpg'); /* Jen's Image */
+            background-size: cover;
+            background-position: center;
+            z-index: 0;
+        }
+
+        /* The Vignette */
+        .vignette-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 85%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* --- LAYOUT CONTAINER --- */
+        .hub-container {
+            position: relative;
+            z-index: 10;
+            width: 100%; height: 100%;
+            padding: 40px;
+        }
+
+        /* --- TOP CENTER: BRAND --- */
+        .brand {
+            position: absolute;
+            top: 40px; left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--font-display);
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--color-white);
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 700;
+        }
+        .brand span { color: var(--color-gold); }
+
+        /* --- CENTER STAGE: TEXT --- */
+        .center-stage {
+            position: absolute;
+            top: 40%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 100%;
+        }
+
+        .welcome-text {
+            font-family: var(--font-display);
+            font-size: 28px;
+            color: rgba(255,255,255,0.9);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+        }
+
+        .quote-block {
+            font-family: var(--font-display);
+            color: var(--color-gold);
+            margin-bottom: 10px;
+        }
+
+        .quote-main {
+            font-size: 16px;
+            letter-spacing: 1px;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .quote-author {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            opacity: 0.8;
+        }
+
+        /* --- RIGHT DOCK: NAVIGATION --- */
+        .nav-dock {
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex; flex-direction: column;
+            gap: 15px;
+        }
+
+        .glass-btn {
+            width: 220px;
+            padding: 18px 0;
+            background: var(--glass-bg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            
+            color: var(--color-gold);
+            font-family: var(--font-display);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border-radius: 2px;
+        }
+
+        .glass-btn:hover {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: var(--color-gold);
+            transform: translateX(-5px);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        /* --- BOTTOM CENTER: MAIN ENTRY --- */
+        .entry-dock {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .entry-btn-large {
+            width: 300px;
+            padding: 25px 0;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            
+            color: var(--color-gold);
+            font-family: var(--font-display);
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            transition: all 0.4s ease;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .entry-btn-large:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: var(--color-gold);
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
+            letter-spacing: 6px;
+        }
+
+        /* --- BOTTOM LEFT: DETAILED STATS GRID --- */
+        .stats-corner {
+            position: absolute;
+            bottom: 40px; left: 50px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px; /* Space between Big Number and the Grid */
+        }
+
+        /* The Big "Total" Number */
+        .stat-header {
+            display: flex; flex-direction: column;
+            align-items: flex-start;
+        }
+        .stat-header .num {
+            font-family: var(--font-num);
+            font-size: 25px; /* Large */
+            color: #fff;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+        .stat-header .label {
+            font-family: var(--font-num);
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        /* The 2x2 Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two columns */
+            gap: 20px 40px; /* row gap 20px, column gap 40px */
+        }
+
+        .stat-mini {
+            display: flex; flex-direction: column;
+            align-items: flex-start;
+        }
+        .stat-mini .num {
+            font-family: var(--font-num);
+            font-size: 20px; /* Medium */
+            color: #fff;
+            line-height: 1;
+        }
+        .stat-mini .label {
+            font-family: var(--font-num);
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            opacity: 0.7;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 3px;
+        }
+
+.glass-btn {
+    width: 220px;
+    padding: 15px 0;
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    
+    color: var(--color-gold);
+    font-family: var(--font-display);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    
+    /* --- NEW FLEXBOX RULES --- */
+    display: flex;               /* Makes it a flexible container */
+    justify-content: center;     /* Centers everything horizontally */
+    align-items: center;         /* Centers everything vertically */
+    gap: 12px;                   /* Adds elegant space between icon and text */
+    /* ------------------------- */
+
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    border-radius: 2px;
+}

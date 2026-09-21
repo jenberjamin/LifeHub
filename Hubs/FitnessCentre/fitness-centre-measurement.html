@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Fitness Centre | Measurements</title>
+
+    <link rel="manifest" href="manifest-fitness.json">
+    <link rel="icon" type="image/png" href="css/files/icon-192.png">
+    <link rel="stylesheet" href="css/fitness-centre-measurement.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+
+    <div class="dashboard">
+        <div class="header-bar">
+            <div class="title-group">
+                <span class="material-symbols-outlined back-btn" onclick="window.location.href='FITNESS-CENTRE.html'">keyboard_backspace</span>
+                <h1>Measurements</h1>
+            </div>
+            <div class="key-stats">
+                <div class="stat-pill" onclick="switchChart('Weight', 'Weight Monitor')">
+                    <div class="stat-label">Weight</div>
+                    <div class="stat-val"><span id="weightDisplay">--</span><span style="font-size:14px; margin-left:5px; color:#888">kg</span></div>
+                </div>
+                <div class="stat-pill" onclick="updateHeight()">
+    <div class="stat-label">Height</div>
+    <div class="stat-val"><span id="heightDisplay">--</span><span style="font-size:14px; margin-left:5px; color:#888">cm</span></div>
+</div>
+                <div class="stat-pill">
+                    <div class="stat-label">BMI</div>
+                    <div class="stat-val bmi-good" id="bmiDisplay">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-panel">
+            <div class="chart-header">
+                <span id="chartTitle">WEIGHT MONITOR</span>
+                <span id="chartGoalLabel" style="color: var(--color-gold); font-size: 12px; letter-spacing: 1px;">GOAL: --</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <div class="grid-wrapper">
+            <div class="measurements-table" id="mGrid"></div>
+        </div>
+
+        <div class="update-text" id="lastUpdateTxt">System Status: Ready</div>
+
+        <div class="fab-stack">
+            <div class="fab crown" onclick="openDynamicModal('goal')" title="Set Goals"><span class="material-symbols-outlined">emoji_events</span></div>
+            <div class="fab" onclick="openDynamicModal('record')" title="Add Record"><span class="material-symbols-outlined">add</span></div>
+            <div class="fab" onclick="openCompareModal()" title="Compare"><span class="material-symbols-outlined">compare_arrows</span></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="dynamicModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span id="modalTitle">Title</span>
+                <span class="material-symbols-outlined close-modal" onclick="closeModal('dynamicModal')">close</span>
+            </div>
+            
+            <div class="modal-scroll" id="modalFormContainer"></div>
+            <button class="modal-btn" id="modalActionBtn" onclick="">SAVE DATA</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>Compare vs.</span>
+                <select id="compareDateSelect" class="compare-filter" onchange="renderHistory()">
+                    </select>
+                <span class="material-symbols-outlined close-modal" onclick="closeModal('historyModal')">close</span>
+            </div>
+            <div class="modal-scroll" id="historyContent"></div>
+        </div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script src="js/gatekeeper.js"></script>
+    <script src="js/fitness-core.js"></script>
+    <script src="js/fitness-measurement.js"></script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

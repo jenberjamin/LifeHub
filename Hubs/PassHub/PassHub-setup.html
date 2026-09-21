@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>PassHub | Setup</title>
+
+    <link rel="icon" type="image/png" href="css/files/PassHub.png">
+    <link rel="stylesheet" href="css/passhub-setup.css">
+
+</head>
+<body>
+
+<a href="PassHub.html" class="back-nav">← PassHub</a>
+
+<div class="sheet" id="sheet">
+
+    <h1>PassHub Setup</h1>
+
+    <!-- ── LOADING ── -->
+    <div id="state-loading">
+        <p class="state-note">Checking…</p>
+    </div>
+
+    <!-- ── NO CRYPTO ──
+         Plain http on a LAN address switches crypto.subtle off, and
+         without it nothing here can be hashed. Better to say so than
+         to quietly store something weaker. -->
+    <div id="state-nocrypto" class="hidden">
+        <p class="state-note" id="nocrypto-msg"></p>
+    </div>
+
+    <!-- ── ALREADY CONFIGURED ──
+         Setup runs once. Not because re-running is dangerous, but
+         because it silently replaces the credentials you are
+         currently using, and doing that by accident is how you lock
+         yourself out of your own vault. -->
+    <div id="state-locked" class="hidden">
+        <p class="state-note">
+            PassHub already has credentials. <br><br>
+            Nothing here can show you what they are — they are stored as
+            one-way hashes, so even the database cannot read them back.<br><br>
+            To start over, run <code>PH_AUTH.reset()</code> in the console
+            and reload this page. That clears the record and lets setup
+            run again.
+        </p>
+        <a href="PassHub.html" class="btn" style="display:block;line-height:36px;text-align:center;text-decoration:none;">Go to the gate →</a>
+    </div>
+
+    <!-- ── THE FORM ── -->
+    <div id="state-form" class="hidden">
+
+        <p class="lede">
+            Everything you type here is hashed in this browser before it
+            goes anywhere. The questions stay readable, because you have to
+            be shown them — every answer, and your passcode, become digests
+            that cannot be turned back into words.
+            <br><br>
+            Which means there is no recovery. Choose a passcode you will not
+            forget.
+        </p>
+
+        <div class="sec-row">
+            <span class="sec-tag">Identity</span>
+            <span class="sec-line"></span>
+        </div>
+
+        <div class="field">
+            <label for="inp-name">Name you'll type at the gate</label>
+            <input type="text" id="inp-name" autocomplete="off" spellcheck="false" placeholder="your name">
+        </div>
+
+        <div class="two-up">
+            <div class="field">
+                <label for="inp-pass">Passcode</label>
+                <input type="password" id="inp-pass" autocomplete="new-password" placeholder="••••••••">
+            </div>
+            <div class="field">
+                <label for="inp-pass2">Passcode again</label>
+                <input type="password" id="inp-pass2" autocomplete="new-password" placeholder="••••••••">
+            </div>
+        </div>
+
+        <div class="sec-row">
+            <span class="sec-tag">Twenty questions</span>
+            <span class="sec-line"></span>
+        </div>
+
+        <p class="lede" style="margin:0 auto 18px;">
+            The gate asks you one of these at random, every time. Twenty is
+            what makes that worth doing — with one question, watching you
+            sign in once is enough to learn it.
+        </p>
+
+        <div class="qgrid" id="qgrid"></div>
+
+        <button class="btn" id="btn-save">Save &amp; lock it in →</button>
+        <div id="err"></div>
+
+    </div>
+
+    <!-- ── DONE ── -->
+    <div id="state-done" class="hidden">
+        <div class="big-tick">✓</div>
+        <p class="state-note">
+            <strong>Credentials stored.</strong><br>
+            <span id="sync-note"></span><br><br>
+            The old plain-text passcode in <code>PassHub-core.js</code> is
+            gone — the gate now checks what you just set.
+        </p>
+        <a href="PassHub.html" class="btn" style="display:block;line-height:36px;text-align:center;text-decoration:none;">Go to the gate →</a>
+    </div>
+
+</div>
+
+<script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-database-compat.js"></script>
+<script src="js/passhub-firebase.js"></script>
+<script src="js/passhub-auth.js"></script>
+<script src="js/passhub-access-log.js"></script>
+<script src="js/passhub-setup.js"></script>
+
+</body>
+</html>

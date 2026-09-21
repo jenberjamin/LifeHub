@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sims 4 Gallery & CC Manager</title>
+    <!-- Import Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Import Google Material Icons (for Layer 4) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Icons">
+    
+    <style>
+        /* Import Century Gothic font */
+        @import url('https://fonts.cdnfonts.com/css/century-gothic');
+
+        body, html {
+            font-family: 'Century Gothic', sans-serif;
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling on the main body */
+        }
+        
+        /* --- Helper Classes --- */
+        .view {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- View 1: Gallery (Home) Styles --- */
+        #gallery-view {
+            background-image: url('https://i.imgur.com/SyuVLuZ.jpeg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 255, 255, 0.7);
+        }
+
+        .button-glow {
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.7), 0 0 12px rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .button-glow:hover {
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 16px rgba(255, 255, 255, 0.8);
+            transform: scale(1.02);
+        }
+        
+        /* --- View 2 & 3: CAS & Sub-Category Styles --- */
+        #cas-view, #sub-category-view {
+            background-image: url('https://i.imgur.com/nr7YA7b.jpeg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+        }
+
+        .cas-button {
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .cas-button:hover {
+            background-color: #444;
+            border-color: #777;
+            transform: scale(1.02);
+        }
+        
+        .cas-button.active {
+             background-color: #555;
+             border-color: #999;
+             box-shadow: 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.2);
+             transform: scale(1.03);
+        }
+        
+        /* --- View 4: Item View Styles (from File 2) --- */
+        #item-view {
+            background-image: url('https://i.imgur.com/6KLNbaI.jpeg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+        }
+
+        .filter-select, .filter-input {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #d0d0d0;
+            border-radius: 8px;
+            padding: 10px 35px 10px 35px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            color: black;
+            outline: none;
+        }
+
+        .filter-input {
+            padding: 10px 15px 10px 40px;
+        }
+
+        .item-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .item-image {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            background: #f0f0f0;
+        }
+
+        /* --- Modal Styles (Combined & Merged) --- */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Item Add/Edit Modal */
+        .modal {
+            background: #f8f1e7;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: #757575;
+            color: white;
+            padding: 18px 25px;
+            font-size: 22px;
+        }
+        
+        /* Confirmation Modal (for all deletes) */
+        .confirm-modal {
+            background: #333;
+            color: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        /* Form Styles (from File 2) */
+        .form-label {
+            font-size: 15px;
+            color: #b8866f;
+            margin-bottom: 6px;
+            display: block;
+            font-weight: bold;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 15px;
+            color: black;
+            outline: none;
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            padding-right: 40px;
+        }
+
+        .icon-btn {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            opacity: 0.7;
+        }
+
+        .delete-icon {
+            color: #ff6b6b;
+        }
+
+        .delete-icon:hover {
+            color: #ff5252;
+        }
+
+        /* Custom Scrollbar (from File 2) */
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-black">
+
+    <!-- 
+      VIEW 1: GALLERY (Original Page)
+    -->
+    <div id="gallery-view" class="view">
+        <!-- Top Navigation Bar -->
+        <nav class="bg-black text-white h-16 flex justify-between items-center px-6 md:px-10 flex-shrink-0">
+            <!-- Left-side links -->
+            <div class="flex items-baseline space-x-6">
+                <a href="#" class="text-xl font-bold tracking-wide hover:opacity-80 transition-opacity">HOME</a>
+                <a href="#" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">GAMEPLAY</a>
+                <a href="#" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">MODS</a>
+                <a href="#" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">CUSTOM CONTENTS</a>
+            </div>
+            
+            <!-- Right-side "Create-a-Sim" button -->
+            <div>
+                <button id="goto-cas-btn" class="text-2xl font-bold text-glow tracking-wider cursor-pointer hover:opacity-80 transition-opacity">
+                    Create-a-Sim
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow relative">
+            <!-- Sims 4 Logo -->
+            <img src="https://i.imgur.com/QdFZp1V.png" 
+                 alt="The Sims 4 Logo" 
+                 class="absolute top-2 left-6 md:left-10 w-36 md:w-48"
+                 onerror="this.style.display='none'"> 
+
+            <!-- Button Grid -->
+            <div class="absolute top-8 right-8 md:right-16 lg:right-24">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Lot Trait</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">CAS Traits</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Traditions</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Aspirations</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Events</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Animations</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Bug Fix</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Interactions</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 
+      VIEW 2: CREATE-A-SIM (Category Page)
+    -->
+    <div id="cas-view" class="view hidden">
+        <!-- CAS Navigation Bar -->
+        <nav class="bg-black text-white h-16 flex justify-between items-center px-6 md:px-10 flex-shrink-0">
+            <!-- Left-side: Home, Title -->
+            <div class="flex items-center space-x-6">
+                <button id="goto-gallery-btn" class="text-white hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                </button>
+                <span class="text-2xl font-bold tracking-wider">CREATE-A-SIM</span>
+            </div>
+        </nav>
+
+        <!-- CAS Main Content -->
+        <main class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6 p-6 md:p-10">
+            <!-- Left Side: Sim Placeholder -->
+            <div class="md:col-span-2 h-[calc(100vh-150px)] relative">
+                <img src="https://i.imgur.com/yJqfSdj.png" 
+                     alt="Sims 4 Logo" 
+                     class="h-14 absolute top-0 left-0" 
+                     onerror="this.style.display='none'">
+            </div>
+
+            <!-- Right Side: Categories -->
+            <div class="flex flex-col space-y-4 pt-4">
+                <!-- Search Bar -->
+                <div class="relative">
+                    <input type="text" id="category-search" class="bg-black bg-opacity-70 border border-gray-600 text-white rounded-full h-12 w-full pl-6 pr-4" placeholder="Search...">
+                </div>
+
+                <!-- Category Buttons -->
+                <div id="category-buttons" class="flex flex-wrap gap-4">
+                    <!-- Dynamically populated from Firestore -->
+                </div>
+
+                <!-- Add New Button -->
+                <button id="add-new-category-btn" class="cas-button px-6 py-3 rounded-full font-bold text-lg w-fit">
+                    + Add New
+                </button>
+                
+                <!-- Input for new category (hidden by default) -->
+                <div id="new-category-input-container" class="hidden flex gap-2">
+                    <input type="text" id="new-category-name" class="bg-white text-black px-4 py-2 rounded-full flex-grow" placeholder="Category Name...">
+                    <button id="save-category-btn" class="bg-green-500 text-white px-4 py-2 rounded-full font-bold">Save</button>
+                    <button id="cancel-category-btn" class="bg-gray-500 text-white px-4 py-2 rounded-full font-bold">Cancel</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 
+      VIEW 3: SUB-CATEGORY
+    -->
+    <div id="sub-category-view" class="view hidden">
+        <!-- Sub-Category Navigation Bar -->
+        <nav class="bg-black text-white h-16 flex justify-between items-center px-6 md:px-10 flex-shrink-0">
+            <!-- Left-side: Back Button -->
+            <div class="flex items-center space-x-4">
+                <button id="goto-cas-view-btn" class="text-white hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Center: Title Bar -->
+            <div class="flex-grow flex justify-center items-center">
+                <div class="bg-black bg-opacity-70 border border-gray-600 rounded-full h-12 flex items-center px-6">
+                    <span id="sub-category-title" class="text-white text-xl font-bold tracking-wider">CATEGORY TITLE</span>
+                </div>
+            </div>
+
+            <!-- Right-side: Delete Button -->
+            <div class="flex items-center">
+                 <button id="delete-category-btn" class="text-white hover:text-red-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Sub-Category Main Content -->
+        <main class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6 p-6 md:p-10">
+            <!-- Left Side: Sim Placeholder -->
+            <div class="md:col-span-2 h-[calc(100vh-150px)] relative">
+                 <img src="https://i.imgur.com/yJqfSdj.png" 
+                     alt="Sims 4 Logo" 
+                     class="h-14 absolute top-0 left-0" 
+                     onerror="this.style.display='none'">
+            </div>
+
+            <!-- Right Side: Sub-Categories -->
+            <div class="flex flex-col space-y-4 pt-4">
+                <!-- Sub-Category Buttons -->
+                <div id="sub-category-buttons" class="flex flex-wrap gap-4">
+                    <!-- Dynamically populated from Firestore -->
+                </div>
+
+                <!-- Add New Sub-Category Button -->
+                <button id="add-new-sub-category-btn" class="cas-button px-6 py-3 rounded-full font-bold text-lg w-fit">
+                    + Add New
+                </button>
+                
+                <!-- Input for new sub-category (hidden by default) -->
+                <div id="new-sub-category-input-container" class="hidden flex gap-2">
+                    <input type="text" id="new-sub-category-name" class="bg-white text-black px-4 py-2 rounded-full flex-grow" placeholder="Sub-Category Name...">
+                    <button id="save-sub-category-btn" class="bg-green-500 text-white px-4 py-2 rounded-full font-bold">Save</button>
+                    <button id="cancel-sub-category-btn" class="bg-gray-500 text-white px-4 py-2 rounded-full font-bold">Cancel</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 
+      VIEW 4: ITEM VIEW (from File 2) - WITH SCROLLBAR
+    -->
+    <div id="item-view" class="hidden">
+        <div class="p-6 scrollbar-custom" style="height: 100vh; overflow-y: auto;">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <!-- Left: Back & Logo -->
+                <div class="flex items-center gap-4">
+                    <button id="goto-sub-category-btn" class="text-black hover:opacity-70 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </button>
+                    <img src="https://i.imgur.com/yJqfSdj.png" alt="Sims 4 Logo" class="h-14">
+                </div>
+
+                <!-- Right: Title & Delete -->
+                <div class="flex items-center gap-4">
+                    <div class="bg-black bg-opacity-70 border border-gray-600 rounded-full px-6 py-3">
+                        <span id="item-view-title" class="text-white text-2xl font-bold tracking-wider">HAIRSTYLE</span>
+                    </div>
+                    <button id="delete-sub-category-btn" class="text-black hover:text-red-500 transition-colors">
+                        <span class="material-icons text-4xl">remove_circle_outline</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="relative">
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none">person</span>
+                    <select id="creatorFilter" class="filter-select w-full">
+                        <option value="">All Creators</option>
+                    </select>
+                </div>
+                <div class="relative">
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none">cake</span>
+                    <select id="ageGroupFilter" class="filter-select w-full">
+                        <option value="">All Ages</option>
+                    </select>
+                </div>
+                <div class="relative">
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none">wc</span>
+                    <select id="genderFilter" class="filter-select w-full">
+                        <option value="">All Genders</option>
+                    </select>
+                </div>
+                <div class="relative">
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none z-10">tag</span>
+                    <input type="text" id="tagsFilter" class="filter-input w-full pl-10" placeholder="#tags">
+                </div>
+            </div>
+
+            <!-- Items Grid - CHANGED TO 5 COLUMNS -->
+            <div id="itemsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pb-24">
+                <!-- Items will be rendered here from Firestore -->
+            </div>
+
+            <!-- FAB Add Button -->
+            <button id="addItemBtn" class="fixed bottom-8 right-8 w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center hover:shadow-xl hover:-translate-y-1 transition-all z-50">
+                <span class="material-icons text-4xl text-gray-800">add</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 
+      MODAL 1: Add/Edit Item (from File 2)
+    -->
+    <div id="itemModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="modal scrollbar-custom">
+            <div class="modal-header flex items-center justify-between">
+                <span id="modalTitle">+ Add New Item</span>
+                <button id="closeModalBtn" class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                    <span class="material-icons text-gray-700">close</span>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="form-label">Name</label>
+                    <input type="text" id="itemName" class="form-input" placeholder="Enter item name">
+                </div>
+                <div>
+                    <label class="form-label">Creator</label>
+                    <div class="flex gap-2">
+                        <select id="itemCreator" class="form-select flex-1"></select>
+                        <button id="deleteCreatorBtn" class="px-3 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors">
+                            <span class="material-icons text-red-500">remove_circle_outline</span>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Age Group</label>
+                    <select id="itemAgeGroup" class="form-select"></select>
+                </div>
+                <div>
+                    <label class="form-label">Gender</label>
+                    <select id="itemGender" class="form-select"></select>
+                </div>
+                <div>
+                    <label class="form-label">Tags</label>
+                    <input type="text" id="itemTags" class="form-input" placeholder="#maxis #alpha">
+                </div>
+                <div>
+                    <label class="form-label">Image URL</label>
+                    <input type="text" id="itemImageUrl" class="form-input" placeholder="https://...">
+                </div>
+                <div>
+                    <label class="form-label">Download Link</label>
+                    <input type="text" id="itemDownloadLink" class="form-input" placeholder="https://...">
+                </div>
+            </div>
+            <div class="p-6 pt-0 flex justify-between items-center">
+                <button id="deleteItemBtn" class="hidden px-4 py-2 bg-white border-2 border-red-500 text-red-500 rounded-lg font-bold hover:bg-red-50 transition-colors">
+                    DELETE
+                </button>
+                <div class="flex gap-3 ml-auto">
+                    <button id="cancelItemBtn" class="px-6 py-2 bg-gray-400 text-white rounded-lg font-bold hover:bg-gray-500 transition-colors">
+                        CANCEL
+                    </button>
+                    <button id="saveItemBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors">
+                        SAVE
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 
+      MODAL 2: Confirmation (from File 2, now used for ALL deletes)
+    -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="confirm-modal">
+            <p id="confirmText" class="text-lg mb-6">Are you sure?</p>
+            <div class="flex gap-4 justify-center">
+                <button id="confirmYes" class="px-8 py-2 bg-white text-gray-800 rounded-lg font-bold hover:bg-gray-100 transition-colors">
+                    YES
+                </button>
+                <button id="confirmNo" class="px-8 py-2 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-700 transition-colors">
+                    NO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 
+      ================================================================
+      --- JAVASCRIPT ---
+      ================================================================
+    -->
+    <script type="module">
+        // --- Firebase SDK Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc,
+            getDocs, 
+            addDoc, 
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            collection, 
+            query, 
+            where, 
+            writeBatch,
+            arrayUnion,
+            arrayRemove,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase & App Initialization ---
+        let app, db, auth;
+        let userId = null;
+        let appId = 'default-app-id';
+
+        // Collection references
+        let categoriesCol, subCategoriesCol, itemsCol;
+
+        // Local data cache (mirrors Firestore)
+        let localCategories = [];
+        let localSubCategories = [];
+        let localItems = [];
+        
+        // Unsubscribe functions for listeners
+        let unsubCategories = () => {};
+        let unsubSubCategories = () => {};
+        let unsubItems = () => {};
+
+        // --- Application State ---
+        let currentView = 'gallery-view';
+        let currentCategory = null; 
+        let currentSubCategory = null; 
+        let editingItemId = null;
+        let confirmCallback = null;
+
+        // --- DOM Elements (Combined from both files) ---
+        
+        // Views
+        const galleryView = document.getElementById('gallery-view');
+        const casView = document.getElementById('cas-view');
+        const subCategoryView = document.getElementById('sub-category-view');
+        const itemView = document.getElementById('item-view');
+        
+        // View 1 (Gallery)
+        const gotoCasBtn = document.getElementById('goto-cas-btn');
+
+        // View 2 (CAS)
+        const gotoGalleryBtn = document.getElementById('goto-gallery-btn');
+        const categorySearch = document.getElementById('category-search');
+        const categoryButtonsContainer = document.getElementById('category-buttons');
+        const addNewCategoryBtn = document.getElementById('add-new-category-btn');
+        const newCategoryInputContainer = document.getElementById('new-category-input-container');
+        const newCategoryNameInput = document.getElementById('new-category-name');
+        const saveCategoryBtn = document.getElementById('save-category-btn');
+        const cancelCategoryBtn = document.getElementById('cancel-category-btn');
+
+        // View 3 (Sub-Category)
+        const gotoCasViewBtn = document.getElementById('goto-cas-view-btn');
+        const subCategoryTitle = document.getElementById('sub-category-title');
+        const deleteCategoryBtn = document.getElementById('delete-category-btn');
+        const subCategoryButtonsContainer = document.getElementById('sub-category-buttons');
+        const addNewSubCategoryBtn = document.getElementById('add-new-sub-category-btn');
+        const newSubCategoryInputContainer = document.getElementById('new-sub-category-input-container');
+        const newSubCategoryNameInput = document.getElementById('new-sub-category-name');
+        const saveSubCategoryBtn = document.getElementById('save-sub-category-btn');
+        const cancelSubCategoryBtn = document.getElementById('cancel-sub-category-btn');
+        
+        // View 4 (Item View)
+        const gotoSubCategoryBtn = document.getElementById('goto-sub-category-btn');
+        const itemViewTitle = document.getElementById('item-view-title');
+        const deleteSubCategoryBtn = document.getElementById('delete-sub-category-btn');
+        const creatorFilter = document.getElementById('creatorFilter');
+        const ageGroupFilter = document.getElementById('ageGroupFilter');
+        const genderFilter = document.getElementById('genderFilter');
+        const tagsFilter = document.getElementById('tagsFilter');
+        const itemsGrid = document.getElementById('itemsGrid');
+        const addItemBtn = document.getElementById('addItemBtn');
+
+        // Item Modal
+        const itemModal = document.getElementById('itemModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const itemName = document.getElementById('itemName');
+        const itemCreator = document.getElementById('itemCreator');
+        const deleteCreatorBtn = document.getElementById('deleteCreatorBtn');
+        const itemAgeGroup = document.getElementById('itemAgeGroup');
+        const itemGender = document.getElementById('itemGender');
+        const itemTags = document.getElementById('itemTags');
+        const itemImageUrl = document.getElementById('itemImageUrl');
+        const itemDownloadLink = document.getElementById('itemDownloadLink');
+        const deleteItemBtn = document.getElementById('deleteItemBtn');
+        const cancelItemBtn = document.getElementById('cancelItemBtn');
+        const saveItemBtn = document.getElementById('saveItemBtn');
+        
+        // Confirmation Modal
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmText = document.getElementById('confirmText');
+        const confirmYes = document.getElementById('confirmYes');
+        const confirmNo = document.getElementById('confirmNo');
+
+        // --- View Switching Logic ---
+        function showView(viewId) {
+            currentView = viewId;
+            galleryView.classList.add('hidden');
+            casView.classList.add('hidden');
+            subCategoryView.classList.add('hidden');
+            itemView.classList.add('hidden');
+
+            if (viewId === 'gallery-view') {
+                galleryView.classList.remove('hidden');
+            } else if (viewId === 'cas-view') {
+                casView.classList.remove('hidden');
+                currentCategory = null;
+                renderCategoryButtons();
+            } else if (viewId === 'sub-category-view') {
+                if (!currentCategory) {
+                    showView('cas-view');
+                    return;
+                }
+                subCategoryTitle.textContent = currentCategory.name.toUpperCase();
+                subCategoryView.classList.remove('hidden');
+                renderSubCategoryButtons();
+            } else if (viewId === 'item-view') {
+                 if (!currentSubCategory) {
+                    showView('sub-category-view');
+                    return;
+                }
+                itemViewTitle.textContent = currentSubCategory.name.toUpperCase();
+                itemView.classList.remove('hidden');
+                populateFilters();
+                renderItems();
+            }
+        }
+        
+        // --- Confirmation Modal Logic (Generic) ---
+        function showConfirm(text, onConfirm) {
+            confirmText.textContent = text;
+            confirmCallback = onConfirm;
+            confirmModal.classList.remove('hidden');
+        }
+
+        confirmYes.addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            confirmModal.classList.add('hidden');
+            confirmCallback = null;
+        });
+
+        confirmNo.addEventListener('click', () => {
+            confirmModal.classList.add('hidden');
+            confirmCallback = null;
+        });
+
+        // --- Render Functions (Read from local cache) ---
+        
+        function renderCategoryButtons() {
+            categoryButtonsContainer.innerHTML = '';
+            const filter = categorySearch.value.toLowerCase();
+            
+            localCategories
+                .filter(cat => cat.name.toLowerCase().includes(filter))
+                .forEach(category => {
+                    const button = document.createElement('button');
+                    button.className = 'cas-button px-6 py-3 rounded-full font-bold text-lg';
+                    button.textContent = category.name;
+                    
+                    button.addEventListener('click', () => {
+                        currentCategory = category;
+                        showView('sub-category-view');
+                    });
+                    categoryButtonsContainer.appendChild(button);
+                });
+        }
+        
+        function renderSubCategoryButtons() {
+            subCategoryButtonsContainer.innerHTML = '';
+            if (!currentCategory) return;
+            
+            localSubCategories
+                .filter(subCat => subCat.categoryId === currentCategory.id)
+                .forEach(subCategory => {
+                    const button = document.createElement('button');
+                    button.className = 'cas-button px-6 py-3 rounded-full font-bold text-lg';
+                    button.textContent = subCategory.name;
+                    
+                    button.addEventListener('click', () => {
+                        currentSubCategory = subCategory;
+                        showView('item-view');
+                    });
+                    subCategoryButtonsContainer.appendChild(button);
+                });
+        }
+        
+        function renderItems() {
+            if (!currentSubCategory) return;
+            
+            const filters = {
+                creator: creatorFilter.value,
+                ageGroup: ageGroupFilter.value,
+                gender: genderFilter.value,
+                tags: tagsFilter.value.toLowerCase().split('#').filter(t => t.trim()).map(t => t.trim())
+            };
+
+            let filteredItems = localItems.filter(item => {
+                if (item.subCategoryId !== currentSubCategory.id) return false;
+                if (filters.creator && item.creator !== filters.creator) return false;
+                if (filters.ageGroup && item.ageGroup !== filters.ageGroup) return false;
+                if (filters.gender && item.gender !== filters.gender) return false;
+                if (filters.tags.length > 0) {
+                    const itemTags = (item.tags || []).map(t => t.replace('#', '').toLowerCase());
+                    if (!filters.tags.every(t => itemTags.includes(t))) return false;
+                }
+                return true;
+            });
+
+            if (filteredItems.length === 0) {
+                const isFiltered = (filters.creator || filters.ageGroup || filters.gender || filters.tags.length > 0);
+                itemsGrid.innerHTML = `<div class="col-span-full text-center text-white text-xl py-20 ${isFiltered ? '' : 'opacity-70'}">
+                    ${isFiltered 
+                        ? 'No items match the current filters.' 
+                        : 'No items in this sub-category yet. Click "+" to add one!'}
+                </div>`;
+                return;
+            }
+
+            itemsGrid.innerHTML = filteredItems.map(item => `
+                <div class="item-card" data-id="${item.id}">
+                    <img src="${item.imageUrl || 'https://placehold.co/300x200/f0f0f0/ccc?text=No+Image'}" 
+                         class="item-image" 
+                         onerror="this.src='https://placehold.co/300x200/f0f0f0/ccc?text=Image+Failed'">
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg mb-2 truncate">${item.name}</h3>
+                        <p class="text-sm text-gray-600 mb-1"><strong>Creator:</strong> ${item.creator || 'N/A'}</p>
+                        <p class="text-sm text-gray-600 mb-1"><strong>Age:</strong> ${item.ageGroup || 'N/A'}</p>
+                        <p class="text-sm text-gray-600 mb-1"><strong>Gender:</strong> ${item.gender || 'N/A'}</p>
+                        <p class="text-sm text-gray-500 mb-3 italic truncate">${(item.tags || []).join(' ')}</p>
+                        <div class="flex gap-2">
+                            <a href="${item.downloadLink || '#'}" 
+                               target="_blank" 
+                               class="flex-1 bg-blue-500 text-white text-center py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-1
+                               ${!item.downloadLink ? 'opacity-50 cursor-not-allowed' : ''}"
+                               onclick="if(!'${item.downloadLink}') return false;">
+                                <span class="material-icons text-sm">download</span>
+                                <span class="text-sm font-bold">Download</span>
+                            </a>
+                            <button class="delete-item-btn-card px-3 bg-red-100 rounded-lg hover:bg-red-200 transition-colors" data-id="${item.id}">
+                                <span class="material-icons delete-icon">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.item-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('.delete-item-btn-card') && !e.target.closest('a')) {
+                        openEditModal(card.dataset.id);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.delete-item-btn-card').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    handleDeleteItem(btn.dataset.id);
+                });
+            });
+        }
+        
+        function populateFilters() {
+            if (!currentSubCategory) return;
+            
+            const subCatData = currentSubCategory;
+            
+            creatorFilter.innerHTML = '<option value="">All Creators</option>';
+            (subCatData.creators || []).forEach(creator => {
+                creatorFilter.innerHTML += `<option value="${creator}">${creator}</option>`;
+            });
+
+            ageGroupFilter.innerHTML = '<option value="">All Ages</option>';
+            (subCatData.ageGroups || []).forEach(age => {
+                ageGroupFilter.innerHTML += `<option value="${age}">${age}</option>`;
+            });
+
+            genderFilter.innerHTML = '<option value="">All Genders</option>';
+            (subCatData.genders || []).forEach(gender => {
+                genderFilter.innerHTML += `<option value="${gender}">${gender}</option>`;
+            });
+
+            itemCreator.innerHTML = '<option value="">Select Creator...</option>';
+            (subCatData.creators || []).forEach(creator => {
+                itemCreator.innerHTML += `<option value="${creator}">${creator}</option>`;
+            });
+            itemCreator.innerHTML += '<option value="__new__">+ Add New Creator</option>';
+
+            itemAgeGroup.innerHTML = '<option value="">Select Age Group...</option>';
+            (subCatData.ageGroups || []).forEach(age => {
+                itemAgeGroup.innerHTML += `<option value="${age}">${age}</option>`;
+            });
+
+            itemGender.innerHTML = '<option value="">Select Gender...</option>';
+            (subCatData.genders || []).forEach(gender => {
+                itemGender.innerHTML += `<option value="${gender}">${gender}</option>`;
+            });
+        }
+
+        // --- Navigation Event Listeners ---
+        gotoCasBtn.addEventListener('click', () => showView('cas-view'));
+        gotoGalleryBtn.addEventListener('click', () => showView('gallery-view'));
+        gotoCasViewBtn.addEventListener('click', () => showView('cas-view'));
+        gotoSubCategoryBtn.addEventListener('click', () => showView('sub-category-view'));
+
+        // --- Firestore Data Listeners (Live Sync) ---
+        function initApp(uid) {
+            userId = uid;
+            
+            const basePath = `/artifacts/${appId}/users/${userId}`;
+            categoriesCol = collection(db, `${basePath}/casCategories`);
+            subCategoriesCol = collection(db, `${basePath}/casSubCategories`);
+            itemsCol = collection(db, `${basePath}/casItems`);
+            
+            unsubCategories();
+            unsubSubCategories();
+            unsubItems();
+
+            unsubCategories = onSnapshot(categoriesCol, (snapshot) => {
+                localCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentView === 'cas-view') renderCategoryButtons();
+            });
+            
+            unsubSubCategories = onSnapshot(subCategoriesCol, (snapshot) => {
+                localSubCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentView === 'sub-category-view') renderSubCategoryButtons();
+            });
+            
+            unsubItems = onSnapshot(itemsCol, (snapshot) => {
+                localItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentView === 'item-view') renderItems();
+            });
+            
+            console.log("Firebase listeners attached for user:", userId);
+            showView('gallery-view');
+        }
+
+        // --- Layer 2: Category CRUD ---
+        categorySearch.addEventListener('input', renderCategoryButtons);
+
+        addNewCategoryBtn.addEventListener('click', () => {
+            newCategoryInputContainer.classList.remove('hidden');
+            addNewCategoryBtn.classList.add('hidden');
+            newCategoryNameInput.focus();
+        });
+        
+        cancelCategoryBtn.addEventListener('click', () => {
+             newCategoryInputContainer.classList.add('hidden');
+             addNewCategoryBtn.classList.remove('hidden');
+             newCategoryNameInput.value = '';
+        });
+
+        saveCategoryBtn.addEventListener('click', async () => {
+            const categoryName = newCategoryNameInput.value.trim();
+            if (categoryName) {
+                try {
+                    await addDoc(categoriesCol, { name: categoryName });
+                    newCategoryNameInput.value = '';
+                    newCategoryInputContainer.classList.add('hidden');
+                    addNewCategoryBtn.classList.remove('hidden');
+                } catch (e) {
+                    console.error("Error adding category: ", e);
+                }
+            }
+        });
+        
+        deleteCategoryBtn.addEventListener('click', () => {
+            if (currentCategory) {
+                showConfirm(`Delete category "${currentCategory.name}"? This will delete ALL sub-categories and items inside it.`, 
+                    handleDeleteCategory);
+            }
+        });
+
+        async function handleDeleteCategory() {
+            if (!currentCategory) return;
+            
+            const categoryToDeleteId = currentCategory.id;
+            console.log(`Deleting category: ${categoryToDeleteId}`);
+
+            try {
+                const batch = writeBatch(db);
+
+                const subCatQuery = query(subCategoriesCol, where("categoryId", "==", categoryToDeleteId));
+                const subCatSnapshot = await getDocs(subCatQuery);
+                const subCatIds = subCatSnapshot.docs.map(d => d.id);
+                
+                for (const subCatId of subCatIds) {
+                    const itemQuery = query(itemsCol, where("subCategoryId", "==", subCatId));
+                    const itemSnapshot = await getDocs(itemQuery);
+                    
+                    itemSnapshot.docs.forEach(itemDoc => {
+                        batch.delete(itemDoc.ref);
+                    });
+                    
+                    batch.delete(doc(subCategoriesCol, subCatId));
+                }
+
+                batch.delete(doc(categoriesCol, categoryToDeleteId));
+
+                await batch.commit();
+                
+                console.log("Category and all contents deleted.");
+                showView('cas-view');
+                
+            } catch (e) {
+                console.error("Error deleting category contents: ", e);
+            }
+        }
+
+        // --- Layer 3: Sub-Category CRUD ---
+        addNewSubCategoryBtn.addEventListener('click', () => {
+            newSubCategoryInputContainer.classList.remove('hidden');
+            addNewSubCategoryBtn.classList.add('hidden');
+            newSubCategoryNameInput.focus();
+        });
+        
+        cancelSubCategoryBtn.addEventListener('click', () => {
+             newSubCategoryInputContainer.classList.add('hidden');
+             addNewSubCategoryBtn.classList.remove('hidden');
+             newSubCategoryNameInput.value = '';
+        });
+        
+        saveSubCategoryBtn.addEventListener('click', async () => {
+            const subCategoryName = newSubCategoryNameInput.value.trim();
+            if (subCategoryName && currentCategory) {
+                try {
+                    await addDoc(subCategoriesCol, { 
+                        name: subCategoryName,
+                        categoryId: currentCategory.id,
+                        creators: ["Maxis"],
+                        ageGroups: ["Elder", "Adult", "Teen", "Child", "Toddler", "Infant", "Newborn"],
+                        genders: ["Male", "Female", "Both"]
+                    });
+                    newSubCategoryNameInput.value = '';
+                    newSubCategoryInputContainer.classList.add('hidden');
+                    addNewSubCategoryBtn.classList.remove('hidden');
+                } catch (e) {
+                    console.error("Error adding sub-category: ", e);
+                }
+            }
+        });
+        
+        deleteSubCategoryBtn.addEventListener('click', () => {
+            if (currentSubCategory) {
+                showConfirm(`Delete sub-category "${currentSubCategory.name}"? This will delete ALL items inside it.`, 
+                    handleDeleteSubCategory);
+            }
+        });
+
+        async function handleDeleteSubCategory() {
+            if (!currentSubCategory) return;
+            
+            const subCategoryToDeleteId = currentSubCategory.id;
+            console.log(`Deleting sub-category: ${subCategoryToDeleteId}`);
+
+            try {
+                const batch = writeBatch(db);
+
+                const itemQuery = query(itemsCol, where("subCategoryId", "==", subCategoryToDeleteId));
+                const itemSnapshot = await getDocs(itemQuery);
+                
+                itemSnapshot.docs.forEach(itemDoc => {
+                    batch.delete(itemDoc.ref);
+                });
+
+                batch.delete(doc(subCategoriesCol, subCategoryToDeleteId));
+
+                await batch.commit();
+                
+                console.log("Sub-category and all items deleted.");
+                showView('sub-category-view');
+                
+            } catch (e) {
+                console.error("Error deleting sub-category contents: ", e);
+            }
+        }
+
+        // --- Layer 4: Item CRUD ---
+        addItemBtn.addEventListener('click', () => {
+            editingItemId = null;
+            modalTitle.textContent = '+ Add New Item';
+            itemName.value = '';
+            itemCreator.value = '';
+            itemAgeGroup.value = '';
+            itemGender.value = '';
+            itemTags.value = '';
+            itemImageUrl.value = '';
+            itemDownloadLink.value = '';
+            deleteItemBtn.classList.add('hidden');
+            itemModal.classList.remove('hidden');
+        });
+        
+        function openEditModal(id) {
+            const item = localItems.find(i => i.id === id);
+            if (!item) return;
+
+            editingItemId = id;
+            modalTitle.textContent = 'Edit Item';
+            itemName.value = item.name || '';
+            itemCreator.value = item.creator || '';
+            itemAgeGroup.value = item.ageGroup || '';
+            itemGender.value = item.gender || '';
+            itemTags.value = (item.tags || []).join(' ');
+            itemImageUrl.value = item.imageUrl || '';
+            itemDownloadLink.value = item.downloadLink || '';
+            deleteItemBtn.classList.remove('hidden');
+            itemModal.classList.remove('hidden');
+        }
+
+        function closeItemModal() {
+            itemModal.classList.add('hidden');
+            editingItemId = null;
+        }
+
+        closeModalBtn.addEventListener('click', closeItemModal);
+        cancelItemBtn.addEventListener('click', closeItemModal);
+
+        saveItemBtn.addEventListener('click', async () => {
+            if (!currentSubCategory) return;
+            
+            const itemData = {
+                name: itemName.value.trim(),
+                creator: itemCreator.value,
+                ageGroup: itemAgeGroup.value,
+                gender: itemGender.value,
+                tags: itemTags.value.split('#').filter(t => t.trim()).map(t => '#' + t.trim()),
+                imageUrl: itemImageUrl.value.trim(),
+                downloadLink: itemDownloadLink.value.trim(),
+                subCategoryId: currentSubCategory.id
+            };
+
+            if (!itemData.name || !itemData.creator || !itemData.ageGroup || !itemData.gender) {
+                showConfirm("Please fill in all required fields (Name, Creator, Age, Gender).", () => {
+                    confirmModal.classList.add('hidden');
+                });
+                return;
+            }
+
+            try {
+                if (editingItemId) {
+                    const itemRef = doc(itemsCol, editingItemId);
+                    await setDoc(itemRef, itemData, { merge: true });
+                } else {
+                    await addDoc(itemsCol, itemData);
+                }
+                closeItemModal();
+            } catch (e) {
+                console.error("Error saving item: ", e);
+            }
+        });
+        
+        deleteItemBtn.addEventListener('click', () => {
+            if (editingItemId) {
+                handleDeleteItem(editingItemId);
+                closeItemModal();
+            }
+        });
+        
+        function handleDeleteItem(id) {
+            if (!id) return;
+            showConfirm('Are you sure you want to delete this item?', async () => {
+                try {
+                    await deleteDoc(doc(itemsCol, id));
+                } catch (e) {
+                    console.error("Error deleting item: ", e);
+                }
+            });
+        }
+        
+        // --- Layer 4: Filter Metadata Management ---
+        itemCreator.addEventListener('change', async function() {
+            if (this.value === '__new__') {
+                const newCreator = prompt('Enter new creator name:');
+                if (newCreator && newCreator.trim()) {
+                    const creatorName = newCreator.trim();
+                    try {
+                        const subCatRef = doc(subCategoriesCol, currentSubCategory.id);
+                        await updateDoc(subCatRef, {
+                            creators: arrayUnion(creatorName)
+                        });
+                        currentSubCategory = localSubCategories.find(s => s.id === currentSubCategory.id);
+                        populateFilters();
+                        itemCreator.value = creatorName;
+                    } catch (e) {
+                        console.error("Error adding new creator: ", e);
+                        this.value = '';
+                    }
+                } else {
+                    this.value = '';
+                }
+            }
+        });
+
+        deleteCreatorBtn.addEventListener('click', () => {
+            const creator = itemCreator.value;
+            if (!creator || creator === '__new__') {
+                showConfirm("Please select a creator to delete.", () => confirmModal.classList.add('hidden'));
+                return;
+            }
+
+            showConfirm(`Delete creator "${creator}" from this sub-category's filter list? This won't delete items.`, async () => {
+                try {
+                    const subCatRef = doc(subCategoriesCol, currentSubCategory.id);
+                    await updateDoc(subCatRef, {
+                        creators: arrayRemove(creator)
+                    });
+                    currentSubCategory = localSubCategories.find(s => s.id === currentSubCategory.id);
+                    populateFilters();
+                    itemCreator.value = '';
+                } catch (e) {
+                    console.error("Error deleting creator: ", e);
+                }
+            });
+        });
+        
+        creatorFilter.addEventListener('change', renderItems);
+        ageGroupFilter.addEventListener('change', renderItems);
+        genderFilter.addEventListener('change', renderItems);
+        tagsFilter.addEventListener('input', renderItems);
+
+        // --- Firebase Auth & App Start ---
+        window.onload = async () => {
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = typeof __firebase_config !== 'undefined' 
+                ? JSON.parse(__firebase_config) 
+                : {
+                    apiKey: "AIzaSyAlt9mATV_kD9CNPkj9pTRZ92oNhqKPYg8",
+                    authDomain: "sims-4-gallery.firebaseapp.com",
+                    projectId: "sims-4-gallery",
+                    storageBucket: "sims-4-gallery.firebasestorage.app",
+                    messagingSenderId: "881427654109",
+                    appId: "1:881427654109:web:6aaffa062ca2d6ad2e0234",
+                    measurementId: "G-41V198HVRV"
+                  };
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('debug');
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        console.log("User is signed in:", user.uid);
+                        initApp(user.uid);
+                    } else {
+                        console.log("User is not signed in.");
+                    }
+                });
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+            } catch (e) {
+                console.error("Firebase initialization failed:", e);
+                document.body.innerHTML = "<h1 class='text-white p-10'>Error: Could not connect to database.</h1>";
+            }
+        };
+        
+    </script>
+</body>
+</html>

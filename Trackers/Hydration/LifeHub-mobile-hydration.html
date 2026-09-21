@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hydro Lite</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<link rel="manifest" href="/manifest-mobile-hydration.json">
+<meta name="theme-color" content="#5A6B5D">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js') // This looks at root, which is correct
+                .then(reg => console.log('LifeHub Service Worker registered'))
+                .catch(err => console.log('Service Worker failed:', err));
+        });
+    }
+</script>
+
+
+    <style>
+        :root {
+            --bg-body: #F0F8FF; /* Alice Blue */
+            --water-main: #3498db;
+            --water-light: #5dade2;
+            --text-dark: #2c3e50;
+            --white-glass: rgba(255,255,255,0.6);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Red Hat Display', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 100%);
+        }
+
+        /* --- HEADER --- */
+        .app-header {
+            padding: 20px 25px;
+            padding-top: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title { font-size: 24px; font-weight: 800; color: var(--water-main); letter-spacing: -1px; }
+        
+        .date-picker {
+            border: none; background: rgba(52, 152, 219, 0.1); 
+            padding: 8px 12px; border-radius: 12px;
+            font-family: inherit; font-size: 13px; color: var(--water-main);
+            outline: none; font-weight: 600;
+        }
+
+        /* --- VISUAL STAGE --- */
+        .stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* THE WAVE CIRCLE */
+        .circle-progress {
+            width: 220px; height: 220px; border-radius: 50%;
+            border: 5px solid #FFF;
+            position: relative; overflow: hidden;
+            background: rgba(255,255,255,0.5);
+            box-shadow: 0 20px 50px rgba(52, 152, 219, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .wave {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; /* JS fills this */
+            background: linear-gradient(to top, #3498db, #5dade2);
+            transition: height 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            opacity: 0.9;
+        }
+        
+        .wave::after {
+            content: ""; position: absolute; top: -15px; left: 0; width: 200%; height: 30px;
+            background: inherit; border-radius: 45%; opacity: 0.6; 
+            animation: wave-anim 4s infinite linear;
+        }
+
+        .percentage-text { 
+            position: relative; z-index: 2; 
+            font-size: 48px; font-weight: 800; color: #2c3e50; 
+            text-shadow: 0 2px 10px rgba(255,255,255,0.8);
+        }
+        .meta-text {
+            position: relative; z-index: 2;
+            font-size: 14px; font-weight: 600; color: #2c3e50; opacity: 0.7;
+            margin-top: -5px;
+        }
+
+        /* --- WORKOUT TOGGLE --- */
+        .toggle-container {
+            background: #FFF;
+            padding: 8px 16px; border-radius: 20px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 20px;
+        }
+        .t-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #888; }
+        
+        /* Custom Switch */
+        .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--water-main); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        /* --- CONTROLS (Bottom Sheet) --- */
+        .controls {
+            background: #FFF;
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            padding: 30px 25px 40px 25px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.05);
+        }
+
+        .quick-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-add {
+            background: #F4F9FF; border: 1px solid #E1EEFF;
+            padding: 15px; border-radius: 16px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+            cursor: pointer; transition: 0.1s;
+        }
+        .btn-add:active { transform: scale(0.95); background: #E1EEFF; }
+        
+        .btn-add span:first-child { font-size: 24px; color: var(--water-main); }
+        .btn-add span:last-child { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+
+        .input-row { display: flex; gap: 10px; }
+        .custom-input { 
+            flex: 1; padding: 15px; background: #F8F8F8; border: none; border-radius: 12px; 
+            font-size: 16px; font-weight: 600; outline: none; text-align: center; font-family: inherit;
+        }
+        .btn-custom {
+            width: 60px; background: var(--water-main); color: #fff; border: none; border-radius: 12px;
+            font-size: 24px; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* --- HIDDEN ELEMENTS (To satisfy JS requirements) --- */
+        .ghost { display: none; }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="app-title">Hydro Lite</div>
+        <input type="date" id="logDate" class="date-picker">
+    </div>
+
+    <div class="stage">
+        
+        <div class="circle-progress">
+            <div class="wave" id="waterWave"></div>
+            <div style="text-align:center;">
+                <div class="percentage-text" id="percentDisplay">0%</div>
+                <div class="meta-text">
+                    <span id="currentIntake">0</span> / <span id="goalIntake">100</span> oz
+                </div>
+            </div>
+        </div>
+
+        <div class="toggle-container">
+            <span class="t-label">Workout Day</span>
+            <label class="switch">
+                <input type="checkbox" id="workoutToggle" onchange="toggleWorkoutMode()">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div style="font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+            Current Streak: <span id="streakDisplay" style="color:#3498db;">--</span>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        
+        <div class="quick-grid">
+            <button class="btn-add" onclick="addWater(5)">
+                <span class="material-symbols-rounded">water_drop</span>
+                <span>5 oz</span>
+            </button>
+            <button class="btn-add" onclick="addWater(10)">
+                <span class="material-symbols-rounded">local_drink</span>
+                <span>10 oz</span>
+            </button>
+            <button class="btn-add" onclick="addWater(20)">
+                <span class="material-symbols-rounded">water_bottle</span>
+                <span>20 oz</span>
+            </button>
+            <button class="btn-add" onclick="addWater(40)">
+                <span class="material-symbols-rounded">check_box_outline_blank</span>
+                <span>40 oz</span>
+            </button>
+            <button class="btn-add" onclick="addWater(50)">
+                <span class="material-symbols-rounded">local_cafe</span>
+                <span>50 oz</span>
+            </button>
+            </div>
+
+        <div class="input-row">
+            <input type="number" id="customAmount" class="custom-input" placeholder="Custom Amt">
+            <button class="btn-custom" onclick="addCustomWater()">+</button>
+        </div>
+
+    </div>
+
+    <div class="ghost">
+        <div id="hydrationChart"></div>
+        <div id="waterHistory"></div>
+    </div>
+
+    <!-- The goal, rates and unit maths. Must come before
+         tracker-hydration.js, which reads its constants from it. -->
+    <script src="../../JS/lifehub-hydration-rules.js"></script>
+    <script src="js/tracker-hydration.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,3182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHRONICLE</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Material+Icons&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0A0908;
+  --surface: #100F0D;
+  --card: #181512;
+  --card2: #1E1A15;
+  --border: #28231C;
+  --border2: #332C24;
+  --gold: #C8A86A;
+  --gold-light: #E0C898;
+  --gold-dim: #60491E;
+  --gold-glow: rgba(200,168,106,0.08);
+  --crimson: #8B2020;
+  --crimson-light: #C0392B;
+  --text: #E8DFD0;
+  --text2: #A89880;
+  --text3: #5A5040;
+  --success: #2D7A4A;
+  --info: #1E5A8A;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+
+/* Background grid texture */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 80px,rgba(200,168,106,0.012) 80px,rgba(200,168,106,0.012) 81px),
+    repeating-linear-gradient(90deg,transparent,transparent 80px,rgba(200,168,106,0.012) 80px,rgba(200,168,106,0.012) 81px);
+}
+
+/* ====================== TOP NAV ====================== */
+#top-nav{
+  position:fixed;top:0;left:0;right:0;height:54px;
+  background:rgba(10,9,8,0.96);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);
+  display:flex;align-items:center;
+  padding:0 28px;gap:0;z-index:500;
+}
+.nav-brand{
+  font-family:'Cormorant Garamond',serif;
+  font-size:17px;font-weight:600;color:var(--gold);
+  letter-spacing:6px;text-transform:uppercase;
+  cursor:pointer;margin-right:32px;white-space:nowrap;
+}
+.nav-sep{width:1px;height:20px;background:var(--border2);margin-right:8px;}
+.nav-link{
+  font-size:11px;font-weight:500;letter-spacing:2px;
+  text-transform:uppercase;color:var(--text3);
+  padding:8px 16px;border-radius:4px;cursor:pointer;
+  transition:all .2s;border:1px solid transparent;white-space:nowrap;
+}
+.nav-link:hover{color:var(--text2);background:var(--gold-glow);}
+.nav-link.active{color:var(--gold);border-color:var(--gold-dim);background:var(--gold-glow);}
+.nav-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+
+/* ====================== VIEWS ====================== */
+.view{
+  display:none;position:fixed;
+  top:54px;left:0;right:0;bottom:0;
+  overflow-y:auto;z-index:1;
+}
+.view.active{display:block;}
+.view::-webkit-scrollbar{width:5px;}
+.view::-webkit-scrollbar-track{background:transparent;}
+.view::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.view-inner{max-width:1380px;margin:0 auto;padding:32px 28px 60px;}
+
+/* Home full-height centering */
+#home-view.active{display:flex;align-items:center;justify-content:center;}
+
+/* ====================== HOME ====================== */
+.home-wrap{text-align:center;padding:40px 24px;}
+.home-eyebrow{font-size:10px;letter-spacing:8px;text-transform:uppercase;color:var(--gold-dim);margin-bottom:20px;}
+.home-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(52px,8vw,88px);font-weight:300;
+  color:var(--text);letter-spacing:10px;text-transform:uppercase;
+  line-height:1;margin-bottom:10px;
+}
+.home-title span{color:var(--gold);}
+.home-sub{font-size:11px;color:var(--text3);letter-spacing:4px;text-transform:uppercase;margin-bottom:64px;}
+.home-cards{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:18px;max-width:860px;margin:0 auto;
+}
+.home-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:32px 20px;cursor:pointer;
+  transition:all .3s;
+}
+.home-card:hover{border-color:var(--gold-dim);transform:translateY(-5px);background:var(--card2);}
+.home-card-icon{font-size:28px;color:var(--gold);margin-bottom:16px;}
+.home-card-label{
+  font-family:'Cormorant Garamond',serif;
+  font-size:19px;font-weight:600;color:var(--text);margin-bottom:6px;
+}
+.home-card-desc{font-size:11px;color:var(--text2);line-height:1.6;}
+
+/* ====================== SECTION HEADER ====================== */
+.sec-header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:28px;
+}
+.sec-title-wrap
+.sec-eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:600;color:var(--text);}
+.sec-actions{display:flex;gap:10px;align-items:center;}
+
+/* ====================== BUTTONS ====================== */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 18px;border-radius:6px;font-size:12px;font-weight:600;
+  letter-spacing:.8px;text-transform:uppercase;cursor:pointer;
+  border:none;transition:all .2s;font-family:'DM Sans',sans-serif;
+}
+.btn-gold{background:var(--gold);color:var(--bg);}
+.btn-gold:hover{background:var(--gold-light);}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2);}
+.btn-outline:hover{border-color:var(--gold-dim);color:var(--text);}
+.btn-ghost{background:transparent;border:1px solid transparent;color:var(--text3);}
+.btn-ghost:hover{color:var(--text2);}
+.btn-danger{background:transparent;border:1px solid rgba(139,32,32,.35);color:var(--crimson-light);}
+.btn-danger:hover{background:rgba(139,32,32,.1);}
+.btn-sm{padding:6px 14px;font-size:11px;}
+.btn-icon{padding:8px;border-radius:50%;}
+
+/* ====================== SEARCH BAR ====================== */
+.search-wrap{position:relative;margin-bottom:22px;}
+.search-wrap .material-icons{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  color:var(--text3);font-size:18px;pointer-events:none;
+}
+.search-input{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:6px;padding:10px 14px 10px 40px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;
+  transition:border-color .2s;
+}
+.search-input:focus{border-color:var(--gold-dim);}
+.search-input::placeholder{color:var(--text3);}
+
+/* ====================== CARDS GRID ====================== */
+.cards-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+  gap:18px;
+}
+
+/* ====================== CHARACTER CARD ====================== */
+.char-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:22px;cursor:pointer;
+  transition:all .25s;position:relative;overflow:hidden;
+}
+.char-card::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0;transition:opacity .25s;
+}
+.char-card:hover{border-color:var(--gold-dim);transform:translateY(-3px);}
+.char-card:hover::after{opacity:1;}
+.char-initials{
+  width:52px;height:52px;border-radius:50%;
+  border:1px solid var(--gold-dim);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;
+  color:var(--gold);background:var(--gold-glow);margin-bottom:14px;
+}
+.char-name{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.char-role{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+.char-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.char-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+
+/* ====================== BADGES ====================== */
+.badge{
+  display:inline-block;font-size:9px;letter-spacing:1.5px;
+  text-transform:uppercase;padding:3px 8px;border-radius:2px;font-weight:600;
+}
+.badge-alive{background:rgba(45,122,74,.15);color:#4CAF7D;border:1px solid rgba(45,122,74,.3);}
+.badge-deceased{background:rgba(139,32,32,.15);color:#C0392B;border:1px solid rgba(139,32,32,.3);}
+.badge-unknown{background:rgba(90,80,64,.2);color:var(--text2);border:1px solid var(--border2);}
+.badge-public{background:rgba(45,122,74,.1);color:#4CAF7D;border:1px solid rgba(45,122,74,.2);}
+.badge-private{background:rgba(200,168,106,.1);color:var(--gold);border:1px solid var(--gold-dim);}
+.badge-underground{background:rgba(139,32,32,.1);color:#C0392B;border:1px solid rgba(139,32,32,.25);}
+.badge-blackmarket{background:rgba(80,0,0,.5);color:#FF5050;border:1px solid rgba(255,50,50,.3);}
+.badge-military{background:rgba(30,90,138,.15);color:#5BA3D9;border:1px solid rgba(30,90,138,.3);}
+.pill{
+  font-size:10px;padding:3px 9px;border-radius:10px;
+  background:rgba(200,168,106,.06);color:var(--text2);border:1px solid var(--border);
+}
+
+/* ====================== ORG CARD ====================== */
+.org-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;cursor:pointer;
+  transition:all .25s;
+}
+.org-card:hover{border-color:var(--gold-dim);transform:translateY(-3px);}
+.org-card-header{padding:22px 22px 14px;}
+.org-card-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.org-card-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.org-card-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px;}
+.org-card-footer{
+  background:var(--card2);border-top:1px solid var(--border);
+  padding:12px 22px;display:flex;align-items:center;justify-content:space-between;
+}
+.org-card-stat{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;}
+.org-card-stat span{color:var(--gold);font-size:13px;font-weight:600;display:block;letter-spacing:0;}
+
+/* ====================== STORY ARC CARD ====================== */
+.arc-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:24px;cursor:pointer;
+  transition:all .25s;margin-bottom:14px;
+  display:flex;align-items:flex-start;gap:20px;
+}
+.arc-card:hover{border-color:var(--gold-dim);transform:translateX(4px);}
+.arc-chapter-num{
+  font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:300;
+  color:var(--gold-dim);line-height:1;min-width:52px;text-align:center;
+  margin-top:-4px;
+}
+.arc-card-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.arc-card-summary{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;}
+.arc-card-tags{display:flex;flex-wrap:wrap;gap:6px;}
+
+/* ====================== MODAL OVERLAY ====================== */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.78);backdrop-filter:blur(6px);
+  z-index:600;align-items:flex-start;justify-content:center;
+  padding:24px;overflow-y:auto;
+}
+.modal-overlay.active{display:flex;}
+.modal-box{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:12px;width:100%;max-width:740px;
+  margin:auto;overflow:hidden;animation:slideUp .25s ease;
+}
+.modal-box.wide{max-width:920px;}
+.modal-box.narrow{max-width:440px;}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.modal-head{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:20px 26px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:10;
+}
+.modal-title-line
+.modal-eyebrow{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold-dim);}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text);}
+.modal-close{
+  width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);
+  background:transparent;color:var(--text3);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  transition:all .2s;
+}
+.modal-close:hover{color:var(--text);border-color:var(--text3);}
+.modal-body{
+  padding:26px;max-height:76vh;overflow-y:auto;
+}
+.modal-body::-webkit-scrollbar{width:5px;}
+.modal-body::-webkit-scrollbar-track{background:transparent;}
+.modal-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.modal-foot{
+  background:var(--card);border-top:1px solid var(--border);
+  padding:14px 26px;display:flex;align-items:center;justify-content:space-between;
+}
+
+/* ====================== FORM ELEMENTS ====================== */
+.f-section{margin-bottom:26px;}
+.f-section-title{
+  font-size:9px;font-weight:600;letter-spacing:3.5px;text-transform:uppercase;
+  color:var(--gold);padding-bottom:10px;border-bottom:1px solid var(--border);
+  margin-bottom:16px;
+}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;}
+.f-row.f3{grid-template-columns:1fr 1fr 1fr;}
+.f-row.full{grid-template-columns:1fr;}
+.f-group{display:flex;flex-direction:column;gap:5px;}
+.f-label{
+  font-size:10px;font-weight:500;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--text2);
+}
+.f-label.locked{color:var(--gold-dim);}
+.f-label.locked::after{content:' · AUTO';font-size:8px;opacity:.7;}
+.f-in,.f-sel,.f-ta{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:6px;padding:9px 12px;
+  font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);
+  outline:none;transition:border-color .2s;
+}
+.f-in:focus,.f-sel:focus,.f-ta:focus{border-color:var(--gold-dim);}
+.f-in::placeholder{color:var(--text3);}
+.f-in:disabled,.f-sel:disabled{
+  opacity:.5;cursor:not-allowed;
+  background:rgba(200,168,106,.03);border-color:var(--gold-dim);
+}
+.f-sel{
+  appearance:none;cursor:pointer;padding-right:32px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%235A5040' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+}
+.f-sel option{background:#181512;color:var(--text);}
+.f-ta{resize:vertical;min-height:76px;}
+.f-ta.tall{min-height:200px;}
+.f-hint{font-size:10px;color:var(--text3);margin-top:3px;}
+.f-subsection{
+  font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text3);margin:16px 0 10px;
+  display:flex;align-items:center;gap:10px;
+}
+.f-subsection::before,.f-subsection::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ====================== TAG PILL INPUT ====================== */
+.tag-container{
+  border:1px solid var(--border);border-radius:6px;
+  padding:7px;display:flex;flex-wrap:wrap;gap:5px;
+  align-items:center;min-height:40px;background:var(--card);
+  transition:border-color .2s;cursor:text;
+}
+.tag-container:focus-within{border-color:var(--gold-dim);}
+.t-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(200,168,106,.1);border:1px solid var(--gold-dim);
+  border-radius:10px;padding:2px 9px;font-size:12px;color:var(--gold-light);
+}
+.t-pill-x{
+  cursor:pointer;color:var(--gold-dim);font-size:13px;line-height:1;
+  transition:color .15s;margin-left:1px;
+}
+.t-pill-x:hover{color:var(--crimson-light);}
+.tag-text-in{
+  border:none;outline:none;background:transparent;
+  color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;
+  min-width:90px;flex:1;
+}
+.tag-text-in::placeholder{color:var(--text3);font-size:11px;}
+
+/* ====================== PAIR ROWS ====================== */
+.pair-row{
+  display:grid;gap:8px;align-items:center;margin-bottom:7px;
+}
+.pair-row.p2{grid-template-columns:1fr 1fr auto;}
+.pair-row.p3{grid-template-columns:1fr 1fr 1fr auto;}
+.pair-row.p4{grid-template-columns:1fr 1fr 1fr 1fr auto;}
+.pair-row.p5{grid-template-columns:1fr 1fr 1fr 1fr 1fr auto;}
+.pair-row .f-in,.pair-row .f-sel{margin:0;}
+.pair-remove{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  border:1px solid rgba(139,32,32,.3);background:transparent;
+  color:rgba(192,57,43,.6);cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.pair-remove:hover{background:rgba(139,32,32,.15);color:var(--crimson-light);border-color:var(--crimson-light);}
+.add-row{
+  display:flex;align-items:center;gap:6px;
+  background:transparent;border:1px dashed var(--border);
+  border-radius:6px;padding:7px 12px;color:var(--text3);
+  font-size:11px;cursor:pointer;width:100%;
+  transition:all .2s;font-family:'DM Sans',sans-serif;letter-spacing:.5px;
+}
+.add-row:hover{border-color:var(--gold-dim);color:var(--gold);}
+
+/* ====================== LOCKED DISPLAY ====================== */
+.locked-display{
+  border:1px solid var(--gold-dim);border-radius:6px;padding:10px 14px;
+  background:rgba(200,168,106,.03);min-height:40px;
+}
+.locked-item{
+  display:flex;align-items:center;gap:8px;padding:5px 0;
+  border-bottom:1px solid var(--border);font-size:13px;color:var(--text);
+}
+.locked-item:last-child{border-bottom:none;}
+.locked-item-label{font-size:10px;color:var(--gold);letter-spacing:1px;min-width:90px;}
+.locked-empty{font-size:11px;color:var(--text3);font-style:italic;}
+
+/* ====================== DOSSIER VIEW (Char Detail) ====================== */
+.dossier-modal{max-width:860px;}
+.dossier-head{
+  background:linear-gradient(135deg,#150F08,#1E1510);
+  border-bottom:1px solid var(--border2);padding:28px 32px;
+  position:relative;overflow:hidden;
+}
+.dossier-head::before{
+  content:'CLASSIFIED';position:absolute;right:-20px;top:20px;
+  font-size:64px;font-weight:700;color:rgba(200,168,106,.04);
+  letter-spacing:6px;transform:rotate(-5deg);pointer-events:none;
+}
+.dossier-initials{
+  width:64px;height:64px;border-radius:50%;
+  border:1px solid var(--gold-dim);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;
+  color:var(--gold);background:var(--gold-glow);margin-bottom:14px;
+}
+.dossier-name{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.dossier-role{font-size:11px;color:var(--text3);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;}
+.dossier-badges{display:flex;flex-wrap:wrap;gap:6px;}
+.dossier-body{padding:28px 32px;overflow-y:auto;max-height:72vh;}
+.dossier-body::-webkit-scrollbar{width:5px;}
+.dossier-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.d-section{margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid var(--border);}
+.d-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.d-sec-title{font-size:9px;letter-spacing:3.5px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.d-grid.d3{grid-template-columns:1fr 1fr 1fr;}
+.d-field-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
+.d-field-val{font-size:13px;color:var(--text);line-height:1.6;}
+.d-pill-group{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;}
+.d-table{width:100%;border-collapse:collapse;}
+.d-table th{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;}
+.d-table td{font-size:12px;color:var(--text);padding:8px 10px;border-bottom:1px solid var(--border);}
+.d-table tr:last-child td{border-bottom:none;}
+.pct-bar{height:3px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden;}
+.pct-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold-dim),var(--gold));}
+.pct-fill.threat{background:linear-gradient(90deg,var(--crimson),var(--crimson-light));}
+.d-text-block{
+  background:var(--card);border-radius:6px;padding:12px 14px;
+  font-size:13px;color:var(--text2);line-height:1.75;
+  border-left:2px solid var(--gold-dim);
+}
+.liaison-card{
+  background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:14px 16px;margin-bottom:10px;
+}
+.liaison-card-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.liaison-card-pos{font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
+
+/* ====================== HIERARCHY VIEW ====================== */
+#hierarchy-view{
+  background:radial-gradient(ellipse at 30% 40%,rgba(200,168,106,.03) 0%,transparent 60%),var(--bg);
+}
+.hierarchy-back{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--text3);cursor:pointer;
+  letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px;
+  transition:color .2s;
+}
+.hierarchy-back:hover{color:var(--gold);}
+.hierarchy-wrap{overflow-x:auto;padding:10px 0 40px;}
+.h-level{
+  display:flex;justify-content:center;flex-wrap:wrap;
+  gap:12px;margin-bottom:50px;position:relative;
+}
+.h-level-connector{
+  position:absolute;bottom:-26px;left:0;right:0;
+  height:26px;pointer-events:none;
+}
+.h-node{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:13px 16px;min-width:160px;max-width:200px;
+  text-align:center;cursor:pointer;transition:all .2s;
+  position:relative;
+}
+.h-node:hover{border-color:var(--gold-dim);}
+.h-node.h-top{border-color:var(--gold-dim);background:var(--card2);}
+.h-node-name{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.h-node-pos{font-size:9px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.h-node-loyalty{font-size:10px;color:var(--text3);}
+.h-marker{
+  display:inline-block;width:8px;height:8px;border-radius:50%;
+  margin-right:4px;vertical-align:middle;
+}
+.h-level-label{
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);
+  text-align:center;margin-bottom:8px;
+}
+.h-connector-line{
+  width:1px;height:30px;background:var(--border2);
+  margin:0 auto -14px;
+}
+
+/* ====================== ORG DETAIL PANEL ====================== */
+.org-detail-modal{max-width:920px;}
+.org-detail-head{background:var(--card2);border-bottom:1px solid var(--border);padding:24px 28px;}
+.org-detail-name{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.org-detail-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.org-detail-left{padding:24px 28px;border-right:1px solid var(--border);max-height:75vh;overflow-y:auto;}
+.org-detail-left::-webkit-scrollbar{width:4px;}
+.org-detail-left::-webkit-scrollbar-thumb{background:var(--border2);}
+.org-detail-right{padding:24px 28px;max-height:75vh;overflow-y:auto;}
+.org-detail-right::-webkit-scrollbar{width:4px;}
+.org-detail-right::-webkit-scrollbar-thumb{background:var(--border2);}
+.member-row{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border-radius:6px;cursor:pointer;
+  transition:background .15s;margin-bottom:4px;
+}
+.member-row:hover{background:var(--gold-glow);}
+.member-row-initials{
+  width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--gold-dim);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:13px;
+  color:var(--gold);background:var(--gold-glow);
+}
+.member-row-name{font-size:13px;color:var(--text);font-weight:500;}
+.member-row-pos{font-size:10px;color:var(--text3);letter-spacing:1px;}
+
+/* ====================== EMPTY STATE ====================== */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:80px 0;text-align:center;
+}
+.empty-icon{font-size:44px;color:var(--text3);margin-bottom:14px;}
+.empty-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text2);margin-bottom:6px;}
+.empty-desc{font-size:12px;color:var(--text3);}
+
+/* ====================== CONFIRM MODAL ====================== */
+.confirm-box{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:12px;padding:32px;max-width:380px;width:100%;
+  text-align:center;animation:slideUp .25s ease;
+}
+.confirm-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);margin-bottom:8px;}
+.confirm-body{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6;}
+.confirm-actions{display:flex;gap:10px;justify-content:center;}
+
+/* ====================== ASSET SEARCH DROPDOWN ====================== */
+.asset-search-wrap{position:relative;}
+.asset-dropdown{
+  position:absolute;top:100%;left:0;right:0;z-index:10;
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:6px;max-height:200px;overflow-y:auto;display:none;
+}
+.asset-dropdown.open{display:block;}
+.asset-option{
+  padding:10px 14px;cursor:pointer;transition:background .15s;
+  font-size:13px;color:var(--text);
+}
+.asset-option:hover{background:var(--gold-glow);}
+.asset-option-name{font-weight:500;}
+.asset-option-sub{font-size:11px;color:var(--text3);}
+.selected-asset-pill{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:6px;padding:8px 12px;margin-bottom:6px;
+}
+.selected-asset-name{font-size:13px;color:var(--text);}
+.selected-asset-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+
+/* ====================== FILTER TABS ====================== */
+.filter-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:18px;}
+.f-tab{
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  padding:5px 13px;border-radius:4px;border:1px solid var(--border);
+  color:var(--text3);cursor:pointer;transition:all .2s;
+}
+.f-tab:hover{border-color:var(--gold-dim);color:var(--text2);}
+.f-tab.active{border-color:var(--gold);color:var(--gold);background:var(--gold-glow);}
+
+/* ====================== KNOWLEDGE BADGE ====================== */
+.know-badge{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  padding:2px 7px;border-radius:2px;font-weight:600;
+}
+.know-uninformed{background:rgba(90,80,64,.2);color:var(--text3);border:1px solid var(--border);}
+.know-informed{background:rgba(45,122,74,.12);color:#4CAF7D;border:1px solid rgba(45,122,74,.25);}
+.know-partial{background:rgba(200,168,106,.1);color:var(--gold);border:1px solid var(--gold-dim);}
+.know-suspecting{background:rgba(30,90,138,.1);color:#5BA3D9;border:1px solid rgba(30,90,138,.25);}
+.know-blinded{background:rgba(139,32,32,.1);color:#C0392B;border:1px solid rgba(139,32,32,.25);}
+.know-participant{background:rgba(80,0,80,.2);color:#C57BCD;border:1px solid rgba(197,123,205,.25);}
+.know-oblivious{background:rgba(50,50,50,.3);color:var(--text2);border:1px solid var(--border2);}
+
+/* animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeIn .3s ease forwards;}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav id="top-nav">
+  <span class="nav-brand" onclick="showView('home-view')">CHRONICLE</span>
+  <div class="nav-sep"></div>
+  <div style="display:flex;gap:2px;">
+    <span class="nav-link" id="nav-chars" onclick="showView('chars-view')">Characters</span>
+    <span class="nav-link" id="nav-orgs" onclick="showView('orgs-view')">Organizations</span>
+    <span class="nav-link" id="nav-hier" onclick="showView('hierarchy-view')">Hierarchy</span>
+    <span class="nav-link" id="nav-arcs" onclick="showView('arcs-view')">Story Arcs</span>
+  </div>
+  <div class="nav-right">
+    <button class="btn btn-outline btn-sm" onclick="openAssetManager()">
+      <span class="material-icons" style="font-size:14px;">home_work</span> Assets
+    </button>
+  </div>
+</nav>
+
+<!-- ==================== HOME VIEW ==================== -->
+<div id="home-view" class="view active">
+  <div class="home-wrap">
+    <div class="home-eyebrow">World Bible</div>
+    <div class="home-title">CHRON<span>I</span>CLE</div>
+    <div class="home-sub">Characters · Organizations · Hierarchy · Story</div>
+    <div class="home-cards">
+      <div class="home-card" onclick="showView('chars-view')">
+        <div class="home-card-icon"><span class="material-icons">person</span></div>
+        <div class="home-card-label">Characters</div>
+        <div class="home-card-desc">Dossiers, relationships, story arcs, and assets for every character in your world.</div>
+      </div>
+      <div class="home-card" onclick="showView('orgs-view')">
+        <div class="home-card-icon"><span class="material-icons">corporate_fare</span></div>
+        <div class="home-card-label">Organizations</div>
+        <div class="home-card-desc">Factions, power structures, command chains, and member profile cards.</div>
+      </div>
+      <div class="home-card" onclick="showView('hierarchy-view')">
+        <div class="home-card-icon"><span class="material-icons">account_tree</span></div>
+        <div class="home-card-label">Hierarchy</div>
+        <div class="home-card-desc">Visual command maps. Select any organization to render its full chain of power.</div>
+      </div>
+      <div class="home-card" onclick="showView('arcs-view')">
+        <div class="home-card-icon"><span class="material-icons">auto_stories</span></div>
+        <div class="home-card-label">Story Arcs</div>
+        <div class="home-card-desc">Chapters, timelines, plot elements, and the full story body.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CHARACTERS VIEW ==================== -->
+<div id="chars-view" class="view">
+  <div class="view-inner">
+    <div class="sec-header">
+      <div class="sec-title-wrap">
+        <div class="sec-eyebrow">Intelligence Files</div>
+        <div class="sec-title">Characters</div>
+      </div>
+      <div class="sec-actions">
+        <button class="btn btn-gold" onclick="openCharModal()">
+          <span class="material-icons" style="font-size:16px;">add</span> New Character
+        </button>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <span class="material-icons search-icon">search</span>
+      <input class="search-input" id="char-search" placeholder="Search by name, role, alias..." oninput="renderChars()">
+    </div>
+    <div class="filter-tabs" id="char-filters">
+      <span class="f-tab active" data-filter="all" onclick="setCharFilter(this,'all')">All</span>
+      <span class="f-tab" data-filter="alive" onclick="setCharFilter(this,'alive')">Alive</span>
+      <span class="f-tab" data-filter="deceased" onclick="setCharFilter(this,'deceased')">Deceased</span>
+    </div>
+    <div class="cards-grid" id="chars-grid"></div>
+  </div>
+</div>
+
+<!-- ==================== ORGANIZATIONS VIEW ==================== -->
+<div id="orgs-view" class="view">
+  <div class="view-inner">
+    <div class="sec-header">
+      <div class="sec-title-wrap">
+        <div class="sec-eyebrow">Power Structures</div>
+        <div class="sec-title">Organizations</div>
+      </div>
+      <div class="sec-actions">
+        <button class="btn btn-gold" onclick="openOrgModal()">
+          <span class="material-icons" style="font-size:16px;">add</span> New Organization
+        </button>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <span class="material-icons search-icon">search</span>
+      <input class="search-input" id="org-search" placeholder="Search organizations..." oninput="renderOrgs()">
+    </div>
+    <div class="cards-grid" id="orgs-grid"></div>
+  </div>
+</div>
+
+<!-- ==================== HIERARCHY VIEW ==================== -->
+<div id="hierarchy-view" class="view">
+  <div class="view-inner">
+    <div class="sec-header">
+      <div class="sec-title-wrap">
+        <div class="sec-eyebrow">Command Structure</div>
+        <div class="sec-title" id="hier-title">Select an Organization</div>
+      </div>
+      <div class="sec-actions">
+        <select class="f-sel" id="hier-org-select" onchange="onHierOrgChange()" style="min-width:220px;">
+          <option value="">— Choose Organization —</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="openOrgMemberModal(currentHierOrg)">
+          <span class="material-icons" style="font-size:14px;">person_add</span> Add Member
+        </button>
+      </div>
+    </div>
+    <div id="hierarchy-content">
+      <div class="empty-state">
+        <div class="empty-icon"><span class="material-icons">account_tree</span></div>
+        <div class="empty-title">No organization selected</div>
+        <div class="empty-desc">Choose an organization above to render its command hierarchy.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== STORY ARCS VIEW ==================== -->
+<div id="arcs-view" class="view">
+  <div class="view-inner">
+    <div class="sec-header">
+      <div class="sec-title-wrap">
+        <div class="sec-eyebrow">Narrative Archive</div>
+        <div class="sec-title">Story Arcs</div>
+      </div>
+      <div class="sec-actions">
+        <button class="btn btn-gold" onclick="openArcModal()">
+          <span class="material-icons" style="font-size:16px;">add</span> New Section
+        </button>
+      </div>
+    </div>
+    <div id="arcs-list"></div>
+  </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- MODALS                                                 -->
+<!-- ===================================================== -->
+
+<!-- ====== CHARACTER CREATE/EDIT MODAL ====== -->
+<div class="modal-overlay" id="char-modal">
+  <div class="modal-box wide">
+    <div class="modal-head">
+      <div class="modal-title-line">
+        <div class="modal-eyebrow">Character Profile</div>
+        <div class="modal-title" id="char-modal-title">New Character</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('char-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Top badges -->
+      <div class="f-row f3" style="margin-bottom:20px;">
+        <div class="f-group">
+          <label class="f-label">Role</label>
+          <input class="f-in" id="cm-role" placeholder="e.g. Protagonist, Antagonist, Ally">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Status</label>
+          <select class="f-sel" id="cm-status">
+            <option value="">— Select —</option>
+            <option>Alive</option>
+            <option>Deceased</option>
+            <option>Unknown</option>
+            <option>Missing</option>
+            <option>Exiled</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Photo URL</label>
+          <input class="f-in" id="cm-photo" placeholder="https://...">
+        </div>
+      </div>
+
+      <!-- BASIC INFORMATION -->
+      <div class="f-section">
+        <div class="f-section-title">Basic Information</div>
+        <div class="f-row f3">
+          <div class="f-group">
+            <label class="f-label">Public Name</label>
+            <input class="f-in" id="cm-name" placeholder="e.g. Maxwell Lamperouge">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Known As</label>
+            <input class="f-in" id="cm-known-as" placeholder="e.g. Max">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Birth Name</label>
+            <input class="f-in" id="cm-birth-name" placeholder="e.g. Maxwell Igrid Lamperouge">
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="f-group">
+            <label class="f-label">Age</label>
+            <input class="f-in" id="cm-age" placeholder="Age">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Race / Ethnicity</label>
+            <input class="f-in" id="cm-race" placeholder="Race / Ethnicity">
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="f-group">
+            <label class="f-label">Born</label>
+            <input class="f-in" id="cm-born" placeholder="City, Country">
+          </div>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Residence(s)</label>
+          <div class="tag-container" id="cm-residences-wrap">
+            <input class="tag-text-in" id="cm-residences-in" placeholder="Type and press Enter...">
+          </div>
+        </div>
+      </div>
+
+      <!-- LABELS -->
+      <div class="f-section">
+        <div class="f-section-title">Labels</div>
+        <div class="f-group" style="margin-bottom:14px;">
+          <label class="f-label">Aliases</label>
+          <div id="cm-aliases-rows"></div>
+          <button class="add-row" onclick="addPairRow('cm-aliases-rows','aliases',['Alias / Nickname','Given by'])">
+            <span class="material-icons" style="font-size:14px;">add</span> Add Alias
+          </button>
+        </div>
+        <div class="f-group">
+          <label class="f-label locked">Titles</label>
+          <div class="locked-display" id="cm-titles-display">
+            <div class="locked-empty">Auto-populated from Organization Profile Cards.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPEARANCE -->
+      <div class="f-section">
+        <div class="f-section-title">Appearance</div>
+        <div class="f-row f3">
+          <div class="f-group">
+            <label class="f-label">Height</label>
+            <input class="f-in" id="cm-height" placeholder='e.g. 5"10'>
+          </div>
+          <div class="f-group">
+            <label class="f-label">Build</label>
+            <input class="f-in" id="cm-build" placeholder="e.g. Slender, Athletic">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Eyes</label>
+            <input class="f-in" id="cm-eyes" placeholder="Eye color">
+          </div>
+        </div>
+        <div class="f-row f3">
+          <div class="f-group">
+            <label class="f-label">Hair</label>
+            <input class="f-in" id="cm-hair" placeholder="Hair color / style">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Skin Tone</label>
+            <input class="f-in" id="cm-skin" placeholder="Skin tone">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Marks / Tattoos</label>
+            <input class="f-in" id="cm-marks" placeholder="Scars, tattoos, etc.">
+          </div>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Signature Look</label>
+          <input class="f-in" id="cm-look" placeholder="Defining aesthetic, style, scent...">
+        </div>
+      </div>
+
+      <!-- IMPRESSION -->
+      <div class="f-section">
+        <div class="f-section-title">Impression</div>
+        <div class="f-group" style="margin-bottom:12px;">
+          <label class="f-label">Statement Vibe</label>
+          <input class="f-in" id="cm-vibe" placeholder="e.g. Alpha Female, The Phantom">
+        </div>
+        <div class="f-group" style="margin-bottom:12px;">
+          <label class="f-label">Personality</label>
+          <div class="tag-container" id="cm-personality-wrap">
+            <input class="tag-text-in" id="cm-personality-in" placeholder="Add trait, press Enter...">
+          </div>
+        </div>
+        <div class="f-group" style="margin-bottom:12px;">
+          <label class="f-label">Interests</label>
+          <div class="tag-container" id="cm-interests-wrap">
+            <input class="tag-text-in" id="cm-interests-in" placeholder="Add interest, press Enter...">
+          </div>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Quirks</label>
+          <div class="tag-container" id="cm-quirks-wrap">
+            <input class="tag-text-in" id="cm-quirks-in" placeholder="Add quirk, press Enter...">
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPETENCIES -->
+      <div class="f-section">
+        <div class="f-section-title">Competencies</div>
+        <div class="f-group" style="margin-bottom:12px;">
+          <label class="f-label">Languages Spoken</label>
+          <div class="tag-container" id="cm-languages-wrap">
+            <input class="tag-text-in" id="cm-languages-in" placeholder="Language (level), press Enter...">
+          </div>
+        </div>
+        <div class="f-group" style="margin-bottom:12px;">
+          <label class="f-label">Core Strengths</label>
+          <div class="tag-container" id="cm-strengths-wrap">
+            <input class="tag-text-in" id="cm-strengths-in" placeholder="Add strength, press Enter...">
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="f-group">
+            <label class="f-label">Weapon of Choice</label>
+            <input class="f-in" id="cm-weapon" placeholder="Primary weapon">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Weakness</label>
+            <input class="f-in" id="cm-weakness" placeholder="Fatal flaw or vulnerability">
+          </div>
+        </div>
+      </div>
+
+      <!-- RELATIONSHIPS -->
+      <div class="f-section">
+        <div class="f-section-title">Relationships</div>
+
+        <div class="f-subsection">Social Circle</div>
+        <div id="cm-family-rows"></div>
+        <button class="add-row" onclick="addPairRow('cm-family-rows','family',['Name','Relationship','Status','Dynamic'])">
+          <span class="material-icons" style="font-size:14px;">add</span> Add Member
+        </button>
+
+        <div class="f-subsection" style="margin-top:16px;">Allies</div>
+        <div id="cm-allies-rows"></div>
+        <button class="add-row" onclick="addPairRow('cm-allies-rows','allies',['Name','Loyalty Level (%)','Dynamic'])">
+          <span class="material-icons" style="font-size:14px;">add</span> Add Ally
+        </button>
+
+        <div class="f-subsection" style="margin-top:16px;">Enemies</div>
+        <div id="cm-enemies-rows"></div>
+        <button class="add-row" onclick="addPairRow('cm-enemies-rows','enemies',['Name','Threat Level (%)','Dynamic'])">
+          <span class="material-icons" style="font-size:14px;">add</span> Add Enemy
+        </button>
+
+        <div class="f-subsection" style="margin-top:16px;">Romances</div>
+        <div id="cm-romances-rows"></div>
+        <button class="add-row" onclick="addPairRow('cm-romances-rows','romances',['Name','Status','Dynamic'])">
+          <span class="material-icons" style="font-size:14px;">add</span> Add Romance
+        </button>
+      </div>
+
+      <!-- LIAISONS -->
+      <div class="f-section">
+        <div class="f-section-title">Liaisons</div>
+        <div class="f-group">
+          <label class="f-label locked">Organizations</label>
+          <div class="locked-display" id="cm-orgs-display">
+            <div class="locked-empty">Auto-populated from Organization Profile Cards.</div>
+          </div>
+          <div class="f-hint">Save the character first, then create an Organization Profile Card linking this name.</div>
+        </div>
+      </div>
+
+      <!-- ASSETS -->
+      <div class="f-section">
+        <div class="f-section-title">Assets</div>
+
+        <div class="f-group" style="margin-bottom:14px;">
+          <label class="f-label">Properties</label>
+          <div class="asset-search-wrap">
+            <input class="f-in" id="cm-asset-search" placeholder="Search existing assets..." oninput="filterAssetDropdown()" autocomplete="off">
+            <div class="asset-dropdown" id="cm-asset-dropdown"></div>
+          </div>
+          <div id="cm-selected-assets" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="f-group" style="margin-bottom:14px;">
+          <label class="f-label">Vehicles</label>
+          <div class="asset-search-wrap">
+            <input class="f-in" id="cm-vehicle-search" placeholder="Search vehicles from registry..." oninput="filterTypedAssetDropdown('vehicle','cm-vehicle-search','cm-vehicle-dropdown',selectedVehicleIds,'selectVehicleAsset')" autocomplete="off">
+            <div class="asset-dropdown" id="cm-vehicle-dropdown"></div>
+          </div>
+          <div id="cm-selected-vehicles" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="f-group" style="margin-bottom:14px;">
+          <label class="f-label">Valuables</label>
+          <div class="asset-search-wrap">
+            <input class="f-in" id="cm-valuable-search" placeholder="Search valuables from registry..." oninput="filterTypedAssetDropdown('valuable','cm-valuable-search','cm-valuable-dropdown',selectedValuableIds,'selectValuableAsset')" autocomplete="off">
+            <div class="asset-dropdown" id="cm-valuable-dropdown"></div>
+          </div>
+          <div id="cm-selected-valuables" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="f-subsection" style="margin-top:16px;">Financial & Monetary</div>
+        <div id="cm-financial-rows"></div>
+        <button class="add-row" onclick="addPairRow('cm-financial-rows','financial',['Account / Source','Value'])">
+          <span class="material-icons" style="font-size:14px;">add</span> Add Account
+        </button>
+
+        <div class="f-subsection" style="margin-top:16px;">Investments</div>
+        <div id="cm-investments-rows"></div>
+        <button class="add-row" onclick="addPairRow('cm-investments-rows','investments',['Company','Share %'])">
+          <span class="material-icons" style="font-size:14px;">add</span> Add Investment
+        </button>
+      </div>
+
+      <!-- STORY ARC -->
+      <div class="f-section">
+        <div class="f-section-title">Story Arc</div>
+        <div class="f-row full" style="margin-bottom:12px;">
+          <div class="f-group"><label class="f-label">Background</label><textarea class="f-ta tall" id="cm-background" placeholder="Character background..."></textarea></div>
+        </div>
+        <div class="f-row full" style="margin-bottom:12px;">
+          <div class="f-group"><label class="f-label">Early Life</label><textarea class="f-ta tall" id="cm-early-life" placeholder="Childhood, upbringing, formative events..."></textarea></div>
+        </div>
+        <div class="f-row full" style="margin-bottom:12px;">
+          <div class="f-group"><label class="f-label">Origin</label><textarea class="f-ta tall" id="cm-origin" placeholder="Where they come from..."></textarea></div>
+        </div>
+        <div class="f-row">
+          <div class="f-group"><label class="f-label">Goal</label><textarea class="f-ta" id="cm-goal" placeholder="What they want..."></textarea></div>
+        </div> <div class="f-row">
+          <div class="f-group"><label class="f-label">Motivation</label><textarea class="f-ta" id="cm-motivation" placeholder="Why they want it..."></textarea></div>
+          <div class="f-group"><label class="f-label">Obstacles</label><textarea class="f-ta" id="cm-obstacles" placeholder="What stands in the way..."></textarea></div>
+        </div>
+        <div class="f-row">
+          <div class="f-group"><label class="f-label">Stakes</label><textarea class="f-ta" id="cm-stakes" placeholder="What they lose if they fail..."></textarea></div>
+          <div class="f-group"><label class="f-label">Forward Momentum</label><textarea class="f-ta" id="cm-momentum" placeholder="Actions they take..."></textarea></div>
+        </div>
+        <div class="f-row">
+          <div class="f-group"><label class="f-label">Flaw</label><textarea class="f-ta" id="cm-flaw" placeholder="Their core flaw..."></textarea></div>
+          <div class="f-group"><label class="f-label">Character Growth</label><textarea class="f-ta" id="cm-growth" placeholder="How they change..."></textarea></div>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Secrets</label>
+          <textarea class="f-ta" id="cm-secrets" placeholder="What they're hiding..."></textarea>
+        </div>
+      </div>
+
+    </div><!-- /modal-body -->
+    <div class="modal-foot">
+      <div>
+        <button class="btn btn-danger btn-sm" id="cm-delete-btn" onclick="deleteChar()" style="display:none;">
+          <span class="material-icons" style="font-size:14px;">delete</span> Delete
+        </button>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline" onclick="closeModal('char-modal')">Cancel</button>
+        <button class="btn btn-gold" onclick="saveChar()">
+          <span class="material-icons" style="font-size:14px;">save</span> Save Character
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== CHARACTER DOSSIER VIEW MODAL ====== -->
+<div class="modal-overlay" id="dossier-modal">
+  <div class="modal-box wide dossier-modal">
+    <div class="dossier-head">
+      <button class="modal-close" onclick="closeModal('dossier-modal')" style="position:absolute;right:20px;top:20px;">✕</button>
+      <div style="display:flex;gap:18px;align-items:flex-start;">
+        <div class="dossier-initials" id="dos-initials"></div>
+        <div>
+          <div class="dossier-role" id="dos-role"></div>
+          <div class="dossier-name" id="dos-name"></div>
+          <div class="dossier-badges" id="dos-badges"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:18px;">
+        <button class="btn btn-outline btn-sm" onclick="editCurrentDossier()">
+          <span class="material-icons" style="font-size:14px;">edit</span> Edit
+        </button>
+      </div>
+    </div>
+    <div class="dossier-body" id="dossier-body"></div>
+  </div>
+</div>
+
+<!-- ====== ORGANIZATION CARD MODAL ====== -->
+<div class="modal-overlay" id="org-modal">
+  <div class="modal-box wide">
+    <div class="modal-head">
+      <div class="modal-title-line">
+        <div class="modal-eyebrow">Organization</div>
+        <div class="modal-title" id="org-modal-title">New Organization</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('org-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Organization Name</label>
+          <input class="f-in" id="om-name" placeholder="Full official name">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Annual Revenue</label>
+          <input class="f-in" id="om-revenue" placeholder="e.g. $180M, Classified">
+        </div>
+      </div>
+      <div class="f-row f3">
+        <div class="f-group">
+          <label class="f-label">Years Established</label>
+          <input class="f-in" id="om-years" placeholder="Year founded">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Industry Type</label>
+          <input class="f-in" id="om-industry" placeholder="e.g. Security, Finance">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Headquarters (Primary)</label>
+          <input class="f-in" id="om-hq" placeholder="City, Country">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Description</label>
+        <textarea class="f-ta" id="om-desc" placeholder="What this organization does and why it matters..."></textarea>
+      </div>
+
+      <div class="f-row f3">
+        <div class="f-group">
+          <label class="f-label">Command Structure</label>
+          <select class="f-sel" id="om-cmd">
+            <option value="">— Select —</option>
+            <option>Centralized</option><option>Cell-based</option>
+            <option>Corporate</option><option>Fragmented</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Power Scale</label>
+          <select class="f-sel" id="om-power">
+            <option value="">— Select —</option>
+            <option>Local</option><option>Regional</option>
+            <option>National</option><option>Global</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Classification</label>
+          <select class="f-sel" id="om-class">
+            <option value="">— Select —</option>
+            <option>Public</option><option>Private</option>
+            <option>Underground</option><option>Black Market</option>
+          </select>
+        </div>
+      </div>
+      <div class="f-row f3">
+        <div class="f-group">
+          <label class="f-label">Exclusivity Level</label>
+          <select class="f-sel" id="om-excl">
+            <option value="">— Select —</option>
+            <option>Open</option><option>Shadowed</option><option>Invite-Only</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Security Level</label>
+          <select class="f-sel" id="om-sec">
+            <option value="">— Select —</option>
+            <option>Low</option><option>Medium</option>
+            <option>High</option><option>Military-grade</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Organization Alias</label>
+        <div class="tag-container" id="om-aliases-wrap">
+          <input class="tag-text-in" id="om-aliases-in" placeholder="Known aliases, press Enter...">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Secondary Bases</label>
+        <div class="tag-container" id="om-bases-wrap">
+          <input class="tag-text-in" id="om-bases-in" placeholder="City, Country · press Enter...">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Functions</label>
+        <div class="tag-container" id="om-functions-wrap">
+          <input class="tag-text-in" id="om-functions-in" placeholder="Core function, press Enter...">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Regions</label>
+        <div class="tag-container" id="om-regions-wrap">
+          <input class="tag-text-in" id="om-regions-in" placeholder="Region name, press Enter...">
+        </div>
+      </div>
+
+<div class="f-section-title" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">Lore & Leadership</div>
+      
+      <div class="f-row f3">
+        <div class="f-group">
+          <label class="f-label">Organization Creed</label>
+          <input class="f-in" id="om-creed" placeholder="Their motto or sworn words">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Original Founder(s)</label>
+          <input class="f-in" id="om-founder" placeholder="Who started it all">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Current Successor / Leader</label>
+          <input class="f-in" id="om-successor" placeholder="Who holds the throne now">
+        </div>
+      </div>
+
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Origin</label>
+        <textarea class="f-ta" id="om-origin" placeholder="How it all began..."></textarea>
+      </div>
+
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">The Evolution</label>
+        <textarea class="f-ta" id="om-evolution" placeholder="How they grew and changed over time..."></textarea>
+      </div>
+
+      <div class="f-subsection">Generational Founders / Throne Lineage</div>
+      <div id="om-founders-rows"></div>
+      <button class="add-row" onclick="addPairRow('om-founders-rows','founders',['Name','Years Active','How Throned','How Dethroned'])">
+        <span class="material-icons" style="font-size:14px;">add</span> Add Ruler
+      </button>
+
+      <div class="f-section-title" style="margin-top:24px;">Culture & Relations</div>
+      
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Sacred Sites</label>
+        <textarea class="f-ta" id="om-sites" placeholder="Where they rule, gather, or worship..."></textarea>
+      </div>
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Traditions</label>
+        <textarea class="f-ta" id="om-traditions" placeholder="Rituals, ceremonies, customs..."></textarea>
+      </div>
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Organization Rules</label>
+        <textarea class="f-ta" id="om-rules" placeholder="The absolute laws of the faction..."></textarea>
+      </div>
+
+      <div class="f-subsection">Key Alliances</div>
+      <div id="om-alliances-rows"></div>
+      <button class="add-row" onclick="addPairRow('om-alliances-rows','alliances',['Alliance Name / Faction','Details & Terms'])">
+        <span class="material-icons" style="font-size:14px;">add</span> Add Alliance
+      </button>
+
+      <div class="f-subsection" style="margin-top:16px;">Key Rivalries</div>
+      <div id="om-rivalries-rows"></div>
+      <button class="add-row" onclick="addPairRow('om-rivalries-rows','rivalries',['Rival Name / Faction','Blood feud details...'])">
+        <span class="material-icons" style="font-size:14px;">add</span> Add Rivalry
+      </button>
+
+      <div class="f-section-title" style="margin-top:24px;">Historical Archive</div>
+
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Timeline of Major Events</label>
+        <textarea class="f-ta tall" id="om-timeline" placeholder="Chronological breakdown of major historical shifts..."></textarea>
+      </div>
+
+      <div class="f-subsection">Significant Deaths</div>
+      <div id="om-deaths-rows"></div>
+      <button class="add-row" onclick="addPairRow('om-deaths-rows','deaths',['Name','Position','Year','How Died','Details'])">
+        <span class="material-icons" style="font-size:14px;">add</span> Add Significant Death
+      </button>
+
+      
+      <div class="f-section-title" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">Personnel</div>
+      <div id="om-personnel-rows"></div>
+      <button class="add-row" onclick="addPairRow('om-personnel-rows','personnel',['Title / Rank','Number','Function'])">
+        <span class="material-icons" style="font-size:14px;">add</span> Add Personnel Row
+      </button>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="om-delete-btn" onclick="deleteOrg()" style="display:none;">
+        <span class="material-icons" style="font-size:14px;">delete</span> Delete
+      </button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline" onclick="closeModal('org-modal')">Cancel</button>
+        <button class="btn btn-gold" onclick="saveOrg()">
+          <span class="material-icons" style="font-size:14px;">save</span> Save Organization
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== ORG DETAIL PANEL MODAL ====== -->
+<div class="modal-overlay" id="org-detail-modal">
+  <div class="modal-box org-detail-modal">
+    <div class="modal-head" style="background:var(--card2);">
+      <div class="modal-title-line">
+        <div class="modal-eyebrow" id="od-eyebrow">Organization</div>
+        <div class="modal-title" id="od-name">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('org-detail-modal')">✕</button>
+    </div>
+    <div class="org-detail-body">
+      <div class="org-detail-left" id="od-info"></div>
+      <div class="org-detail-right">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);">Profile Cards</div>
+          <button class="btn btn-outline btn-sm" id="od-add-member-btn" onclick="openOrgMemberModalFromDetail()">
+            <span class="material-icons" style="font-size:13px;">person_add</span> Add
+          </button>
+        </div>
+        <div id="od-members"></div>
+      </div>
+    </div>
+    <div style="background:var(--card);border-top:1px solid var(--border);padding:12px 22px;display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-outline btn-sm" onclick="editCurrentOrg()">
+        <span class="material-icons" style="font-size:13px;">edit</span> Edit Org
+      </button>
+      <button class="btn btn-gold btn-sm" onclick="goToHierarchyFromDetail()">
+        <span class="material-icons" style="font-size:13px;">account_tree</span> View Hierarchy
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== ORG MEMBER (PROFILE CARD) MODAL ====== -->
+<div class="modal-overlay" id="org-member-modal">
+  <div class="modal-box wide">
+    <div class="modal-head">
+      <div class="modal-title-line">
+        <div class="modal-eyebrow" id="omm-eyebrow">Organization Profile Card</div>
+        <div class="modal-title" id="omm-title">New Profile</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('org-member-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Organization</label>
+          <select class="f-sel" id="omm-org">
+            <option value="">— Select Organization —</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Character Name</label>
+          <input class="f-in" id="omm-char-name" placeholder="Must match character name exactly">
+        </div>
+      </div>
+
+      <div class="f-section-title" style="margin:18px 0 14px;padding-top:14px;border-top:1px solid var(--border);">Position</div>
+      <div id="omm-position-rows"></div>
+      <button class="add-row" onclick="addOmmPositionRow()">
+        <span class="material-icons" style="font-size:14px;">add</span> Add Position / Title
+      </button>
+      <div class="f-hint" style="margin-top:6px;">These positions auto-populate in the Character's Title field.</div>
+
+      <div class="f-row" style="margin-top:16px;">
+        <div class="f-group">
+          <label class="f-label">Alias / Codename</label>
+          <input class="f-in" id="omm-alias" placeholder="e.g. The Sovereign">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Years Active</label>
+          <input class="f-in" id="omm-years" placeholder="e.g. 2010 - Present">
+        </div>
+      </div>
+      <div class="f-row f3">
+        <div class="f-group">
+          <label class="f-label">Recruitment Type</label>
+          <select class="f-sel" id="omm-recruit">
+            <option value="">— Select —</option>
+            <option>Born In</option><option>Recruited</option>
+            <option>Infiltrated</option><option>Promoted</option><option>Founder</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Role</label>
+          <input class="f-in" id="omm-role" placeholder="Operational role">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Specialization</label>
+          <input class="f-in" id="omm-spec" placeholder="Area of expertise">
+        </div>
+      </div>
+
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Functions</label>
+        <div class="tag-container" id="omm-functions-wrap">
+          <input class="tag-text-in" id="omm-functions-in" placeholder="Add function, press Enter...">
+        </div>
+      </div>
+
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Reports To</label>
+          <input class="f-in" id="omm-reports" placeholder="Name of superior within this organization">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Division Name</label>
+          <input class="f-in" id="omm-chain" placeholder="e.g. Capo of Intel, Capo of Security">
+        </div>
+      </div>
+      <div class="f-row f3">
+        <div class="f-group">
+          <label class="f-label">Influence Level</label>
+          <select class="f-sel" id="omm-influence">
+            <option value="">— Select —</option>
+            <option>Critical</option><option>High</option>
+            <option>Medium</option><option>Low</option><option>Negligible</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Operational Reach</label>
+          <input class="f-in" id="omm-reach" placeholder="e.g. Global, East Coast">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Resources Controlled</label>
+          <input class="f-in" id="omm-resources" placeholder="e.g. $40B, Vanguard Army">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:20px;">
+        <label class="f-label">Known Traits</label>
+        <textarea class="f-ta" id="omm-traits" placeholder="How they're known within the organization..."></textarea>
+      </div>
+
+      <div class="f-section-title">Zarina Chain</div>
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Social Link to Zarina</label>
+          <input class="f-in" id="omm-z-link" placeholder="e.g. Employer, Ally, Rival">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Shadow Market Knowledge</label>
+          <select class="f-sel" id="omm-z-know">
+            <option value="">— Select —</option>
+            <option>Uninformed</option><option>Informed</option>
+            <option>Partially Informed</option><option>Oblivious</option>
+            <option>Suspecting</option><option>Blinded</option><option>Participant</option>
+          </select>
+        </div>
+      </div>
+      <div class="f-row f3">
+        <div class="f-group">
+          <label class="f-label">Loyalty to Zarina (%)</label>
+          <input class="f-in" id="omm-z-loyalty" type="number" min="0" max="100" placeholder="0–100">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Threat to Zarina (%)</label>
+          <input class="f-in" id="omm-z-threat" type="number" min="0" max="100" placeholder="0–100">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:20px;">
+        <label class="f-label">Dynamic with Zarina</label>
+        <textarea class="f-ta" id="omm-z-dynamic" placeholder="Nature of their relationship..."></textarea>
+      </div>
+
+      <div class="f-section-title">Leah Chain</div>
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Social Link to Leah</label>
+          <input class="f-in" id="omm-l-link" placeholder="e.g. Stranger, Informant, Mark">
+        </div>
+      </div>
+      <div class="f-row f3">
+        <div class="f-group">
+          <label class="f-label">Loyalty to Leah (%)</label>
+          <input class="f-in" id="omm-l-loyalty" type="number" min="0" max="100" placeholder="0–100">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Threat to Leah (%)</label>
+          <input class="f-in" id="omm-l-threat" type="number" min="0" max="100" placeholder="0–100">
+        </div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Dynamic with Leah</label>
+        <textarea class="f-ta" id="omm-l-dynamic" placeholder="Nature of their relationship..."></textarea>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="omm-delete-btn" onclick="deleteOrgMember()" style="display:none;">
+        <span class="material-icons" style="font-size:14px;">delete</span> Delete
+      </button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline" onclick="closeModal('org-member-modal')">Cancel</button>
+        <button class="btn btn-gold" onclick="saveOrgMember()">
+          <span class="material-icons" style="font-size:14px;">save</span> Save Profile Card
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ====== ORG MEMBER VIEW MODAL ====== -->
+<div class="modal-overlay" id="org-member-view-modal">
+  <div class="modal-box wide dossier-modal">
+    <div class="dossier-head">
+      <button class="modal-close" onclick="closeModal('org-member-view-modal')" style="position:absolute;right:20px;top:20px;">✕</button>
+      <div style="display:flex;gap:18px;align-items:flex-start;">
+        <div class="dossier-initials" id="omv-initials"></div>
+        <div>
+          <div class="dossier-role" id="omv-org"></div>
+          <div class="dossier-name" id="omv-name"></div>
+          <div class="dossier-badges" id="omv-badges"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:18px;">
+        <button class="btn btn-outline btn-sm" id="omv-edit-btn">
+          <span class="material-icons" style="font-size:14px;">edit</span> Edit Profile Card
+        </button>
+      </div>
+    </div>
+    <div class="dossier-body" id="omv-body"></div>
+  </div>
+</div>
+<!-- ====== ASSET MANAGER MODAL ====== -->
+<div class="modal-overlay" id="asset-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title-line">
+        <div class="modal-eyebrow">Asset Registry</div>
+        <div class="modal-title">Properties & Assets</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('asset-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+        <div class="search-wrap" style="margin-bottom:0;flex:1;">
+          <span class="material-icons search-icon">search</span>
+          <input class="search-input" id="asset-registry-search" placeholder="Search assets..." oninput="renderAssetList()">
+        </div>
+        <button class="btn btn-gold btn-sm" onclick="openAssetFormModal()">
+          <span class="material-icons" style="font-size:14px;">add</span> New Asset
+        </button>
+      </div>
+      <div class="filter-tabs" style="margin-bottom:14px;">
+        <span class="f-tab active" onclick="setAssetTypeFilter(this,'all')">All</span>
+        <span class="f-tab" onclick="setAssetTypeFilter(this,'property')">Properties</span>
+        <span class="f-tab" onclick="setAssetTypeFilter(this,'vehicle')">Vehicles</span>
+        <span class="f-tab" onclick="setAssetTypeFilter(this,'valuable')">Valuables</span>
+      </div>
+      <div id="asset-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== ASSET FORM MODAL ====== -->
+<div class="modal-overlay" id="asset-form-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title-line">
+        <div class="modal-eyebrow">Asset</div>
+        <div class="modal-title" id="af-modal-title">New Asset</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('asset-form-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="f-row f3">
+        <div class="f-group">
+          <label class="f-label">Asset Type</label>
+          <select class="f-sel" id="af-type">
+            <option value="property">Property</option>
+            <option value="vehicle">Vehicle</option>
+            <option value="valuable">Valuable</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Asset Name</label>
+          <input class="f-in" id="af-name" placeholder="e.g. The Tribeca Penthouse">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Location / Detail</label>
+          <input class="f-in" id="af-location" placeholder="City / Address or description">
+        </div>
+      </div>
+      <div class="f-row">
+  <div class="f-group">
+    <label class="f-label">Estimated Worth</label>
+    <input class="f-in" id="af-worth" placeholder="e.g. $12M, Classified">
+  </div>
+  <div class="f-group">
+    <label class="f-label">Owner</label>
+    <input class="f-in" id="af-owner" placeholder="Who owns this place">
+  </div>
+</div>
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Purpose</label>
+          <input class="f-in" id="af-purpose" placeholder="e.g. Primary Residence, Safehouse">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Year Obtained</label>
+          <input class="f-in" id="af-year" placeholder="Year">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:12px;">
+        <label class="f-label">Core Function</label>
+        <input class="f-in" id="af-function" placeholder="Primary operational role">
+      </div>
+      <div class="f-group">
+        <label class="f-label">Description</label>
+        <textarea class="f-ta" id="af-desc" placeholder="Details about the property..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="af-delete-btn" onclick="deleteAsset()" style="display:none;">
+        <span class="material-icons" style="font-size:14px;">delete</span> Delete
+      </button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline" onclick="closeModal('asset-form-modal')">Cancel</button>
+        <button class="btn btn-gold" onclick="saveAsset()">Save Asset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== STORY ARC MODAL ====== -->
+<div class="modal-overlay" id="arc-modal">
+  <div class="modal-box wide">
+    <div class="modal-head">
+      <div class="modal-title-line">
+        <div class="modal-eyebrow">Story Arc</div>
+        <div class="modal-title" id="arc-modal-title">New Section</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('arc-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Section Title</label>
+          <input class="f-in" id="arc-title" placeholder="e.g. Chapter 1: The Widow">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Chapter / Section Number</label>
+          <input class="f-in" id="arc-num" type="number" placeholder="1">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Plot Summary</label>
+        <textarea class="f-ta" id="arc-summary" placeholder="What happens in this section..."></textarea>
+      </div>
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">SYL</label>
+        <textarea class="f-ta" id="arc-syl" placeholder="SYL notes..."></textarea>
+      </div>
+      <div class="f-group" style="margin-bottom:14px;">
+        <label class="f-label">Timeline</label>
+        <input class="f-in" id="arc-timeline" placeholder="e.g. Week 1, Day 3 — August 2024">
+      </div>
+
+      <div class="f-section-title" style="margin:20px 0 14px;">Story Elements</div>
+      <div class="f-group" style="margin-bottom:12px;">
+        <label class="f-label">Story Elements</label>
+        <div class="tag-container" id="arc-elements-wrap">
+          <input class="tag-text-in" id="arc-elements-in" placeholder="Add element, press Enter...">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:12px;">
+        <label class="f-label">Major Events</label>
+        <div class="tag-container" id="arc-events-wrap">
+          <input class="tag-text-in" id="arc-events-in" placeholder="Add event, press Enter...">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:12px;">
+        <label class="f-label">Venue Reach</label>
+        <div class="tag-container" id="arc-venues-wrap">
+          <input class="tag-text-in" id="arc-venues-in" placeholder="Add location, press Enter...">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:12px;">
+        <label class="f-label">Characters Exposed</label>
+        <div class="tag-container" id="arc-chars-wrap">
+          <input class="tag-text-in" id="arc-chars-in" placeholder="Character name, press Enter...">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:12px;">
+        <label class="f-label">Conflict</label>
+        <div class="tag-container" id="arc-conflict-wrap">
+          <input class="tag-text-in" id="arc-conflict-in" placeholder="Conflict type or description, press Enter...">
+        </div>
+      </div>
+      <div class="f-group" style="margin-bottom:20px;">
+        <label class="f-label">Revelations</label>
+        <div class="tag-container" id="arc-reveals-wrap">
+          <input class="tag-text-in" id="arc-reveals-in" placeholder="What is revealed, press Enter...">
+        </div>
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">Body</label>
+        <textarea class="f-ta tall" id="arc-body" placeholder="Detailed story content of this chapter or section..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="arc-delete-btn" onclick="deleteArc()" style="display:none;">
+        <span class="material-icons" style="font-size:14px;">delete</span> Delete
+      </button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline" onclick="closeModal('arc-modal')">Cancel</button>
+        <button class="btn btn-gold" onclick="saveArc()">
+          <span class="material-icons" style="font-size:14px;">save</span> Save Section
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== CONFIRM MODAL ====== -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-body" id="confirm-body">This action cannot be undone.</div>
+    <div class="confirm-actions">
+      <button class="btn btn-outline" onclick="closeModal('confirm-modal')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- FIREBASE SCRIPT MODULE                                 -->
+<!-- ===================================================== -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// ===================== FIREBASE INIT =====================
+let app, db, auth;
+let userId = null, appId = 'chronicle-app-v1', basePath;
+
+let charsCol, orgsCol, orgMembersCol, assetsCol, arcsCol;
+
+let localChars = [], localOrgs = [], localOrgMembers = [], localAssets = [], localArcs = [];
+let unsubChars = () => {}, unsubOrgs = () => {}, unsubOrgMembers = () => {}, unsubAssets = () => {}, unsubArcs = () => {};
+
+let currentView = 'home-view';
+let editingCharId = null, editingOrgId = null, editingOrgMemberId = null;
+let editingAssetId = null, editingArcId = null;
+let currentDossierId = null, currentDetailOrgId = null;
+window.currentHierOrg = null;
+let confirmCallback = null;
+let charFilter = 'all';
+let assetTypeFilter = 'all';
+let selectedAssetIds = [];
+let selectedVehicleIds = [];
+let selectedValuableIds = [];
+let ommPositionRows = [];
+
+// In-memory tag state
+const tagFields = {
+  char: ['residences','personality','interests','quirks','languages','strengths','vehicles'],
+  org: ['aliases','bases','functions','regions'],
+  omm: ['functions'],
+  arc: ['elements','events','venues','chars','conflict','reveals']
+};
+let tagData = {};
+
+// ===================== HELPERS =====================
+window.showView = (id) => {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  currentView = id;
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  const map = {'chars-view':'nav-chars','orgs-view':'nav-orgs','hierarchy-view':'nav-hier','arcs-view':'nav-arcs'};
+  if (map[id]) document.getElementById(map[id]).classList.add('active');
+  if (id === 'chars-view') renderChars();
+  if (id === 'orgs-view') renderOrgs();
+  if (id === 'hierarchy-view') renderHierarchyOrgs();
+  if (id === 'arcs-view') renderArcs();
+};
+
+window.closeModal = (id) => {
+  document.getElementById(id).classList.remove('active');
+};
+
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+}
+
+function confirmAction(title, body, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-body').textContent = body;
+  confirmCallback = cb;
+  document.getElementById('confirm-ok-btn').onclick = () => { closeModal('confirm-modal'); cb(); };
+  openModal('confirm-modal');
+}
+
+function initials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(' ');
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+}
+
+function statusBadge(s) {
+  if (!s) return '';
+  const cls = s.toLowerCase() === 'alive' ? 'badge-alive' : s.toLowerCase() === 'deceased' ? 'badge-deceased' : 'badge-unknown';
+  return `<span class="badge ${cls}">${s}</span>`;
+}
+
+function classBadge(c) {
+  if (!c) return '';
+  const map = {'public':'badge-public','private':'badge-private','underground':'badge-underground','black market':'badge-blackmarket'};
+  const cls = map[c.toLowerCase()] || 'badge-unknown';
+  return `<span class="badge ${cls}">${c}</span>`;
+}
+
+function knowBadge(k) {
+  if (!k) return '';
+  const map = {'uninformed':'know-uninformed','informed':'know-informed','partially informed':'know-partial','suspecting':'know-suspecting','blinded':'know-blinded','participant':'know-participant','oblivious':'know-oblivious'};
+  const cls = map[k.toLowerCase()] || 'know-uninformed';
+  return `<span class="know-badge ${cls}">${k}</span>`;
+}
+
+function pctBar(val, type='') {
+  const v = parseInt(val) || 0;
+  return `<div class="pct-bar"><div class="pct-fill ${type}" style="width:${v}%"></div></div>`;
+}
+
+function parseWorth(str) {
+  if (!str) return 0;
+  const s = str.replace(/,/g,'').toUpperCase();
+  const match = s.match(/([\d.]+)\s*([KMBT]?)/);
+  if (!match) return 0;
+  const num = parseFloat(match[1]);
+  const mult = {K:1e3,M:1e6,B:1e9,T:1e12}[match[2]] || 1;
+  return num * mult;
+}
+
+function formatNetWorth(n) {
+  if (n >= 1e12) return '$'+(n/1e12).toFixed(2)+'T';
+  if (n >= 1e9) return '$'+(n/1e9).toFixed(2)+'B';
+  if (n >= 1e6) return '$'+(n/1e6).toFixed(2)+'M';
+  if (n >= 1e3) return '$'+(n/1e3).toFixed(1)+'K';
+  return '$'+n.toFixed(0);
+}
+
+// ===================== TAG PILL SYSTEM =====================
+function initTagField(wrapId, inputId, prefix) {
+  const wrap = document.getElementById(wrapId);
+  const inp = document.getElementById(inputId);
+  if (!wrap || !inp) return;
+  tagData[prefix] = tagData[prefix] || [];
+  renderTagPills(wrapId, inputId, prefix);
+  inp.onkeydown = (e) => {
+    if ((e.key === 'Enter' || e.key === ',') && inp.value.trim()) {
+      e.preventDefault();
+      tagData[prefix].push(inp.value.trim());
+      inp.value = '';
+      renderTagPills(wrapId, inputId, prefix);
+    }
+    if (e.key === 'Backspace' && !inp.value && tagData[prefix].length) {
+      tagData[prefix].pop();
+      renderTagPills(wrapId, inputId, prefix);
+    }
+  };
+}
+
+function renderTagPills(wrapId, inputId, prefix) {
+  const wrap = document.getElementById(wrapId);
+  const inp = document.getElementById(inputId);
+  if (!wrap || !inp) return;
+  const existing = wrap.querySelectorAll('.t-pill');
+  existing.forEach(p => p.remove());
+  (tagData[prefix] || []).forEach((val, i) => {
+    const pill = document.createElement('span');
+    pill.className = 't-pill';
+    pill.innerHTML = `${val}<span class="t-pill-x" data-i="${i}">×</span>`;
+    pill.querySelector('.t-pill-x').onclick = () => {
+      tagData[prefix].splice(i, 1);
+      renderTagPills(wrapId, inputId, prefix);
+    };
+    wrap.insertBefore(pill, inp);
+  });
+}
+
+function getTagData(prefix) { return [...(tagData[prefix] || [])]; }
+function setTagData(prefix, vals, wrapId, inputId) {
+  tagData[prefix] = vals || [];
+  renderTagPills(wrapId, inputId, prefix);
+}
+
+// ===================== PAIR ROW SYSTEM =====================
+window.addPairRow = (containerId, prefix, labels) => {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const row = document.createElement('div');
+  const isP3 = labels.length === 3;
+  const isP4 = labels.length === 4;
+  const isP5 = labels.length === 5;
+  row.className = `pair-row ${isP5 ? 'p5' : isP4 ? 'p4' : isP3 ? 'p3' : 'p2'}`;
+  row.innerHTML = labels.map(l => `<input class="f-in" placeholder="${l}">`).join('') +
+    `<button class="pair-remove" onclick="this.closest('.pair-row').remove()">×</button>`;
+  container.appendChild(row);
+};
+
+function getPairRows(containerId, keys) {
+  const container = document.getElementById(containerId);
+  if (!container) return [];
+  return [...container.querySelectorAll('.pair-row')].map(row => {
+    const ins = row.querySelectorAll('.f-in, .f-sel');
+    const obj = {};
+    keys.forEach((k, i) => { obj[k] = ins[i]?.value?.trim() || ''; });
+    return obj;
+  }).filter(obj => Object.values(obj).some(v => v));
+}
+
+function setPairRows(containerId, keys, data, labels) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  (data || []).forEach(item => {
+    window.addPairRow(containerId, '', labels);
+    const row = container.lastElementChild;
+    const ins = row.querySelectorAll('.f-in, .f-sel');
+    keys.forEach((k, i) => { if (ins[i]) ins[i].value = item[k] || ''; });
+  });
+}
+
+// ===================== ORG MEMBER POSITION ROWS =====================
+window.addOmmPositionRow = () => {
+  const container = document.getElementById('omm-position-rows');
+  if (!container) return;
+  const row = document.createElement('div');
+  row.className = 'pair-row p2';
+  row.innerHTML = `<input class="f-in" placeholder="Position Title (e.g. Chairwoman)">
+    <input class="f-in" placeholder="of Organization (auto-filled if blank)">
+    <button class="pair-remove" onclick="this.closest('.pair-row').remove()">×</button>`;
+  container.appendChild(row);
+};
+
+function getOmmPositions() {
+  const container = document.getElementById('omm-position-rows');
+  if (!container) return [];
+  return [...container.querySelectorAll('.pair-row')].map(row => {
+    const ins = row.querySelectorAll('.f-in');
+    return { position: ins[0]?.value?.trim(), ofOrg: ins[1]?.value?.trim() };
+  }).filter(p => p.position);
+}
+
+function setOmmPositions(positions) {
+  const container = document.getElementById('omm-position-rows');
+  if (!container) return;
+  container.innerHTML = '';
+  (positions || []).forEach(p => {
+    window.addOmmPositionRow();
+    const row = container.lastElementChild;
+    const ins = row.querySelectorAll('.f-in');
+    if (ins[0]) ins[0].value = p.position || '';
+    if (ins[1]) ins[1].value = p.ofOrg || '';
+  });
+}
+
+// ===================== ASSET SEARCH =====================
+window.filterAssetDropdown = () => {
+  const q = document.getElementById('cm-asset-search')?.value?.toLowerCase() || '';
+  const dd = document.getElementById('cm-asset-dropdown');
+  if (!dd) return;
+  if (!q) { dd.classList.remove('open'); return; }
+  const filtered = localAssets.filter(a => (a.assetType === 'property' || !a.assetType) && a.name?.toLowerCase().includes(q) && !selectedAssetIds.includes(a.id));
+  if (!filtered.length) { dd.classList.remove('open'); return; }
+  dd.innerHTML = filtered.slice(0, 8).map(a =>
+    `<div class="asset-option" onclick="selectAsset('${a.id}')">
+      <div class="asset-option-name">${a.name}</div>
+      <div class="asset-option-sub">${a.location || ''} ${a.purpose ? '· '+a.purpose : ''}</div>
+    </div>`).join('');
+  dd.classList.add('open');
+};
+
+window.selectAsset = (id) => {
+  const asset = localAssets.find(a => a.id === id);
+  if (!asset || selectedAssetIds.includes(id)) return;
+  selectedAssetIds.push(id);
+  document.getElementById('cm-asset-search').value = '';
+  document.getElementById('cm-asset-dropdown').classList.remove('open');
+  renderSelectedAssets();
+};
+
+function renderSelectedAssets() {
+  const container = document.getElementById('cm-selected-assets');
+  if (!container) return;
+  container.innerHTML = selectedAssetIds.map(id => {
+    const a = localAssets.find(x => x.id === id);
+    if (!a) return '';
+    return `<div class="selected-asset-pill">
+      <div><div class="selected-asset-name">${a.name}</div>
+      <div class="selected-asset-sub">${a.location || ''} ${a.worth ? '· '+a.worth : ''}</div></div>
+      <button class="pair-remove" onclick="removeSelectedAsset('${id}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+window.removeSelectedAsset = (id) => {
+  selectedAssetIds = selectedAssetIds.filter(x => x !== id);
+  renderSelectedAssets();
+};
+
+window.filterTypedAssetDropdown = (type, searchId, dropdownId, selectedIds, selectFn) => {
+  const q = document.getElementById(searchId)?.value?.toLowerCase() || '';
+  const dd = document.getElementById(dropdownId);
+  if (!dd) return;
+  if (!q) { dd.classList.remove('open'); return; }
+  const filtered = localAssets.filter(a => a.assetType === type && a.name?.toLowerCase().includes(q) && !selectedIds.includes(a.id));
+  if (!filtered.length) { dd.classList.remove('open'); return; }
+  dd.innerHTML = filtered.slice(0, 8).map(a =>
+    `<div class="asset-option" onclick="window['${selectFn}']('${a.id}')">
+      <div class="asset-option-name">${a.name}</div>
+      <div class="asset-option-sub">${a.location || ''} ${a.worth ? '· '+a.worth : ''}</div>
+    </div>`).join('');
+  dd.classList.add('open');
+};
+
+window.filterVehicleDropdown = () => {
+  window.filterTypedAssetDropdown('vehicle', 'cm-vehicle-search', 'cm-vehicle-dropdown', selectedVehicleIds, 'selectVehicleAsset');
+};
+
+window.filterValuableDropdown = () => {
+  window.filterTypedAssetDropdown('valuable', 'cm-valuable-search', 'cm-valuable-dropdown', selectedValuableIds, 'selectValuableAsset');
+};
+
+window.selectVehicleAsset = (id) => {
+  const asset = localAssets.find(a => a.id === id);
+  if (!asset || selectedVehicleIds.includes(id)) return;
+  selectedVehicleIds.push(id);
+  document.getElementById('cm-vehicle-search').value = '';
+  document.getElementById('cm-vehicle-dropdown').classList.remove('open');
+  renderSelectedVehicles();
+};
+
+window.selectValuableAsset = (id) => {
+  const asset = localAssets.find(a => a.id === id);
+  if (!asset || selectedValuableIds.includes(id)) return;
+  selectedValuableIds.push(id);
+  document.getElementById('cm-valuable-search').value = '';
+  document.getElementById('cm-valuable-dropdown').classList.remove('open');
+  renderSelectedValuables();
+};
+
+function renderSelectedVehicles() {
+  const container = document.getElementById('cm-selected-vehicles');
+  if (!container) return;
+  container.innerHTML = selectedVehicleIds.map(id => {
+    const a = localAssets.find(x => x.id === id);
+    if (!a) return '';
+    return `<div class="selected-asset-pill">
+      <div><div class="selected-asset-name">${a.name}</div>
+      <div class="selected-asset-sub">${a.location || ''} ${a.worth ? '· '+a.worth : ''}</div></div>
+      <button class="pair-remove" onclick="removeSelectedVehicle('${id}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+function renderSelectedValuables() {
+  const container = document.getElementById('cm-selected-valuables');
+  if (!container) return;
+  container.innerHTML = selectedValuableIds.map(id => {
+    const a = localAssets.find(x => x.id === id);
+    if (!a) return '';
+    return `<div class="selected-asset-pill">
+      <div><div class="selected-asset-name">${a.name}</div>
+      <div class="selected-asset-sub">${a.location || ''} ${a.worth ? '· '+a.worth : ''}</div></div>
+      <button class="pair-remove" onclick="removeSelectedValuable('${id}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+window.removeSelectedVehicle = (id) => {
+  selectedVehicleIds = selectedVehicleIds.filter(x => x !== id);
+  renderSelectedVehicles();
+};
+window.removeSelectedValuable = (id) => {
+  selectedValuableIds = selectedValuableIds.filter(x => x !== id);
+  renderSelectedValuables();
+};
+
+window.setAssetTypeFilter = (el, type) => {
+  assetTypeFilter = type;
+  document.querySelectorAll('#asset-registry-search').forEach(() => {});
+  document.querySelectorAll('.filter-tabs .f-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderAssetList();
+};
+
+// ===================== CHARACTERS =====================
+window.openCharModal = (id = null) => {
+  editingCharId = id;
+  const char = id ? localChars.find(c => c.id === id) : null;
+
+  document.getElementById('char-modal-title').textContent = char ? 'Edit Character' : 'New Character';
+  document.getElementById('cm-delete-btn').style.display = char ? 'flex' : 'none';
+
+  // Reset tag data
+  ['residences','personality','interests','quirks','languages','strengths'].forEach(k => {
+    tagData['cm-'+k] = char ? [...(char[k] || [])] : [];
+  });
+  selectedVehicleIds = char ? [...(char.vehicleIds || [])] : [];
+  selectedValuableIds = char ? [...(char.valuableIds || [])] : [];
+
+  // Basic fields
+  const fields = ['role','status','photo','name','known-as','birth-name','age','race','born','height','build','eyes','hair','skin','marks','look','vibe','weapon','weakness','background','early-life','origin','goal','motivation','obstacles','stakes','momentum','flaw','growth','secrets'];
+  const keys = ['role','status','photo','name','knownAs','birthName','age','race','born','height','build','eyes','hair','skinTone','marks','signatureLook','vibe','weapon','weakness','background','earlyLife','origin','goal','motivation','obstacles','stakes','momentum','flaw','characterGrowth','secrets'];
+  fields.forEach((f, i) => {
+    const el = document.getElementById('cm-'+f);
+    if (el) el.value = char ? (char[keys[i]] || '') : '';
+  });
+
+  // Init tag fields
+  ['residences','personality','interests','quirks','languages','strengths'].forEach(k => {
+    initTagField('cm-'+k+'-wrap', 'cm-'+k+'-in', 'cm-'+k);
+  });
+  renderSelectedVehicles();
+  renderSelectedValuables();
+  setPairRows('cm-aliases-rows', ['alias','givenBy'], char?.aliases, ['Alias / Nickname','Given by']);
+
+  // Pair rows
+  setPairRows('cm-family-rows', ['name','relationship','status','dynamic'], char?.family, ['Name','Relationship','Status','Dynamic']);
+  setPairRows('cm-allies-rows', ['name','loyalty','dynamic'], char?.allies, ['Name','Loyalty Level (%)','Dynamic']);
+  setPairRows('cm-enemies-rows', ['name','threat','dynamic'], char?.enemies, ['Name','Threat Level (%)','Dynamic']);
+  setPairRows('cm-romances-rows', ['name','status','dynamic'], char?.romances, ['Name','Status','Dynamic']);
+  setPairRows('cm-valuables-rows', ['name','value'], char?.valuables, ['Item Name','Estimated Value']);
+  setPairRows('cm-financial-rows', ['account','value'], char?.financial, ['Account / Source','Value']);
+  setPairRows('cm-investments-rows', ['company','share'], char?.investments, ['Company','Share %']);
+
+  // Assets
+  selectedAssetIds = char ? [...(char.assetIds || [])] : [];
+  renderSelectedAssets();
+
+  // Auto-pull titles/orgs from orgMembers
+  renderLockedTitles(char?.name);
+  renderLockedOrgs(char?.name);
+
+  openModal('char-modal');
+};
+
+function renderLockedTitles(charName) {
+  const display = document.getElementById('cm-titles-display');
+  if (!display) return;
+  if (!charName) { display.innerHTML = '<div class="locked-empty">Save the character first, then add Organization Profile Cards.</div>'; return; }
+  const entries = localOrgMembers.filter(m => m.charName === charName);
+  if (!entries.length) { display.innerHTML = '<div class="locked-empty">No organization profiles linked yet.</div>'; return; }
+  display.innerHTML = entries.flatMap(m => (m.positions || []).map(p => {
+    const orgName = p.ofOrg || m.orgName || '';
+    return `<div class="locked-item"><span class="locked-item-label">${m.orgName||''}</span>${p.position} of ${orgName}</div>`;
+  })).join('');
+}
+
+function renderLockedOrgs(charName) {
+  const display = document.getElementById('cm-orgs-display');
+  if (!display) return;
+  if (!charName) { display.innerHTML = '<div class="locked-empty">Auto-populated from Organization Profile Cards.</div>'; return; }
+  const entries = localOrgMembers.filter(m => m.charName === charName);
+  if (!entries.length) { display.innerHTML = '<div class="locked-empty">No organizations linked yet.</div>'; return; }
+  display.innerHTML = entries.map(m => {
+    const org = localOrgs.find(o => o.id === m.orgId);
+    return `<div class="locked-item"><span class="locked-item-label">${org?.classification || ''}</span>${m.orgName || ''} ${org ? '· '+org.industryType : ''}</div>`;
+  }).join('');
+}
+
+window.saveChar = async () => {
+  const name = document.getElementById('cm-name').value.trim();
+  if (!name) { alert('Name is required.'); return; }
+  const data = {
+    role: document.getElementById('cm-role').value.trim(),
+    status: document.getElementById('cm-status').value,
+    photo: document.getElementById('cm-photo').value.trim(),
+    name,
+    knownAs: document.getElementById('cm-known-as').value.trim(),
+    birthName: document.getElementById('cm-birth-name').value.trim(),
+    age: document.getElementById('cm-age').value.trim(),
+    race: document.getElementById('cm-race').value.trim(),
+    born: document.getElementById('cm-born').value.trim(),
+    height: document.getElementById('cm-height').value.trim(),
+    build: document.getElementById('cm-build').value.trim(),
+    eyes: document.getElementById('cm-eyes').value.trim(),
+    hair: document.getElementById('cm-hair').value.trim(),
+    skinTone: document.getElementById('cm-skin').value.trim(),
+    marks: document.getElementById('cm-marks').value.trim(),
+    signatureLook: document.getElementById('cm-look').value.trim(),
+    vibe: document.getElementById('cm-vibe').value.trim(),
+    weapon: document.getElementById('cm-weapon').value.trim(),
+    weakness: document.getElementById('cm-weakness').value.trim(),
+    background: document.getElementById('cm-background').value.trim(),
+    earlyLife: document.getElementById('cm-early-life').value.trim(),
+    origin: document.getElementById('cm-origin').value.trim(),
+    goal: document.getElementById('cm-goal').value.trim(),
+    motivation: document.getElementById('cm-motivation').value.trim(),
+    obstacles: document.getElementById('cm-obstacles').value.trim(),
+    stakes: document.getElementById('cm-stakes').value.trim(),
+    momentum: document.getElementById('cm-momentum').value.trim(),
+    flaw: document.getElementById('cm-flaw').value.trim(),
+    characterGrowth: document.getElementById('cm-growth').value.trim(),
+    secrets: document.getElementById('cm-secrets').value.trim(),
+    residences: getTagData('cm-residences'),
+    aliases: getPairRows('cm-aliases-rows', ['alias','givenBy']),
+    personality: getTagData('cm-personality'),
+    interests: getTagData('cm-interests'),
+    quirks: getTagData('cm-quirks'),
+    languages: getTagData('cm-languages'),
+    strengths: getTagData('cm-strengths'),
+    vehicleIds: [...selectedVehicleIds],
+    valuableIds: [...selectedValuableIds],
+    family: getPairRows('cm-family-rows', ['name','relationship','status','dynamic']),
+    allies: getPairRows('cm-allies-rows', ['name','loyalty','dynamic']),
+    enemies: getPairRows('cm-enemies-rows', ['name','threat','dynamic']),
+    romances: getPairRows('cm-romances-rows', ['name','status','dynamic']),
+    valuables: [],
+    financial: getPairRows('cm-financial-rows', ['account','value']),
+    investments: getPairRows('cm-investments-rows', ['company','share']),
+    assetIds: [...selectedAssetIds],
+    updatedAt: Date.now()
+  };
+  try {
+    if (editingCharId) await updateDoc(doc(db, `${basePath}/characters`, editingCharId), data);
+    else await addDoc(charsCol, { ...data, createdAt: Date.now() });
+    closeModal('char-modal');
+  } catch (e) { console.error(e); alert('Error saving character.'); }
+};
+
+window.deleteChar = () => {
+  if (!editingCharId) return;
+  confirmAction('Delete Character', 'This will permanently delete this character profile.', async () => {
+    await deleteDoc(doc(db, `${basePath}/characters`, editingCharId));
+    closeModal('char-modal');
+  });
+};
+
+window.setCharFilter = (el, val) => {
+  charFilter = val;
+  document.querySelectorAll('#char-filters .f-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderChars();
+};
+
+window.renderChars = () => {
+  const grid = document.getElementById('chars-grid');
+  if (!grid) return;
+  const q = document.getElementById('char-search')?.value?.toLowerCase() || '';
+  let chars = localChars.filter(c => {
+    const matchQ = !q || c.name?.toLowerCase().includes(q) || c.role?.toLowerCase().includes(q) || c.aliases?.some(a => a.toLowerCase().includes(q));
+    const matchF = charFilter === 'all' || c.status?.toLowerCase() === charFilter;
+    return matchQ && matchF;
+  });
+  if (!chars.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-icon"><span class="material-icons">person_off</span></div>
+      <div class="empty-title">No characters found</div>
+      <div class="empty-desc">Create a new character profile to get started.</div>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = chars.map(c => {
+    const ini = initials(c.name);
+    const traits = (c.personality || []).slice(0, 3).map(t => `<span class="pill">${t}</span>`).join('');
+    return `<div class="char-card anim" onclick="openDossier('${c.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div class="char-initials">${ini}</div>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();openCharModal('${c.id}')" title="Edit">
+          <span class="material-icons" style="font-size:15px;">edit</span>
+        </button>
+      </div>
+      <div class="char-name">${c.name || '—'}</div>
+      <div class="char-role">${c.role || ''}</div>
+      <div class="char-badges">
+        ${statusBadge(c.status)}
+        ${c.vibe ? `<span class="badge badge-private">${c.vibe}</span>` : ''}
+      </div>
+      <div style="font-size:11px;color:var(--text3);">${c.born || ''} ${c.age ? '· Age '+c.age : ''}</div>
+      ${traits ? `<div class="char-pills" style="margin-top:10px;">${traits}</div>` : ''}
+    </div>`;
+  }).join('');
+};
+
+// ===================== CHARACTER DOSSIER =====================
+window.openDossier = (id) => {
+  const char = localChars.find(c => c.id === id);
+  if (!char) return;
+  currentDossierId = id;
+
+  document.getElementById('dos-initials').textContent = initials(char.name);
+  document.getElementById('dos-name').textContent = char.name || '—';
+  document.getElementById('dos-role').textContent = char.role || '';
+  document.getElementById('dos-badges').innerHTML = statusBadge(char.status) + (char.vibe ? ` <span class="badge badge-private">${char.vibe}</span>` : '');
+
+  const orgEntries = localOrgMembers.filter(m => m.charName === char.name);
+  const titles = orgEntries.flatMap(m => (m.positions || []).map(p => `${p.position} of ${p.ofOrg || m.orgName || ''}`));
+
+  let html = '';
+
+  // Quick facts
+  html += `<div class="d-section">
+    <div class="d-sec-title">Basic Information</div>
+    <div class="d-grid d3" style="margin-bottom:10px;">
+      ${char.name ? `<div><div class="d-field-label">Public Name</div><div class="d-field-val">${char.name}</div></div>` : ''}
+      ${char.knownAs ? `<div><div class="d-field-label">Known As</div><div class="d-field-val">${char.knownAs}</div></div>` : ''}
+      ${char.birthName ? `<div><div class="d-field-label">Birth Name</div><div class="d-field-val">${char.birthName}</div></div>` : ''}
+    </div>
+    <div class="d-grid d3">
+      ${char.age ? `<div><div class="d-field-label">Age</div><div class="d-field-val">${char.age}</div></div>` : ''}
+      ${char.race ? `<div><div class="d-field-label">Race</div><div class="d-field-val">${char.race}</div></div>` : ''}
+      ${char.born ? `<div><div class="d-field-label">Born</div><div class="d-field-val">${char.born}</div></div>` : ''}
+    </div>
+    ${char.residences?.length ? `<div class="d-field-label" style="margin-top:12px;">Residence(s)</div><div class="d-pill-group">${char.residences.map(r=>`<span class="pill">${r}</span>`).join('')}</div>` : ''}
+    ${char.aliases?.length ? `<div class="d-field-label" style="margin-top:12px;">Known Aliases</div><div class="d-pill-group">${char.aliases.map(a=>`<span class="pill">${a}</span>`).join('')}</div>` : ''}
+    ${titles.length ? `<div class="d-field-label" style="margin-top:12px;">Titles</div><div class="d-pill-group">${titles.map(t=>`<span class="pill" style="color:var(--gold);border-color:var(--gold-dim);">${t}</span>`).join('')}</div>` : ''}
+  </div>`;
+
+  // Appearance
+  if (char.height || char.build || char.eyes || char.hair || char.skinTone || char.marks || char.signatureLook) {
+    html += `<div class="d-section">
+      <div class="d-sec-title">Appearance</div>
+      <div class="d-grid d3">
+        ${char.height ? `<div><div class="d-field-label">Height</div><div class="d-field-val">${char.height}</div></div>` : ''}
+        ${char.build ? `<div><div class="d-field-label">Build</div><div class="d-field-val">${char.build}</div></div>` : ''}
+        ${char.eyes ? `<div><div class="d-field-label">Eyes</div><div class="d-field-val">${char.eyes}</div></div>` : ''}
+        ${char.hair ? `<div><div class="d-field-label">Hair</div><div class="d-field-val">${char.hair}</div></div>` : ''}
+        ${char.skinTone ? `<div><div class="d-field-label">Skin Tone</div><div class="d-field-val">${char.skinTone}</div></div>` : ''}
+        ${char.marks ? `<div><div class="d-field-label">Marks</div><div class="d-field-val">${char.marks}</div></div>` : ''}
+      </div>
+      ${char.signatureLook ? `<div class="d-field-label" style="margin-top:10px;">Signature Look</div><div class="d-field-val">${char.signatureLook}</div>` : ''}
+    </div>`;
+  }
+
+  // Impression
+  if (char.personality?.length || char.interests?.length || char.quirks?.length) {
+    html += `<div class="d-section">
+      <div class="d-sec-title">Impression</div>
+      ${char.personality?.length ? `<div class="d-field-label">Personality</div><div class="d-pill-group" style="margin-bottom:12px;">${char.personality.map(p=>`<span class="pill">${p}</span>`).join('')}</div>` : ''}
+      ${char.interests?.length ? `<div class="d-field-label">Interests</div><div class="d-pill-group" style="margin-bottom:12px;">${char.interests.map(i=>`<span class="pill">${i}</span>`).join('')}</div>` : ''}
+      ${char.quirks?.length ? `<div class="d-field-label">Quirks</div><div class="d-pill-group">${char.quirks.map(q=>`<span class="pill">${q}</span>`).join('')}</div>` : ''}
+    </div>`;
+  }
+
+  // Competencies
+  if (char.languages?.length || char.strengths?.length || char.weapon || char.weakness) {
+    html += `<div class="d-section">
+      <div class="d-sec-title">Competencies</div>
+      ${char.languages?.length ? `<div class="d-field-label">Languages</div><div class="d-pill-group" style="margin-bottom:10px;">${char.languages.map(l=>`<span class="pill">${l}</span>`).join('')}</div>` : ''}
+      ${char.strengths?.length ? `<div class="d-field-label">Core Strengths</div><div class="d-pill-group" style="margin-bottom:10px;">${char.strengths.map(s=>`<span class="pill">${s}</span>`).join('')}</div>` : ''}
+      <div class="d-grid">
+        ${char.weapon ? `<div><div class="d-field-label">Weapon of Choice</div><div class="d-field-val">${char.weapon}</div></div>` : ''}
+        ${char.weakness ? `<div><div class="d-field-label">Weakness</div><div class="d-field-val">${char.weakness}</div></div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // Relationships
+  const hasRel = char.family?.length || char.allies?.length || char.enemies?.length || char.romances?.length;
+  if (hasRel) {
+    html += `<div class="d-section"><div class="d-sec-title">Relationships</div>`;
+    if (char.family?.length) {
+      html += `<div class="d-field-label" style="margin-bottom:8px;">Social Circle</div>`;
+      char.family.forEach(f => {
+        const lc = localChars.find(x => x.name === f.name);
+        html += `<div class="liaison-card" style="margin-bottom:8px;">
+          <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;">
+            <span class="liaison-card-name" style="${lc?'color:var(--gold);cursor:pointer;':''}" ${lc?`onclick="closeModal('dossier-modal');openDossier('${lc.id}')"`:''}>${f.name}</span>
+            ${f.relationship?`<span style="font-size:11px;color:var(--text3);">${f.relationship}</span>`:''}
+            ${f.status?`<span class="badge badge-${f.status.toLowerCase()==='deceased'?'deceased':'unknown'}" style="margin-left:4px;">${f.status}</span>`:''}
+          </div>
+          ${f.dynamic?`<div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6;border-left:2px solid var(--border2);padding-left:8px;">Dynamic with ${char.name}: ${f.dynamic}</div>`:''}
+        </div>`;
+      });
+    }
+    if (char.allies?.length) {
+      html += `<div class="d-field-label" style="margin-bottom:8px;margin-top:12px;">Allies</div>`;
+      char.allies.forEach(a => {
+        const lc = localChars.find(x => x.name === a.name);
+        html += `<div class="liaison-card" style="margin-bottom:8px;">
+          <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;">
+            <span class="liaison-card-name" style="${lc?'color:var(--gold);cursor:pointer;':''}" ${lc?`onclick="closeModal('dossier-modal');openDossier('${lc.id}')"`:''}>${a.name}</span>
+            ${a.loyalty?`<span style="font-size:11px;color:var(--text3);">${a.loyalty}% loyalty</span>`:''}
+          </div>
+          ${a.loyalty?pctBar(a.loyalty):''}
+          ${a.dynamic?`<div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6;border-left:2px solid var(--border2);padding-left:8px;">${a.dynamic}</div>`:''}
+        </div>`;
+      });
+    }
+    if (char.enemies?.length) {
+      html += `<div class="d-field-label" style="margin-bottom:8px;margin-top:12px;">Enemies</div>`;
+      char.enemies.forEach(e => {
+        const lc = localChars.find(x => x.name === e.name);
+        html += `<div class="liaison-card" style="margin-bottom:8px;">
+          <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;">
+            <span class="liaison-card-name" style="${lc?'color:var(--gold);cursor:pointer;':''}" ${lc?`onclick="closeModal('dossier-modal');openDossier('${lc.id}')"`:''}>${e.name}</span>
+            ${e.threat?`<span style="font-size:11px;color:var(--text3);">${e.threat}% threat</span>`:''}
+          </div>
+          ${e.threat?pctBar(e.threat,'threat'):''}
+          ${e.dynamic?`<div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6;border-left:2px solid var(--border2);padding-left:8px;">${e.dynamic}</div>`:''}
+        </div>`;
+      });
+    }
+    if (char.romances?.length) {
+      html += `<div class="d-field-label" style="margin-bottom:8px;margin-top:12px;">Romances</div>`;
+      char.romances.forEach(r => {
+        const lc = localChars.find(x => x.name === r.name);
+        html += `<div class="liaison-card" style="margin-bottom:8px;">
+          <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;">
+            <span class="liaison-card-name" style="${lc?'color:var(--gold);cursor:pointer;':''}" ${lc?`onclick="closeModal('dossier-modal');openDossier('${lc.id}')"`:''}>${r.name}</span>
+            ${r.status?`<span style="font-size:11px;color:var(--text3);">${r.status}</span>`:''}
+          </div>
+          ${r.dynamic?`<div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6;border-left:2px solid var(--border2);padding-left:8px;">${r.dynamic}</div>`:''}
+        </div>`;
+      });
+    }
+    html += `</div>`;
+  }
+
+  // Liaisons
+  if (orgEntries.length) {
+    html += `<div class="d-section"><div class="d-sec-title">Liaisons</div>`;
+    orgEntries.forEach(m => {
+      const org = localOrgs.find(o => o.id === m.orgId);
+      html += `<div class="liaison-card">
+        <div class="liaison-card-name">${m.orgName || ''}</div>
+        <div class="liaison-card-pos">${(m.positions||[]).map(p=>p.position).join(' · ')}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          ${org ? classBadge(org.classification) : ''}
+          ${m.zKnow ? knowBadge(m.zKnow) : ''}
+          ${m.zLoyalty !== undefined ? `<span class="badge badge-private">Loyalty ${m.zLoyalty}%</span>` : ''}
+        </div>
+        ${org ? `<div style="font-size:11px;color:var(--text3);">${org.industryType || ''} ${org.powerScale ? '· '+org.powerScale : ''}</div>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Assets
+  const ownedAssets = (char.assetIds || []).map(id => localAssets.find(a => a.id === id)).filter(Boolean);
+  const ownedVehicles = (char.vehicleIds || []).map(id => localAssets.find(a => a.id === id)).filter(Boolean);
+  const ownedValuables = (char.valuableIds || []).map(id => localAssets.find(a => a.id === id)).filter(Boolean);
+  const hasAssets = ownedAssets.length || ownedVehicles.length || ownedValuables.length || char.financial?.length || char.investments?.length;
+  if (hasAssets) {
+    // Net Worth calculation
+    let netWorth = 0;
+    ownedAssets.forEach(a => { netWorth += parseWorth(a.worth); });
+    ownedVehicles.forEach(a => { netWorth += parseWorth(a.worth); });
+    ownedValuables.forEach(a => { netWorth += parseWorth(a.worth); });
+    (char.financial || []).forEach(f => { netWorth += parseWorth(f.value); });
+
+    html += `<div class="d-section"><div class="d-sec-title">Assets</div>`;
+    if (netWorth > 0) {
+      html += `<div style="background:var(--card2);border:1px solid var(--gold-dim);border-radius:8px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);">Estimated Net Worth</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold);">${formatNetWorth(netWorth)}</div>
+      </div>`;
+    }
+    if (ownedAssets.length) {
+      html += `<div class="d-field-label" style="margin-bottom:8px;">Properties</div>`;
+      ownedAssets.forEach(a => {
+        html += `<div class="liaison-card">
+          <div class="liaison-card-name">${a.name}</div>
+          <div class="liaison-card-pos">${a.location || ''} ${a.purpose ? '· '+a.purpose : ''}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;">${a.description || ''}</div>
+          <div style="font-size:11px;color:var(--gold);margin-top:6px;">${a.worth ? 'Value: '+a.worth : ''} ${a.coreFunction ? '· '+a.coreFunction : ''}</div>
+        </div>`;
+      });
+    }
+    if (ownedVehicles.length) {
+      html += `<div class="d-field-label" style="margin-top:12px;margin-bottom:8px;">Vehicles</div>`;
+      ownedVehicles.forEach(a => {
+        html += `<div class="liaison-card">
+          <div class="liaison-card-name">${a.name}</div>
+          <div class="liaison-card-pos">${a.location || ''}</div>
+          <div style="font-size:11px;color:var(--gold);margin-top:4px;">${a.worth ? 'Value: '+a.worth : ''}</div>
+        </div>`;
+      });
+    }
+    if (ownedValuables.length) {
+      html += `<div class="d-field-label" style="margin-top:12px;margin-bottom:8px;">Valuables</div>`;
+      ownedValuables.forEach(a => {
+        html += `<div class="liaison-card">
+          <div class="liaison-card-name">${a.name}</div>
+          <div style="font-size:11px;color:var(--gold);margin-top:4px;">${a.worth ? 'Value: '+a.worth : ''}</div>
+        </div>`;
+      });
+    }
+    if (char.financial?.length) {
+      html += `<div class="d-field-label" style="margin-top:12px;margin-bottom:8px;">Financial & Monetary</div>
+        <table class="d-table">${char.financial.map(f=>`<tr><td>${f.account}</td><td style="color:var(--gold);">${f.value}</td></tr>`).join('')}</table>`;
+    }
+    if (char.investments?.length) {
+      html += `<div class="d-field-label" style="margin-top:12px;margin-bottom:8px;">Investments</div>
+        <table class="d-table">${char.investments.map(i=>`<tr><td>${i.company}</td><td>${i.share}%</td></tr>`).join('')}</table>`;
+    }
+    html += `</div>`;
+  }
+
+  // Story Arc
+  const arcFields = [['background','Background'],['earlyLife','Early Life'],['origin','Origin'],['goal','Goal'],['motivation','Motivation'],['obstacles','Obstacles'],['stakes','Stakes'],['momentum','Forward Momentum'],['flaw','Flaw'],['characterGrowth','Character Growth'],['secrets','Secrets']];
+  const hasArc = arcFields.some(([k]) => char[k]);
+  if (hasArc) {
+    html += `<div class="d-section"><div class="d-sec-title">Story Arc</div>`;
+    arcFields.forEach(([k, label]) => {
+      if (char[k]) html += `<div class="d-field-label" style="margin-bottom:4px;">${label}</div><div class="d-text-block" style="margin-bottom:14px;">${char[k]}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('dossier-body').innerHTML = html || '<div class="empty-state"><div class="empty-desc">No details recorded yet.</div></div>';
+  openModal('dossier-modal');
+};
+
+window.editCurrentDossier = () => {
+  closeModal('dossier-modal');
+  openCharModal(currentDossierId);
+};
+
+// ===================== ORGANIZATIONS =====================
+window.openOrgModal = (id = null) => {
+  editingOrgId = id;
+  const org = id ? localOrgs.find(o => o.id === id) : null;
+  document.getElementById('org-modal-title').textContent = org ? 'Edit Organization' : 'New Organization';
+  document.getElementById('om-delete-btn').style.display = org ? 'flex' : 'none';
+
+  const textFields = [['om-name','name'],['om-revenue','annualRevenue'],['om-years','yearsEstablished'],['om-industry','industryType'],['om-hq','hqPrimary'],['om-desc','description'],['om-cmd','commandStructure'],['om-power','powerScale'],['om-class','classification'],['om-excl','exclusivityLevel'],['om-sec','securityLevel'],['om-founder','founder'],['om-successor','successor'],['om-creed','creed'],['om-origin','origin'],['om-evolution','evolution'],['om-sites','sacredSites'],['om-traditions','traditions'],['om-rules','orgRules'],['om-timeline','timeline']];
+  textFields.forEach(([elId, key]) => {
+    const el = document.getElementById(elId);
+    if (el) el.value = org ? (org[key] || '') : '';
+  });
+
+  ['aliases','bases','functions','regions'].forEach(k => {
+    tagData['om-'+k] = org ? [...(org[k] || [])] : [];
+    initTagField('om-'+k+'-wrap', 'om-'+k+'-in', 'om-'+k);
+  });
+
+  setPairRows('om-personnel-rows', ['title','number','function'], org?.personnel, ['Title / Rank','Number','Function']);
+  setPairRows('om-founders-rows', ['name','years','throned','dethroned'], org?.genFounders, ['Name','Years Active','How Throned','How Dethroned']);
+  setPairRows('om-alliances-rows', ['name','details'], org?.alliances, ['Alliance Name / Faction','Details & Terms']);
+  setPairRows('om-rivalries-rows', ['name','details'], org?.rivalries, ['Rival Name / Faction','Blood feud details...']);
+  setPairRows('om-deaths-rows', ['name','position','year','howDied','details'], org?.sigDeaths, ['Name','Position','Year','How Died','Details']);
+  openModal('org-modal');
+};
+
+window.saveOrg = async () => {
+  const name = document.getElementById('om-name').value.trim();
+  if (!name) { alert('Organization name is required.'); return; }
+  const data = {
+    name,
+    annualRevenue: document.getElementById('om-revenue').value.trim(),
+    yearsEstablished: document.getElementById('om-years').value.trim(),
+    industryType: document.getElementById('om-industry').value.trim(),
+    hqPrimary: document.getElementById('om-hq').value.trim(),
+    description: document.getElementById('om-desc').value.trim(),
+    commandStructure: document.getElementById('om-cmd').value,
+    powerScale: document.getElementById('om-power').value,
+    classification: document.getElementById('om-class').value,
+    exclusivityLevel: document.getElementById('om-excl').value,
+    securityLevel: document.getElementById('om-sec').value,
+    aliases: getTagData('om-aliases'),
+    bases: getTagData('om-bases'),
+    functions: getTagData('om-functions'),
+    regions: getTagData('om-regions'),
+    personnel: getPairRows('om-personnel-rows', ['title','number','function']),
+    founder: document.getElementById('om-founder').value.trim(),
+    successor: document.getElementById('om-successor').value.trim(),
+    creed: document.getElementById('om-creed').value.trim(),
+    origin: document.getElementById('om-origin').value.trim(),
+    evolution: document.getElementById('om-evolution').value.trim(),
+    sacredSites: document.getElementById('om-sites').value.trim(),
+    traditions: document.getElementById('om-traditions').value.trim(),
+    orgRules: document.getElementById('om-rules').value.trim(),
+    timeline: document.getElementById('om-timeline').value.trim(),
+    genFounders: getPairRows('om-founders-rows', ['name','years','throned','dethroned']),
+    alliances: getPairRows('om-alliances-rows', ['name','details']),
+    rivalries: getPairRows('om-rivalries-rows', ['name','details']),
+    sigDeaths: getPairRows('om-deaths-rows', ['name','position','year','howDied','details']),
+    updatedAt: Date.now()
+  };
+  try {
+    if (editingOrgId) await updateDoc(doc(db, `${basePath}/organizations`, editingOrgId), data);
+    else await addDoc(orgsCol, { ...data, createdAt: Date.now() });
+    closeModal('org-modal');
+    renderHierarchyOrgs();
+  } catch (e) { console.error(e); alert('Error saving organization.'); }
+};
+
+window.deleteOrg = () => {
+  if (!editingOrgId) return;
+  confirmAction('Delete Organization', 'This will permanently delete this organization and all its profile cards.', async () => {
+    const members = localOrgMembers.filter(m => m.orgId === editingOrgId);
+    for (const m of members) await deleteDoc(doc(db, `${basePath}/orgMembers`, m.id));
+    await deleteDoc(doc(db, `${basePath}/organizations`, editingOrgId));
+    closeModal('org-modal');
+    closeModal('org-detail-modal');
+  });
+};
+
+window.renderOrgs = () => {
+  const grid = document.getElementById('orgs-grid');
+  if (!grid) return;
+  const q = document.getElementById('org-search')?.value?.toLowerCase() || '';
+  let orgs = localOrgs.filter(o => !q || o.name?.toLowerCase().includes(q) || o.description?.toLowerCase().includes(q));
+  if (!orgs.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-icon"><span class="material-icons">corporate_fare</span></div>
+      <div class="empty-title">No organizations yet</div>
+      <div class="empty-desc">Create your first organization to start building the hierarchy.</div>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = orgs.map(o => {
+    const memberCount = localOrgMembers.filter(m => m.orgId === o.id).length;
+    return `<div class="org-card anim" onclick="openOrgDetail('${o.id}')">
+      <div class="org-card-header">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="org-card-name">${o.name}</div>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();openOrgModal('${o.id}')" title="Edit">
+            <span class="material-icons" style="font-size:15px;">edit</span>
+          </button>
+        </div>
+        <div class="org-card-badges">
+          ${classBadge(o.classification)}
+          ${o.powerScale ? `<span class="badge badge-unknown">${o.powerScale}</span>` : ''}
+          ${o.securityLevel === 'Military-grade' ? `<span class="badge badge-military">Military-grade</span>` : ''}
+        </div>
+        <div class="org-card-desc">${o.description ? o.description.slice(0,120)+'...' : ''}</div>
+      </div>
+      <div class="org-card-footer">
+        <div class="org-card-stat">Members<span>${memberCount}</span></div>
+        <div class="org-card-stat">Industry<span>${o.industryType || '—'}</span></div>
+        <div class="org-card-stat">Revenue<span>${o.annualRevenue || '—'}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// Org Detail Panel
+window.openOrgDetail = (id) => {
+  const org = localOrgs.find(o => o.id === id);
+  if (!org) return;
+  currentDetailOrgId = id;
+  document.getElementById('od-name').textContent = org.name;
+  document.getElementById('od-eyebrow').textContent = org.classification || 'Organization';
+
+  const info = document.getElementById('od-info');
+  info.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+      ${classBadge(org.classification)}
+      ${org.powerScale ? `<span class="badge badge-unknown">${org.powerScale}</span>` : ''}
+      ${org.commandStructure ? `<span class="badge badge-unknown">${org.commandStructure}</span>` : ''}
+    </div>
+    ${org.description ? `<div class="d-text-block" style="margin-bottom:14px;">${org.description}</div>` : ''}
+    <div class="d-grid" style="margin-bottom:12px;">
+      ${org.yearsEstablished ? `<div><div class="d-field-label">Est.</div><div class="d-field-val">${org.yearsEstablished}</div></div>` : ''}
+      ${org.annualRevenue ? `<div><div class="d-field-label">Revenue</div><div class="d-field-val">${org.annualRevenue}</div></div>` : ''}
+      ${org.hqPrimary ? `<div><div class="d-field-label">HQ</div><div class="d-field-val">${org.hqPrimary}</div></div>` : ''}
+      ${org.exclusivityLevel ? `<div><div class="d-field-label">Exclusivity</div><div class="d-field-val">${org.exclusivityLevel}</div></div>` : ''}
+      ${org.securityLevel ? `<div><div class="d-field-label">Security</div><div class="d-field-val">${org.securityLevel}</div></div>` : ''}
+    </div>
+    ${org.functions?.length ? `<div class="d-field-label">Functions</div><div class="d-pill-group" style="margin-bottom:12px;">${org.functions.map(f=>`<span class="pill">${f}</span>`).join('')}</div>` : ''}
+    ${org.regions?.length ? `<div class="d-field-label">Regions</div><div class="d-pill-group" style="margin-bottom:12px;">${org.regions.map(r=>`<span class="pill">${r}</span>`).join('')}</div>` : ''}
+    ${org.bases?.length ? `<div class="d-field-label">Secondary Bases</div><div class="d-pill-group">${org.bases.map(b=>`<span class="pill">${b}</span>`).join('')}</div>` : ''}
+    ${org.creed ? `<div class="d-field-label" style="margin-top:14px;">Creed</div><div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--gold);margin-bottom:12px;">"${org.creed}"</div>` : ''}
+    
+    <div class="d-grid" style="margin-bottom:12px;">
+      ${org.founder ? `<div><div class="d-field-label">Original Founder</div><div class="d-field-val">${org.founder}</div></div>` : ''}
+      ${org.successor ? `<div><div class="d-field-label">Current Successor</div><div class="d-field-val">${org.successor}</div></div>` : ''}
+    </div>
+
+    ${org.origin ? `<div class="d-field-label" style="margin-top:14px;">Origin</div><div class="d-text-block" style="margin-bottom:12px;">${org.origin}</div>` : ''}
+    ${org.evolution ? `<div class="d-field-label" style="margin-top:14px;">The Evolution</div><div class="d-text-block" style="margin-bottom:12px;">${org.evolution}</div>` : ''}
+    
+    ${org.genFounders?.length ? `<div class="d-field-label" style="margin-top:14px;margin-bottom:8px;">Lineage of the Throne</div>
+      <table class="d-table" style="margin-bottom:12px;">
+        <tr><th>Name</th><th>Years</th><th>Throned</th><th>Dethroned</th></tr>
+        ${org.genFounders.map(f=>`<tr><td style="color:var(--gold);">${f.name}</td><td>${f.years}</td><td>${f.throned}</td><td>${f.dethroned}</td></tr>`).join('')}
+      </table>` : ''}
+
+    ${org.sacredSites ? `<div class="d-field-label" style="margin-top:14px;">Sacred Sites</div><div class="d-text-block" style="margin-bottom:12px;">${org.sacredSites}</div>` : ''}
+    ${org.traditions ? `<div class="d-field-label" style="margin-top:14px;">Traditions</div><div class="d-text-block" style="margin-bottom:12px;">${org.traditions}</div>` : ''}
+    ${org.orgRules ? `<div class="d-field-label" style="margin-top:14px;">Rules & Laws</div><div class="d-text-block" style="margin-bottom:12px;border-color:var(--crimson);">${org.orgRules}</div>` : ''}
+
+    ${org.alliances?.length ? `<div class="d-field-label" style="margin-top:14px;margin-bottom:8px;">Key Alliances</div>
+      <table class="d-table" style="margin-bottom:12px;">${org.alliances.map(a=>`<tr><td style="color:var(--info);font-weight:600;">${a.name}</td><td style="color:var(--text2);">${a.details}</td></tr>`).join('')}</table>` : ''}
+      
+    ${org.rivalries?.length ? `<div class="d-field-label" style="margin-top:14px;margin-bottom:8px;">Key Rivalries</div>
+      <table class="d-table" style="margin-bottom:12px;">${org.rivalries.map(r=>`<tr><td style="color:var(--crimson-light);font-weight:600;">${r.name}</td><td style="color:var(--text2);">${r.details}</td></tr>`).join('')}</table>` : ''}
+
+    ${org.sigDeaths?.length ? `<div class="d-field-label" style="margin-top:14px;margin-bottom:8px;">Significant Deaths</div>
+      <table class="d-table" style="margin-bottom:12px;">
+        <tr><th>Name / Pos</th><th>Year</th><th>Cause</th><th>Details</th></tr>
+        ${org.sigDeaths.map(d=>`<tr><td style="color:var(--crimson);">${d.name}<br><span style="font-size:9px;color:var(--text3);">${d.position}</span></td><td>${d.year}</td><td>${d.howDied}</td><td style="color:var(--text2);">${d.details}</td></tr>`).join('')}
+      </table>` : ''}
+
+    ${org.timeline ? `<div class="d-field-label" style="margin-top:14px;">Timeline of Major Events</div><div class="d-text-block" style="margin-bottom:12px;">${org.timeline}</div>` : ''}
+    ${org.personnel?.length ? `<div class="d-field-label" style="margin-top:14px;margin-bottom:8px;">Personnel</div>
+      <table class="d-table">${org.personnel.map(p=>`<tr><td>${p.title}</td><td>${p.number||''}</td><td style="color:var(--text2);font-size:11px;">${p.function||''}</td></tr>`).join('')}</table>` : ''}
+  `;
+
+  const membersEl = document.getElementById('od-members');
+  const members = localOrgMembers.filter(m => m.orgId === id).sort((a,b) => (parseInt(a.chainLevel)||99) - (parseInt(b.chainLevel)||99));
+  if (!members.length) {
+    membersEl.innerHTML = `<div class="empty-state" style="padding:40px 0;"><div class="empty-desc">No profile cards yet.</div></div>`;
+  } else {
+    membersEl.innerHTML = members.map(m => `
+      <div class="member-row" onclick="openOrgMemberView('${id}','${m.id}')">
+        <div class="member-row-initials">${initials(m.charName)}</div>
+        <div>
+          <div class="member-row-name">${m.charName}</div>
+          <div class="member-row-pos">${(m.positions||[]).map(p=>p.position).join(' · ')} ${m.divisionName||m.chainLevel ? '· '+(m.divisionName||m.chainLevel) : ''}</div>
+        </div>
+        <div style="margin-left:auto;font-size:10px;color:var(--text3);">${m.zLoyalty !== undefined && m.zLoyalty !== '' ? m.zLoyalty+'%' : ''}</div>
+      </div>`).join('');
+  }
+
+  openModal('org-detail-modal');
+};
+
+window.editCurrentOrg = () => {
+  closeModal('org-detail-modal');
+  openOrgModal(currentDetailOrgId);
+};
+
+window.openOrgMemberModalFromDetail = () => {
+  openOrgMemberModal(currentDetailOrgId);
+};
+
+window.goToHierarchyFromDetail = () => {
+  closeModal('org-detail-modal');
+  window.currentHierOrg = currentDetailOrgId;
+  showView('hierarchy-view');
+};
+
+// ===================== ORG MEMBERS =====================
+window.openOrgMemberModal = (orgId = null, memberId = null) => {
+  editingOrgMemberId = memberId;
+  const member = memberId ? localOrgMembers.find(m => m.id === memberId) : null;
+
+  document.getElementById('omm-title').textContent = member ? 'Edit Profile Card' : 'New Profile Card';
+  document.getElementById('omm-delete-btn').style.display = member ? 'flex' : 'none';
+
+  // Populate org dropdown
+  const orgSel = document.getElementById('omm-org');
+  orgSel.innerHTML = '<option value="">— Select Organization —</option>' +
+    localOrgs.map(o => `<option value="${o.id}" ${(member?.orgId || orgId) === o.id ? 'selected' : ''}>${o.name}</option>`).join('');
+
+  document.getElementById('omm-char-name').value = member?.charName || '';
+
+  setOmmPositions(member?.positions);
+
+  const fields = [['omm-alias','alias'],['omm-years','yearsActive'],['omm-recruit','recruitmentType'],['omm-role','role'],['omm-spec','specialization'],['omm-reports','reportsTo'],['omm-chain','divisionName'],['omm-influence','influenceLevel'],['omm-reach','operationalReach'],['omm-resources','resourcesControlled'],['omm-traits','knownTraits'],['omm-z-link','zLink'],['omm-z-know','zKnow'],['omm-z-loyalty','zLoyalty'],['omm-z-threat','zThreat'],['omm-z-dynamic','zDynamic'],['omm-l-link','lLink'],['omm-l-loyalty','lLoyalty'],['omm-l-threat','lThreat'],['omm-l-dynamic','lDynamic']];
+  fields.forEach(([elId, key]) => {
+    const el = document.getElementById(elId);
+    if (el) el.value = member ? (member[key] !== undefined ? member[key] : '') : '';
+  });
+
+  tagData['omm-functions'] = member ? [...(member.functions || [])] : [];
+  initTagField('omm-functions-wrap', 'omm-functions-in', 'omm-functions');
+
+  openModal('org-member-modal');
+};
+window.openOrgMemberView = (orgId, memberId) => {
+  const m = localOrgMembers.find(x => x.id === memberId);
+  if (!m) return;
+  document.getElementById('omv-initials').textContent = initials(m.charName);
+  document.getElementById('omv-name').textContent = m.charName || '—';
+  document.getElementById('omv-org').textContent = m.orgName || '';
+  const posText = (m.positions || []).map(p => p.position).join(' · ') || m.role || '';
+  document.getElementById('omv-badges').innerHTML = posText ? `<span class="badge badge-private">${posText}</span>` : '';
+  document.getElementById('omv-edit-btn').onclick = () => { closeModal('org-member-view-modal'); openOrgMemberModal(orgId, memberId); };
+
+  let html = '';
+
+  // Core info
+  html += `<div class="d-section"><div class="d-sec-title">Profile</div><div class="d-grid d3">
+    ${m.role ? `<div><div class="d-field-label">Role</div><div class="d-field-val">${m.role}</div></div>` : ''}
+    ${m.specialization ? `<div><div class="d-field-label">Specialization</div><div class="d-field-val">${m.specialization}</div></div>` : ''}
+    ${m.divisionName||m.chainLevel ? `<div><div class="d-field-label">Division</div><div class="d-field-val">${m.divisionName||m.chainLevel}</div></div>` : ''}
+    ${m.reportsTo ? `<div><div class="d-field-label">Reports To</div><div class="d-field-val">${m.reportsTo}</div></div>` : ''}
+    ${m.influenceLevel ? `<div><div class="d-field-label">Influence</div><div class="d-field-val">${m.influenceLevel}</div></div>` : ''}
+    ${m.operationalReach ? `<div><div class="d-field-label">Reach</div><div class="d-field-val">${m.operationalReach}</div></div>` : ''}
+    ${m.recruitmentType ? `<div><div class="d-field-label">Recruited</div><div class="d-field-val">${m.recruitmentType}</div></div>` : ''}
+    ${m.yearsActive ? `<div><div class="d-field-label">Years Active</div><div class="d-field-val">${m.yearsActive}</div></div>` : ''}
+    ${m.resourcesControlled ? `<div><div class="d-field-label">Resources</div><div class="d-field-val">${m.resourcesControlled}</div></div>` : ''}
+  </div>
+  ${m.functions?.length ? `<div class="d-field-label" style="margin-top:10px;">Functions</div><div class="d-pill-group">${m.functions.map(f=>`<span class="pill">${f}</span>`).join('')}</div>` : ''}
+  ${m.knownTraits ? `<div class="d-field-label" style="margin-top:10px;">Known Traits</div><div class="d-text-block">${m.knownTraits}</div>` : ''}
+  </div>`;
+
+  // Zarina Chain
+  if (m.zLink || m.zKnow || m.zLoyalty || m.zThreat || m.zDynamic) {
+    html += `<div class="d-section"><div class="d-sec-title">Zarina Chain</div><div class="d-grid">
+      ${m.zLink ? `<div><div class="d-field-label">Social Link</div><div class="d-field-val">${m.zLink}</div></div>` : ''}
+      ${m.zKnow ? `<div><div class="d-field-label">Knowledge</div><div>${knowBadge(m.zKnow)}</div></div>` : ''}
+      ${m.zLoyalty !== undefined && m.zLoyalty !== '' ? `<div><div class="d-field-label">Loyalty</div><div class="d-field-val">${m.zLoyalty}%</div>${pctBar(m.zLoyalty)}</div>` : ''}
+      ${m.zThreat !== undefined && m.zThreat !== '' ? `<div><div class="d-field-label">Threat</div><div class="d-field-val">${m.zThreat}%</div>${pctBar(m.zThreat,'threat')}</div>` : ''}
+    </div>
+    ${m.zDynamic ? `<div class="d-field-label" style="margin-top:10px;">Dynamic</div><div class="d-text-block">${m.zDynamic}</div>` : ''}
+    </div>`;
+  }
+
+  // Leah Chain
+  if (m.lLink || m.lLoyalty || m.lThreat || m.lDynamic) {
+    html += `<div class="d-section"><div class="d-sec-title">Leah Chain</div><div class="d-grid">
+      ${m.lLink ? `<div><div class="d-field-label">Social Link</div><div class="d-field-val">${m.lLink}</div></div>` : ''}
+      ${m.lLoyalty !== undefined && m.lLoyalty !== '' ? `<div><div class="d-field-label">Loyalty</div><div class="d-field-val">${m.lLoyalty}%</div>${pctBar(m.lLoyalty)}</div>` : ''}
+      ${m.lThreat !== undefined && m.lThreat !== '' ? `<div><div class="d-field-label">Threat</div><div class="d-field-val">${m.lThreat}%</div>${pctBar(m.lThreat,'threat')}</div>` : ''}
+    </div>
+    ${m.lDynamic ? `<div class="d-field-label" style="margin-top:10px;">Dynamic</div><div class="d-text-block">${m.lDynamic}</div>` : ''}
+    </div>`;
+  }
+
+  document.getElementById('omv-body').innerHTML = html || '<div class="empty-state"><div class="empty-desc">No details recorded yet.</div></div>';
+  openModal('org-member-view-modal');
+};
+window.saveOrgMember = async () => {
+  const orgId = document.getElementById('omm-org').value;
+  const charName = document.getElementById('omm-char-name').value.trim();
+  if (!orgId || !charName) { alert('Organization and character name are required.'); return; }
+  const org = localOrgs.find(o => o.id === orgId);
+  const data = {
+    orgId, orgName: org?.name || '',
+    charName,
+    positions: getOmmPositions(),
+    alias: document.getElementById('omm-alias').value.trim(),
+    yearsActive: document.getElementById('omm-years').value.trim(),
+    recruitmentType: document.getElementById('omm-recruit').value,
+    role: document.getElementById('omm-role').value.trim(),
+    specialization: document.getElementById('omm-spec').value.trim(),
+    functions: getTagData('omm-functions'),
+    reportsTo: document.getElementById('omm-reports').value.trim(),
+    divisionName: document.getElementById('omm-chain').value.trim(),
+    influenceLevel: document.getElementById('omm-influence').value,
+    operationalReach: document.getElementById('omm-reach').value.trim(),
+    resourcesControlled: document.getElementById('omm-resources').value.trim(),
+    knownTraits: document.getElementById('omm-traits').value.trim(),
+    zLink: document.getElementById('omm-z-link').value.trim(),
+    zKnow: document.getElementById('omm-z-know').value,
+    zLoyalty: document.getElementById('omm-z-loyalty').value,
+    zThreat: document.getElementById('omm-z-threat').value,
+    zDynamic: document.getElementById('omm-z-dynamic').value.trim(),
+    lLink: document.getElementById('omm-l-link').value.trim(),
+    lLoyalty: document.getElementById('omm-l-loyalty').value,
+    lThreat: document.getElementById('omm-l-threat').value,
+    lDynamic: document.getElementById('omm-l-dynamic').value.trim(),
+    updatedAt: Date.now()
+  };
+  try {
+    if (editingOrgMemberId) await updateDoc(doc(db, `${basePath}/orgMembers`, editingOrgMemberId), data);
+    else await addDoc(orgMembersCol, { ...data, createdAt: Date.now() });
+    closeModal('org-member-modal');
+    if (currentDetailOrgId) openOrgDetail(currentDetailOrgId);
+    if (currentView === 'hierarchy-view') renderHierarchy(window.currentHierOrg);
+  } catch (e) { console.error(e); alert('Error saving profile card.'); }
+};
+
+window.deleteOrgMember = () => {
+  if (!editingOrgMemberId) return;
+  confirmAction('Delete Profile Card', 'This will remove this member from the organization.', async () => {
+    await deleteDoc(doc(db, `${basePath}/orgMembers`, editingOrgMemberId));
+    closeModal('org-member-modal');
+    if (currentDetailOrgId) openOrgDetail(currentDetailOrgId);
+    if (currentView === 'hierarchy-view') renderHierarchy(window.currentHierOrg);
+  });
+};
+
+// ===================== HIERARCHY =====================
+window.renderHierarchyOrgs = () => {
+  const sel = document.getElementById('hier-org-select');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Choose Organization —</option>' +
+    localOrgs.map(o => `<option value="${o.id}" ${o.id === current || o.id === window.currentHierOrg ? 'selected' : ''}>${o.name}</option>`).join('');
+  if (window.currentHierOrg) renderHierarchy(window.currentHierOrg);
+};
+
+window.onHierOrgChange = () => {
+  const id = document.getElementById('hier-org-select').value;
+  window.currentHierOrg = id;
+  if (id) renderHierarchy(id);
+  else document.getElementById('hierarchy-content').innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="material-icons">account_tree</span></div><div class="empty-title">No organization selected</div></div>`;
+};
+
+function renderHierarchy(orgId) {
+  const org = localOrgs.find(o => o.id === orgId);
+  if (!org) return;
+  document.getElementById('hier-title').textContent = org.name;
+
+  const members = localOrgMembers.filter(m => m.orgId === orgId);
+  if (!members.length) {
+    document.getElementById('hierarchy-content').innerHTML = `<div class="empty-state">
+      <div class="empty-icon"><span class="material-icons">people_outline</span></div>
+      <div class="empty-title">No members yet</div>
+      <div class="empty-desc">Add profile cards to this organization to render the hierarchy.</div>
+    </div>`;
+    return;
+  }
+
+  // Build levels from reportsTo (BFS)
+  const byName = {};
+  members.forEach(m => { byName[m.charName] = m; });
+  const levels = {};
+  const visited = new Set();
+
+  // Level 0 = members whose reportsTo is empty or doesn't match anyone in this org
+  const roots = members.filter(m => !m.reportsTo || !byName[m.reportsTo]);
+  levels[0] = roots;
+  roots.forEach(m => visited.add(m.charName));
+
+  let depth = 0;
+  while (levels[depth]?.length) {
+    levels[depth + 1] = [];
+    levels[depth].forEach(parent => {
+      members.filter(m => m.reportsTo === parent.charName && !visited.has(m.charName)).forEach(child => {
+        levels[depth + 1].push(child);
+        visited.add(child.charName);
+      });
+    });
+    if (!levels[depth + 1].length) delete levels[depth + 1];
+    depth++;
+  }
+
+  const unranked = members.filter(m => !visited.has(m.charName));
+  const sortedKeys = Object.keys(levels).map(Number).sort((a,b) => a-b);
+
+  let html = '<div class="hierarchy-wrap">';
+  sortedKeys.forEach((lvl, idx) => {
+    const nodes = levels[lvl];
+    const lvlLabel = idx === 0 ? 'Sovereign' : `Rank ${idx}`;
+    html += `<div class="h-level-label">${lvlLabel}</div><div class="h-level">`;
+    nodes.forEach(m => {
+      const isTop = idx === 0;
+      const posText = (m.positions || []).map(p => p.position).join(', ') || m.role || '';
+      html += `<div class="h-node ${isTop ? 'h-top' : ''}" onclick="openOrgMemberView('${orgId}','${m.id}')">
+        <div class="h-node-name">${m.charName || '—'}</div>
+        <div class="h-node-pos">${posText.slice(0,28)}${posText.length>28?'...':''}</div>
+        ${m.specialization ? `<div style="font-size:9px;color:var(--text3);margin-top:2px;">${m.specialization}</div>` : ''}
+        ${m.divisionName || m.chainLevel ? `<div style="font-size:9px;color:var(--gold-dim);letter-spacing:.8px;text-transform:uppercase;margin-top:3px;">${m.divisionName || m.chainLevel}</div>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+    if (idx < sortedKeys.length - 1) html += '<div class="h-connector-line"></div>';
+  });
+
+  if (unranked.length) {
+    html += `<div class="h-level-label">Unranked</div><div class="h-level">`;
+    unranked.forEach(m => {
+      const posText = (m.positions || []).map(p => p.position).join(', ') || m.role || '';
+      html += `<div class="h-node" onclick="openOrgMemberView('${orgId}','${m.id}')">
+        <div class="h-node-name">${m.charName || '—'}</div>
+        <div class="h-node-pos">${posText.slice(0,28)}${posText.length>28?'...':''}</div>
+        ${m.specialization ? `<div style="font-size:9px;color:var(--text3);margin-top:2px;">${m.specialization}</div>` : ''}
+        ${m.divisionName || m.chainLevel ? `<div style="font-size:9px;color:var(--gold-dim);letter-spacing:.8px;text-transform:uppercase;margin-top:3px;">${m.divisionName || m.chainLevel}</div>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+  document.getElementById('hierarchy-content').innerHTML = html;
+}
+
+// ===================== ASSETS =====================
+window.openAssetManager = () => {
+  renderAssetList();
+  openModal('asset-modal');
+};
+
+function renderAssetList() {
+  const list = document.getElementById('asset-list');
+  if (!list) return;
+  const q = document.getElementById('asset-registry-search')?.value?.toLowerCase() || '';
+  let assets = localAssets.filter(a => {
+    const matchType = assetTypeFilter === 'all' || a.assetType === assetTypeFilter;
+    const matchQ = !q || a.name?.toLowerCase().includes(q) || a.location?.toLowerCase().includes(q);
+    return matchType && matchQ;
+  });
+  if (!assets.length) {
+    list.innerHTML = `<div class="empty-state" style="padding:40px 0;"><div class="empty-icon"><span class="material-icons">home_work</span></div><div class="empty-title">No assets found</div><div class="empty-desc">Add properties, vehicles and valuables to the registry.</div></div>`;
+    return;
+  }
+  const typeIcon = { property: 'location_city', vehicle: 'directions_car', valuable: 'diamond' };
+  list.innerHTML = assets.map(a => `
+    <div class="member-row" style="border:1px solid var(--border);border-radius:6px;margin-bottom:8px;" onclick="openAssetFormModal('${a.id}')">
+      <div style="width:34px;height:34px;border-radius:6px;background:var(--gold-glow);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span class="material-icons" style="font-size:16px;color:var(--gold);">${typeIcon[a.assetType] || 'home_work'}</span>
+      </div>
+      <div>
+        <div class="member-row-name">${a.name}</div>
+        <div class="member-row-pos">${a.assetType ? a.assetType.charAt(0).toUpperCase()+a.assetType.slice(1)+' · ' : ''}${a.location || ''} ${a.purpose ? '· '+a.purpose : ''}</div>
+      </div>
+      <div style="margin-left:auto;font-size:11px;color:var(--gold);">${a.worth || ''}</div>
+    </div>`).join('');
+}
+
+window.openAssetFormModal = (id = null) => {
+  editingAssetId = id;
+  const asset = id ? localAssets.find(a => a.id === id) : null;
+  document.getElementById('af-modal-title').textContent = asset ? 'Edit Asset' : 'New Asset';
+  document.getElementById('af-delete-btn').style.display = asset ? 'flex' : 'none';
+  const typeEl = document.getElementById('af-type');
+  if (typeEl) typeEl.value = asset ? (asset.assetType || 'property') : 'property';
+  const fields = [['af-name','name'],['af-location','location'],['af-worth','worth'],['af-owner','owner'],['af-purpose','purpose'],['af-year','yearObtained'],['af-function','coreFunction'],['af-desc','description']];
+  fields.forEach(([elId, key]) => {
+    const el = document.getElementById(elId);
+    if (el) el.value = asset ? (asset[key] || '') : '';
+  });
+  openModal('asset-form-modal');
+};
+
+window.saveAsset = async () => {
+  const name = document.getElementById('af-name').value.trim();
+  if (!name) { alert('Asset name is required.'); return; }
+  const data = {
+    name,
+    assetType: document.getElementById('af-type').value || 'property',
+    location: document.getElementById('af-location').value.trim(),
+    worth: document.getElementById('af-worth').value.trim(),
+    owner: document.getElementById('af-owner').value.trim(),
+    purpose: document.getElementById('af-purpose').value.trim(),
+    yearObtained: document.getElementById('af-year').value.trim(),
+    coreFunction: document.getElementById('af-function').value.trim(),
+    description: document.getElementById('af-desc').value.trim(),
+    updatedAt: Date.now()
+  };
+  try {
+    if (editingAssetId) await updateDoc(doc(db, `${basePath}/assets`, editingAssetId), data);
+    else await addDoc(assetsCol, { ...data, createdAt: Date.now() });
+    closeModal('asset-form-modal');
+    renderAssetList();
+  } catch (e) { console.error(e); alert('Error saving asset.'); }
+};
+
+window.deleteAsset = () => {
+  if (!editingAssetId) return;
+  confirmAction('Delete Asset', 'This will remove the asset from the registry.', async () => {
+    await deleteDoc(doc(db, `${basePath}/assets`, editingAssetId));
+    closeModal('asset-form-modal');
+    renderAssetList();
+  });
+};
+
+// ===================== STORY ARCS =====================
+window.openArcModal = (id = null) => {
+  editingArcId = id;
+  const arc = id ? localArcs.find(a => a.id === id) : null;
+  document.getElementById('arc-modal-title').textContent = arc ? 'Edit Section' : 'New Section';
+  document.getElementById('arc-delete-btn').style.display = arc ? 'flex' : 'none';
+
+  const fields = [['arc-title','title'],['arc-num','sectionNum'],['arc-summary','plotSummary'],['arc-syl','syl'],['arc-timeline','timeline'],['arc-body','body']];
+  fields.forEach(([elId, key]) => {
+    const el = document.getElementById(elId);
+    if (el) el.value = arc ? (arc[key] || '') : '';
+  });
+
+  ['elements','events','venues','chars','conflict','reveals'].forEach(k => {
+    tagData['arc-'+k] = arc ? [...(arc[k] || [])] : [];
+    initTagField('arc-'+k+'-wrap', 'arc-'+k+'-in', 'arc-'+k);
+  });
+
+  openModal('arc-modal');
+};
+
+window.saveArc = async () => {
+  const title = document.getElementById('arc-title').value.trim();
+  if (!title) { alert('Section title is required.'); return; }
+  const data = {
+    title,
+    sectionNum: parseInt(document.getElementById('arc-num').value) || 0,
+    plotSummary: document.getElementById('arc-summary').value.trim(),
+    syl: document.getElementById('arc-syl').value.trim(),
+    timeline: document.getElementById('arc-timeline').value.trim(),
+    body: document.getElementById('arc-body').value.trim(),
+    elements: getTagData('arc-elements'),
+    events: getTagData('arc-events'),
+    venues: getTagData('arc-venues'),
+    chars: getTagData('arc-chars'),
+    conflict: getTagData('arc-conflict'),
+    reveals: getTagData('arc-reveals'),
+    updatedAt: Date.now()
+  };
+  try {
+    if (editingArcId) await updateDoc(doc(db, `${basePath}/storyArcs`, editingArcId), data);
+    else await addDoc(arcsCol, { ...data, createdAt: Date.now() });
+    closeModal('arc-modal');
+  } catch (e) { console.error(e); alert('Error saving section.'); }
+};
+
+window.deleteArc = () => {
+  if (!editingArcId) return;
+  confirmAction('Delete Section', 'This will permanently delete this story section and all its content.', async () => {
+    await deleteDoc(doc(db, `${basePath}/storyArcs`, editingArcId));
+    closeModal('arc-modal');
+  });
+};
+
+window.renderArcs = () => {
+  const list = document.getElementById('arcs-list');
+  if (!list) return;
+  const sorted = [...localArcs].sort((a,b) => (a.sectionNum || 0) - (b.sectionNum || 0));
+  if (!sorted.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon"><span class="material-icons">auto_stories</span></div>
+      <div class="empty-title">No sections yet</div>
+      <div class="empty-desc">Begin writing your story arc by creating your first section.</div>
+    </div>`;
+    return;
+  }
+  list.innerHTML = sorted.map(a => {
+    const tags = [...(a.elements||[]).slice(0,2), ...(a.venues||[]).slice(0,2)];
+    return `<div class="arc-card anim" onclick="openArcModal('${a.id}')">
+      <div class="arc-chapter-num">${String(a.sectionNum || '?').padStart(2,'0')}</div>
+      <div style="flex:1;">
+        <div class="arc-card-title">${a.title}</div>
+        ${a.timeline ? `<div style="font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">${a.timeline}</div>` : ''}
+        ${a.plotSummary ? `<div class="arc-card-summary">${a.plotSummary.slice(0,180)}${a.plotSummary.length>180?'...':''}</div>` : ''}
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          ${tags.map(t => `<span class="pill">${t}</span>`).join('')}
+          ${a.chars?.length ? `<span class="pill" style="color:var(--gold);border-color:var(--gold-dim);">${a.chars.length} chars</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.asset-search-wrap')) {
+    document.getElementById('cm-asset-dropdown')?.classList.remove('open');
+    document.getElementById('cm-vehicle-dropdown')?.classList.remove('open');
+    document.getElementById('cm-valuable-dropdown')?.classList.remove('open');
+  }
+});
+
+// ===================== FIREBASE INIT =====================
+function initApp(uid) {
+  userId = uid;
+  basePath = `/artifacts/${appId}/users/${userId}`;
+
+  charsCol = collection(db, `${basePath}/characters`);
+  orgsCol = collection(db, `${basePath}/organizations`);
+  orgMembersCol = collection(db, `${basePath}/orgMembers`);
+  assetsCol = collection(db, `${basePath}/assets`);
+  arcsCol = collection(db, `${basePath}/storyArcs`);
+
+  [unsubChars, unsubOrgs, unsubOrgMembers, unsubAssets, unsubArcs].forEach(u => u());
+
+  unsubChars = onSnapshot(query(charsCol), (snap) => {
+    localChars = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (currentView === 'chars-view') renderChars();
+  });
+
+  unsubOrgs = onSnapshot(query(orgsCol), (snap) => {
+    localOrgs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.name?.localeCompare(b.name));
+    if (currentView === 'orgs-view') renderOrgs();
+    if (currentView === 'hierarchy-view') renderHierarchyOrgs();
+  });
+
+  unsubOrgMembers = onSnapshot(query(orgMembersCol), (snap) => {
+    localOrgMembers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (currentView === 'orgs-view') renderOrgs();
+    if (currentView === 'hierarchy-view' && window.currentHierOrg) renderHierarchy(window.currentHierOrg);
+  });
+
+  unsubAssets = onSnapshot(query(assetsCol), (snap) => {
+    localAssets = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.name?.localeCompare(b.name));
+  });
+
+  unsubArcs = onSnapshot(query(arcsCol), (snap) => {
+    localArcs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (currentView === 'arcs-view') renderArcs();
+  });
+
+  console.log('Chronicle: Firebase connected for user', userId);
+}
+
+window.onload = async () => {
+  appId = typeof __app_id !== 'undefined' ? __app_id : 'chronicle-app-v1';
+  const firebaseConfig = typeof __firebase_config !== 'undefined'
+    ? JSON.parse(__firebase_config)
+    : {
+        apiKey: "AIzaSyAlt9mATV_kD9CNPkj9pTRZ92oNhqKPYg8",
+        authDomain: "sims-4-gallery.firebaseapp.com",
+        projectId: "sims-4-gallery",
+        storageBucket: "sims-4-gallery.firebasestorage.app",
+        messagingSenderId: "881427654109",
+        appId: "1:881427654109:web:6aaffa062ca2d6ad2e0234"
+      };
+  try {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    setLogLevel('error');
+    onAuthStateChanged(auth, (user) => {
+      if (user) initApp(user.uid);
+    });
+    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+      await signInWithCustomToken(auth, __initial_auth_token);
+    } else {
+      await signInAnonymously(auth);
+    }
+  } catch (e) {
+    console.error('Firebase init error:', e);
+    document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',sans-serif;color:#C8A86A;font-size:14px;">Failed to connect to database. Check console for details.</div>`;
+  }
+};
+</script>
+</body>
+</html>

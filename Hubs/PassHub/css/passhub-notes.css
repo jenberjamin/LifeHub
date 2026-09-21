@@ -1,0 +1,53 @@
+/* ═══════════════════════════════════════════════════
+   PASSHUB — SECURE NOTES
+   passhub-notes.css
+
+   Shared shell lives in passhub-base.css.
+   Notes and Connections use an identical class set, so
+   their two files are deliberately near-identical — the
+   shared parts sit in the base rather than in both.
+═══════════════════════════════════════════════════ */
+@import url('passhub-base.css');
+
+/* This page has a breadcrumb bar under the header, so
+   main gets less height than the base assumes. */
+main { height: calc(100vh - var(--header-h) - var(--crumb-h)); }
+
+/* Delete affordance, revealed on hover over a folder. */
+.delete-folder-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #D2D0CC;
+    cursor: pointer;
+    font-size: 12px;
+    display: none;
+    padding: 4px;
+    border-radius: 3px;
+    transition: color .15s, background .15s;
+    z-index: 2;
+}
+.folder-card:hover .delete-folder-btn { display: block; }
+.delete-folder-btn:hover { color: var(--danger); background: rgba(192,57,43,.07); }
+
+/* Note bodies wrap, so the detail row stacks instead of
+   sitting label-left / value-right. */
+.detail-row { flex-direction: column; align-items: stretch; }
+.detail-label { margin-bottom: 5px; }
+.detail-val { text-align: left; max-width: 100%; font-weight: 400; }
+
+/* Attached link under a note title. */
+.note-link {
+    font-size: 9.5px;
+    color: var(--link);
+    text-decoration: none;
+    margin-top: 3px;
+    display: block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.note-link:hover { text-decoration: underline; }

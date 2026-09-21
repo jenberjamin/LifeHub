@@ -1,0 +1,428 @@
+ /* --- CORE VARIABLES --- */
+        :root {
+            --text-dark: #1A1A1A;
+            --primary-green: #1A3C34; 
+            --accent-beige: rgba(230, 230, 225, 0.5); /* Made translucent */
+            --alert-red: #E57373; 
+            --glass-bg: rgba(255, 255, 255, 0.45); /* The magic sauce */
+            --glass-border: 1px solid rgba(255, 255, 255, 0.7);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+
+/* --- NAVIGATION --- */
+.nav-dock {
+    position: absolute;
+    top: 30px; left: 40px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    text-decoration: none;
+    color: #fff;
+    color: var(--primary-green);
+    padding: 9px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.45);
+    border: 1px solid rgba(255,255,255,0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0.75;
+    opacity: 0.85;
+    transition: opacity .25s ease, background .25s ease, gap .25s ease;
+}
+.nav-btn svg {
+    width: 17px; height: 17px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.nav-btn span {
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    transition: max-width .3s ease;
+}
+
+.nav-btn:hover,
+.nav-btn:focus-visible {
+    opacity: 1;
+    background: rgba(255,255,255,0.26);
+    background: rgba(255,255,255,0.8);
+    gap: 8px;
+}
+.nav-btn:hover span,
+.nav-btn:focus-visible span { max-width: 130px; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden; 
+            background-image: url('files/FoodHub-BG_1.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* --- LAYOUT GRID --- */
+        /* .main-stage had no rule at all, which is what made the Statistics
+           and History buttons wander. The chain matters: a percentage height
+           only resolves against a parent with a DEFINITE height, so
+           .main-grid's height:100% was measuring an auto-height <main> and
+           silently falling back to auto — i.e. as tall as its contents.
+
+           The right column ends with justify-content:flex-end, so "the
+           bottom" it pinned the buttons to was the bottom of whatever the
+           LEFT column happened to measure that day. Log a few more meals,
+           the food list grows, the row grows, and the buttons slide down
+           with it — off the screen, because the body is overflow:hidden.
+
+           Giving the stage the viewport makes flex-end mean the bottom of
+           the window, which doesn't move. */
+        .main-stage {
+            height: 100vh;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 45% 55%;
+            height: 100%;
+            /* A grid item's default min-height:auto refuses to shrink below
+               its content, which would push the row past the viewport again
+               the moment the log gets long. This lets the columns be bound
+               by the stage instead, and the food list scroll inside itself
+               as it was already set up to do. */
+            min-height: 0;
+            /* Top padding clears the nav dock (absolute, top:30px) rather
+               than merely coming close to it — at 4rem the date sat level
+               with the Home Screen button whenever the column was full. */
+            padding: 5rem 5rem 4rem;
+        }
+
+        /* --- LEFT COLUMN STYLES --- */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            /* Same reason as the grid above — without this the column
+               reports its content height as a floor and the stage can't
+               hold it to the viewport. */
+            min-height: 0;
+
+            /* Centred, but never at the cost of the top. Plain
+               "center" splits any overflow across BOTH ends, which in a
+               windowed browser pushed the date up under the nav dock and
+               the food list off the bottom at the same time. "safe"
+               falls back to flex-start the moment it doesn't fit, so the
+               column can only ever overflow downward — and the block
+               below makes sure it doesn't overflow at all. The plain
+               value stays first as the fallback for anything that
+               doesn't know the keyword. */
+            justify-content: center;
+            justify-content: safe center;
+        }
+
+        /* The consumed block is the column's shock absorber. The header
+           and the macro bars are a fixed size; this takes whatever is
+           left and hands it to the log list, which scrolls inside itself.
+           Without it the list was a hard 300px, so on a short viewport
+           the column simply didn't fit and the overflow had to go
+           somewhere. */
+        .consumed-block {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex: 1 1 auto;
+        }
+
+        .consumed-block #dailyLogList {
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        /* Header Area */
+        .header-group h4 {
+            font-weight: 400;
+            font-size: 0.9rem;
+            color: var(--primary-green);
+            opacity: 0.8;
+            margin-bottom: 0.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .header-group h1 {
+            font-weight: 300; 
+            font-size: 4.5rem;
+            letter-spacing: -2px;
+            color: var(--primary-green);
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+        .subtitle-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--primary-green);
+            font-size: 0.75rem;
+            letter-spacing: 4px; 
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        .line {
+            height: 1px;
+            background-color: var(--primary-green);
+            opacity: 0.5;
+            width: 100px;
+        }
+
+        /* --- THE GLASS MODULES --- */
+        
+        /* Stats Section - Floating Island 1 */
+        .stats-container {
+            display: grid;
+            grid-template-columns: 80px 1fr 50px; /* Label | Bar | % */
+            row-gap: 1.2rem;
+            align-items: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--primary-green);
+            
+            /* Glassmorphism */
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+        }
+        
+        /* Rounded "Pill" Bars */
+        .progress-bg {
+            height: 10px;
+            background-color: rgba(255,255,255,0.5);
+            width: 100%;
+            border-radius: 10px; 
+            overflow: hidden; /* Ensures child doesn't spill out */
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-green);
+            border-radius: 10px;
+            transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* Smooth luxury animation */
+        }
+
+        .percent-text { font-size: 0.85rem; font-weight: 600; text-align: right;}
+        .percent-green { color: var(--primary-green); }
+        .percent-orange { color: #D97706; }
+
+        /* Input Area */
+        .input-label { 
+            margin-bottom: 0.5rem; 
+            font-size: 0.9rem; 
+            font-weight: 500; 
+            color: var(--primary-green);
+            margin-left: 5px;
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .food-input {
+            width: 100%;
+            padding: 12px 20px;
+            
+            /* Glass Input */
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            border: var(--glass-border);
+            border-radius: 50px; /* Fully rounded input */
+            
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            color: var(--primary-green);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .food-input::placeholder { color: rgba(26, 60, 52, 0.5); }
+
+        .food-input:focus {
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 15px rgba(26, 60, 52, 0.1);
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: var(--primary-green);
+            pointer-events: none;
+        }
+
+        .btn-log {
+            color: var(--primary-green);
+            cursor: pointer;
+            background: var(--glass-bg);
+            backdrop-filter: blur(5px);
+            border: var(--glass-border);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+        
+        .btn-log:hover { transform: scale(1.05); background: white; }
+
+        /* Recent Logs - Floating Island 2 */
+        .recent-logs {
+            /* Glassmorphism */
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 16px;
+            
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 350px;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            margin-top: 1rem;
+        }
+        
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            color: var(--primary-green);
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(26, 60, 52, 0.1);
+        }
+        .log-item:last-child { border-bottom: none; }
+        
+        .log-item.alert { color: var(--alert-red); font-weight: 600; }
+        .log-time { color: rgba(26, 60, 52, 0.6); font-size: 0.7rem; }
+
+        /* --- RIGHT COLUMN STYLES --- */
+        /* Now that the stage is the viewport, flex-end is a fixed spot:
+           bottom-right of the window, 4rem of grid padding plus the 2rem
+           below. The buttons no longer know or care how much Jen ate. */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: flex-end;
+            min-height: 0;
+            padding-bottom: 2rem;
+        }
+
+        .btn-outline {
+            display: block;
+            width: 280px; /* Slightly more compact */
+            padding: 15px 0;
+            margin-top: 1rem;
+            
+            /* Glass Button */
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--primary-green);
+            
+            color: var(--primary-green);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 50px; /* Pill buttons */
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 60, 52, 0.2);
+        }
+
+        .hidden { display: none !important; }
+        
+        /* Modal Polish */
+        #quantityModal > div {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(15px);
+            border-radius: 20px !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2) !important;
+            border: none !important;
+        }
+
+        /* --- SCROLLBAR ---
+           Hidden, not disabled. The list still scrolls by wheel, trackpad,
+           touch, arrow keys and Page Up/Down — only the bar itself is gone,
+           because a 4px rail down the side of the glass card was the one
+           hard edge in a panel made of soft ones.
+
+           Both properties are needed and neither is redundant:
+           scrollbar-width is the standard one, the ::-webkit- rule covers
+           versions of Chrome and Edge that predate it, and -ms- covers the
+           old Edge. Setting width to 0 as well as display:none matters —
+           some builds ignore one and honour the other. */
+        .recent-logs {
+            scrollbar-width: none;        /* Firefox, modern Chromium */
+            -ms-overflow-style: none;     /* old Edge / IE */
+        }
+        .recent-logs::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none;
+        }
+
+.bar-alert {
+    background-color: var(--alert-red) !important;
+}
+/* Responsive: Stack on mobile */
+@media (max-width: 768px) {
+    .nav-dock { top: 20px; left: 20px; }
+    /* No hover on touch, so the labels would never appear — show them. */
+    .nav-btn { opacity: .95; gap: 8px; }
+    .nav-btn span { max-width: 130px; }
+}

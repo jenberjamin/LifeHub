@@ -1,0 +1,237 @@
+/* ═══════════════════════════════════════════════════
+   PASSHUB — LOBBY
+   passhub-landing_page.css
+
+   Written fresh to match Scribble. Same tokens and type
+   scale as passhub-entry.css, so the three PassHub pages
+   read as one product.
+═══════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;600;700&display=swap');
+
+:root {
+    --text:        #4A4A4A;
+    --sub:         #9A9A9A;
+    --border:      rgba(0, 0, 0, 0.06);
+    --row-hover:   rgba(0, 0, 0, 0.025);
+    --shadow-sm:   0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:   0 4px 20px rgba(0,0,0,0.11);
+    --radius:      8px;
+
+    --accent:      #5C5C52;
+    --accent-soft: rgba(92, 92, 82, 0.08);
+    --main-bg:     #F6F5F2;
+    --panel:       #FFFFFF;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    min-height: 100vh;
+    background: var(--main-bg);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    padding: 0 22px 80px;
+}
+
+/* ═══════════════════════════════════════════════════
+   HEADER
+   No solid bar here — the lobby is the one page that
+   gets room to breathe, so the title sits on the canvas.
+═══════════════════════════════════════════════════ */
+header {
+    text-align: center;
+    padding: 56px 0 44px;
+}
+
+header h1 {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--text);
+}
+
+header .subtitle {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 2.4px;
+    text-transform: uppercase;
+    color: var(--sub);
+    margin-top: 10px;
+}
+
+/* Hairline rule under the title, matching the gate. */
+header .subtitle::after {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 2px;
+    background: var(--accent);
+    opacity: .45;
+    margin: 16px auto 0;
+    border-radius: 2px;
+}
+
+/* ═══════════════════════════════════════════════════
+   HUB GRID
+   Three across on desktop for six cards — two tidy rows.
+═══════════════════════════════════════════════════ */
+.hub-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    width: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+}
+
+.hub-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 26px 20px 22px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 152px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.hub-card:hover {
+    background: #FCFCFB;
+    border-color: rgba(92, 92, 82, .26);
+    box-shadow: var(--shadow-md);
+}
+
+.card-icon {
+    width: 28px;
+    height: 28px;
+    fill: var(--sub);
+    stroke: none;
+    margin-bottom: 14px;
+    transition: fill .15s;
+}
+.hub-card:hover .card-icon { fill: var(--accent); }
+
+/* The Entry card's icon is drawn with strokes rather than
+   fills, so it needs its own rule or it renders invisible. */
+.hub-card:nth-child(5) .card-icon {
+    stroke: var(--sub);
+    fill: none;
+    transition: stroke .15s, fill .15s;
+}
+.hub-card:nth-child(5):hover .card-icon { stroke: var(--accent); }
+
+.card-title {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text);
+}
+
+.card-desc {
+    font-size: 8.5px;
+    letter-spacing: .8px;
+    color: var(--sub);
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════
+   LOCK & RETURN
+═══════════════════════════════════════════════════ */
+.back-nav {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--sub);
+    text-decoration: none;
+    padding: 8px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: color .15s, border-color .15s;
+    z-index: 20;
+}
+.back-nav:hover { color: var(--text); border-color: rgba(0,0,0,.12); }
+
+/* ═══════════════════════════════════════════════════
+   BOTTOM BAR
+
+   There are two pills down there now — Lock & Return, and
+   the access history. The bar does the centring so the
+   buttons don't have to, which is why .back-nav's own
+   fixed positioning is switched off inside it.
+═══════════════════════════════════════════════════ */
+.bottom-bar {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-width: calc(100vw - 24px);
+    z-index: 20;
+}
+
+.bottom-bar .back-nav {
+    position: static;
+    left: auto;
+    bottom: auto;
+    transform: none;
+}
+
+/* Same pill as .back-nav — a <button> rather than an <a>,
+   because it opens a dialog instead of going somewhere. */
+.bar-btn {
+    font-family: inherit;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--sub);
+    padding: 8px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+}
+.bar-btn:hover { color: var(--text); border-color: rgba(0,0,0,.12); }
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+    .hub-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 420px) {
+    .hub-grid  { grid-template-columns: 1fr; }
+    header     { padding: 36px 0 28px; }
+    header h1  { font-size: 18px; letter-spacing: 4px; }
+    .hub-card  { min-height: 120px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { transition-duration: .01ms !important; }
+}

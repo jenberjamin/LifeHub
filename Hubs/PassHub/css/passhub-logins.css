@@ -1,0 +1,39 @@
+/* ═══════════════════════════════════════════════════
+   PASSHUB — LOGINS
+   passhub-logins.css
+
+   Shell, grid, rows, modals, forms, buttons and detail
+   rows all live in passhub-base.css. Only what's unique
+   to Logins is below.
+
+   @import keeps this drop-in: no HTML change needed.
+═══════════════════════════════════════════════════ */
+@import url('passhub-base.css');
+
+/* Favicon beside each saved login. Fixed box so a missing
+   or oddly-shaped icon can't shove the row around. */
+.favicon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    margin-right: 12px;
+    object-fit: contain;
+    background: #F1EFEA;
+    flex-shrink: 0;
+}
+
+/* Copy-to-clipboard beside a revealed value. */
+.copy-icon {
+    cursor: pointer;
+    margin-left: 8px;
+    font-size: 12px;
+    color: var(--sub);
+    padding: 3px;
+    border-radius: 3px;
+    transition: color .15s, background .15s;
+}
+.copy-icon:hover { color: var(--accent); background: var(--row-hover); }
+
+/* Passwords and keys read as data, not prose — monospace
+   makes a mistyped character visible. */
+.detail-val { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 11px; }

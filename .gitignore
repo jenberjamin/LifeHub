@@ -1,0 +1,48 @@
+# ---- Not part of LifeHub -------------------------------------------------
+# SimStead lives in this folder only so it can be worked on without opening
+# a second window. It is its own project and is not deployed with LifeHub.
+SimStead - Desktop (Prototype)/
+SimStead - Desktop (Prototype) - snapshot */
+
+# See-You-Latte's server.js holds a Gemini API key (billing). Kept local.
+Standalone/SEE-YOU-LATTE/
+
+# ---- Personal documents ---------------------------------------------------
+Documentations/*.xlsx
+Documentations/poppy-core-prompt.txt
+
+# ---- Uncompressed originals ----------------------------------------------
+# Kept on disk as a safety net after optimizing. Must never reach the repo:
+# anything committed here stays in history forever.
+_originals-backup/
+
+# ---- Tooling --------------------------------------------------------------
+Tools/image-optimizer/.venv/
+node_modules/
+__pycache__/
+*.pyc
+
+# ---- Copyrighted material -------------------------------------------------
+# Commercial novels (PDF and full-text). Publishing these would redistribute
+# copyrighted books.
+Hubs/LibraryHub/shared-library/*.pdf
+Hubs/LibraryHub/shared-library/*.txt
+Hubs/LibraryHub/shared-library/*.epub
+
+# ---- Secrets ----------------------------------------------------------------
+# Local config files that hold API keys. Never commit these.
+.env
+.env.*
+*.local.json
+
+# ---- Build noise ----------------------------------------------------------
+*.map
+
+# ---- OS / editor ----------------------------------------------------------
+desktop.ini
+Thumbs.db
+.DS_Store
+*~$*.xlsx
+
+# Temporary file while a video is being re-encoded
+*.optimizing

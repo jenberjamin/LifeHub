@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Fitness Centre | Exercise Index </title>
+
+    <link rel="manifest" href="manifest-fitness.json">
+    <link rel="icon" type="image/png" href="css/files/icon-192.png">
+    <link rel="stylesheet" href="css/fitness-exercise_index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+
+</head>
+<body>
+
+    <div class="overlay"></div>
+
+    <div class="container">
+        <a href="fitness-centre-training_deck.html" class="back-btn" title="Back to Deck">
+            <span class="material-symbols-outlined" style="font-size: 14px;">arrow_back</span> DECK
+        </a>
+
+        <div class="top-bar">
+            <div class="brand-area">
+                <h1 class="page-title">Exercise Index</h1>
+            </div>
+
+            <div class="controls-area">
+                <div class="search-wrapper">
+                    <input type="text" class="search-input" placeholder="SEARCH DATABASE..." onkeyup="renderGrid()">
+                </div>
+                <span class="material-symbols-outlined control-icon" id="btnFilterIcon" onclick="toggleFilterModal()" title="Filter">filter_alt</span>
+                <span class="material-symbols-outlined control-icon" onclick="toggleSort()" title="Sort">sort</span>
+                
+                <div class="sort-menu" id="sortMenu">
+                    <div class="sort-option active" onclick="applySort('name')">Name (A-Z)</div>
+                    <div class="sort-option" onclick="applySort('freq')">Usage Freq.</div>
+                </div>
+                
+                <span class="material-symbols-outlined add-btn" onclick="openAddModal()" title="Add New">add_circle</span>
+            </div>
+        </div>
+
+        <div class="list-header-row">
+            <div>Name</div>
+            <div></div>
+            <div style="text-align:center">Count</div>
+            <div>Target</div>
+            <div>Equipment</div>
+            <div>Position</div>
+            <div>Type</div>
+            <div style="text-align:right">Edit</div>
+        </div>
+
+        <div class="list-container" id="gridContainer"></div>
+    </div>
+
+    <div class="modal-backdrop" id="addModal">
+        <div class="input-modal">
+            <span style="position:absolute; top:20px; right:20px; cursor:pointer; font-size:18px; color:#666; transition:0.3s" onclick="closeAddModal()" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#666'">✕</span>
+            <h2 id="modalTitle" style="font-family:var(--font-header); font-weight:400; margin-bottom:30px; letter-spacing: 3px; color:var(--color-white); font-size:28px;">NEW ENTRY</h2>
+            
+            <div class="input-group"><label class="input-label">Exercise Name</label><input type="text" id="inpName" class="text-input" placeholder="DESIGNATION..."></div>
+            
+            <div class="input-group">
+                <label class="input-label">Muscle Target</label>
+                <div class="multi-select-container" onclick="toggleDropdown('ddTarget')"><div id="tagsTarget" style="display:flex; gap:5px; flex-wrap:wrap;"></div></div>
+                <div class="dropdown-list" id="ddTarget"></div>
+            </div>
+            
+            <div class="input-group"><label class="input-label">Equipment</label><select id="inpEquip" class="select-input"></select></div>
+            
+            <div class="input-group">
+                <label class="input-label">Positioning</label>
+                <div class="multi-select-container" onclick="toggleDropdown('ddPos')"><div id="tagsPos" style="display:flex; gap:5px; flex-wrap:wrap;"></div></div>
+                <div class="dropdown-list" id="ddPos"></div>
+            </div>
+            
+            <div class="input-group"><label class="input-label">Tracking Type</label><select id="inpType" class="select-input"></select></div>
+            
+            <div class="modal-actions">
+                <button class="btn-text btn-cancel" onclick="closeAddModal()">CANCEL</button>
+                <button class="btn-text btn-confirm" onclick="saveExercise()">SAVE EXERCISE</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="historyModal">
+        <div class="history-modal">
+            <span style="position:absolute; top:20px; right:20px; cursor:pointer; font-size:18px; color:#666; transition:0.3s;" onclick="closeHistory()" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#666'">✕</span>
+            <div class="history-header">
+                <h2 class="history-title" id="histTitle">EXERCISE NAME</h2>
+                <span class="history-count" id="histCount">LOGGED: 0</span>
+            </div>
+            <div class="log-scroll-area" id="historyContainer"></div>
+            
+            <div class="modal-actions-row" style="margin-top:30px; display:flex; justify-content:space-between; padding-top:20px; border-top:1px solid rgba(255,255,255,0.1);">
+                <button class="btn-text btn-confirm" style="background:transparent; color:var(--color-accent); border:1px solid var(--color-accent); padding:10px 20px; box-shadow:none;" onclick="confirmAction('permanent')">LOCK AS PERMANENT</button>
+                <button class="btn-text btn-confirm" style="background:#333; color:#fff; box-shadow:none;" onclick="closeHistory()">CLOSE LOG</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="filterModal">
+        <div class="filter-modal">
+            <span style="position:absolute; top:20px; right:20px; cursor:pointer; color:#666;" onclick="toggleFilterModal()">✕</span>
+            <h2 style="margin-bottom:20px; font-family:var(--font-header); letter-spacing:3px; color:var(--color-white); font-size:18px;">Select to Filter</h2>
+            
+            <div class="input-group"><label class="input-label">Muscle Target</label><div class="tag-cloud" id="filterTarget"></div></div>
+            <div class="input-group"><label class="input-label">Equipment</label><div class="tag-cloud" id="filterEquip"></div></div>
+            <div class="input-group"><label class="input-label">Positioning</label><div class="tag-cloud" id="filterPos"></div></div>
+            <div class="input-group"><label class="input-label">Type</label><div class="tag-cloud" id="filterType"></div></div>
+            
+            <button class="apply-btn" onclick="applyFilter()">APPLY FILTERS</button>
+            <button class="btn-clear" onclick="clearFilters()">CLEAR ALL</button>
+        </div>
+    </div>
+
+    <div class="confirm-box" id="confirmBox">
+        <span class="confirm-title" id="confirmText">CONFIRM DELETION</span>
+        <div class="confirm-actions">
+            <button class="btn-pill btn-yup" id="btnConfirmYes">CONFIRM</button>
+            <button class="btn-pill btn-nope" onclick="closeConfirm()">CANCEL</button>
+        </div>
+    </div>
+
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script src="js/gatekeeper.js"></script>
+    <script src="js/fitness-core.js"></script>
+    <script src="js/fitness-exercise_index.js"></script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

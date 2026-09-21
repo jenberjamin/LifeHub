@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>LifeHub | FLO Tracker</title>
+
+    <link rel="icon" type="image/png" href="icons/Flo-tracker.png">
+    <link rel="stylesheet" href="css/lifehub-tracker-FLO.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+<link rel="icon" type="image/png" href="https://i.imgur.com/jmhbAm0.png">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/jmhbAm0.png">
+
+<!-- Firebase was loaded twice here, and analytics was pulled in for a
+     feature this page never uses. One copy, no analytics. -->
+<script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<!-- lifehub-core-prestige-system.js is still NOT loaded here, and for
+     the reason the old comment gave: it carries a global firebaseConfig
+     that collides with the navigation core.
+
+     But the old comment then concluded this page needed no bank at all,
+     because payPrestige() is defined in tracker-flo.js. It is — and all
+     it did was call window.deposit(), which lives in the file that
+     wasn't loaded. So nothing was ever paid.
+
+     payPrestige() now writes the ledger itself, through the shared row
+     builder below, on the named Firebase app tracker-flo.js already
+     has. This file must load BEFORE tracker-flo.js. -->
+<script defer src="../../JS/lifehub-prestige-ledger.js"></script>
+<!-- Pure cycle maths, loaded first so tracker-flo.js can use it. -->
+<script defer src="js/flo-cycle-analysis.js"></script>
+<!-- What a tablet is worth and how the streak is counted. Shared with
+     Poppy, so she pays exactly what the buttons here pay. -->
+<script defer src="../../JS/lifehub-pill-rules.js"></script>
+<!-- The daily-log vocabularies, and what a symptom is worth. Shared
+     with Poppy so both pay per symptom rather than per save. -->
+<script defer src="../../JS/lifehub-flo-vocab.js"></script>
+<script defer src="js/tracker-flo.js"></script>
+<script defer src="../../JS/lifehub-navigation-core.js"></script>
+
+</head>
+<body>
+    <!-- Two ways out: the wallpaper, or the interior. -->
+    <nav class="nav-dock" aria-label="Leave the tracker">
+      <a href="../../LifeHub-HomeScreen.html" class="nav-btn" title="Home Screen" aria-label="Home Screen">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+        <span>Home Screen</span>
+      </a>
+      <a href="../../LifeHub.html" class="nav-btn" title="LifeHub Lobby" aria-label="LifeHub Lobby">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 20V8.2l8-4.2 8 4.2V20"/>
+          <path d="M2.6 20h18.8"/>
+          <path d="M9.9 20v-5.1a2.1 2.1 0 0 1 4.2 0V20"/>
+        </svg>
+        <span>Lobby</span>
+      </a>
+    </nav>
+    <main class="main-stage">
+        
+        <div class="dashboard-card">
+            
+            <div class="zone-left">
+                
+                <div class="header-group">
+    <div class="date-container">
+    <input 
+        type="date" 
+        id="datePickerInput" 
+        class="ghost-input" 
+        style="pointer-events: none; position: absolute; opacity: 0;"
+        onchange="datePicked(this)"
+    >
+    
+    <div 
+        class="date-display" 
+        id="dateDisplay" 
+        onclick="openCalendar()"
+        style="pointer-events: auto; cursor: pointer;"
+    >
+        LOADING...
+    </div>
+</div>
+
+    <h1 class="phase-title" id="phaseTitle">FOLLICULAR</h1>
+    <div class="cycle-subtitle" id="cycleDaySubtitle">Day 1 of cycle</div>
+</div>
+
+                <div class="week-bubbles">
+    <div class="bubble">S</div>
+    <div class="bubble">M</div>
+    <div class="bubble">T</div>
+    <div class="bubble">W</div>
+    <div class="bubble">T</div>
+    <div class="bubble">F</div>
+    <div class="bubble">S</div>
+</div>
+
+                <button class="btn-main-log">
+                    LOG PERIOD START </span>
+                </button>
+
+                <div class="action-grid">
+                    <button class="btn-soft" onclick="openMoodModal()">
+                        <span class="material-symbols-rounded btn-soft-icon">sentiment_satisfied</span>
+                        <span class="btn-soft-label">Mood</span>
+                        <span class="btn-soft-plus">+</span>
+                    </button>
+                    <button class="btn-soft" onclick="openFlowModal()">
+                        <span class="material-symbols-rounded btn-soft-icon">water_drop</span>
+                        <span class="btn-soft-label">Flow</span>
+                        <span class="btn-soft-plus">+</span>
+                    </button>
+                    <button class="btn-soft" onclick="openActivityModal()">
+                        <span class="material-symbols-rounded btn-soft-icon">bed</span>
+                        <span class="btn-soft-label">Activity</span>
+                        <span class="btn-soft-plus">+</span>
+                    </button>
+                    <button class="btn-soft" onclick="openSymptomsModal()">
+                        <span class="material-symbols-rounded btn-soft-icon">ecg_heart</span>
+                        <span class="btn-soft-label">Symptoms</span>
+                        <span class="btn-soft-plus">+</span>
+                    </button>
+                    <button class="btn-soft" onclick="openMedicineModal()">
+                        <span class="material-symbols-rounded btn-soft-icon">medication</span>
+                        <span class="btn-soft-label">Medicine</span>
+                        <span class="btn-soft-plus">+</span>
+                    </button>
+                    <button class="btn-soft" onclick="openTempModal()">
+                        <span class="material-symbols-rounded btn-soft-icon">thermostat</span>
+                        <span class="btn-soft-label">Basal Temp.</span>
+                        <span class="btn-soft-plus">+</span>
+                    </button>
+                    <button class="btn-soft" onclick="openDischargeModal()">
+                        <span class="material-symbols-rounded btn-soft-icon">humidity_mid</span>
+                        <span class="btn-soft-label">Discharge</span>
+                        <span class="btn-soft-plus">+</span>
+                    </button>
+                    <button class="btn-soft" onclick="openNotesModal()">
+                        <span class="material-symbols-rounded btn-soft-icon">edit_note</span>
+                        <span class="btn-soft-label">Notes</span>
+                        <span class="btn-soft-plus">+</span>
+                    </button>
+                </div>
+
+            </div>
+
+
+            <div class="zone-center-nav">
+    <div class="nav-item" onclick="openCalendarView()">
+    <span class="material-symbols-rounded">calendar_month</span>
+    <span>CALENDAR</span>
+</div>
+                <div class="nav-item" onclick="openStatsModal()">
+                    <span class="material-symbols-rounded">bar_chart</span>
+                    <span>STATS</span>
+                </div>
+                <!-- The notes were only ever visible on the day they
+                     were written. Everything else on this tracker has
+                     somewhere to be read back — the calendar for the
+                     stamps, stats for the shapes — and the one field
+                     that is actually in her own words did not. -->
+                <div class="nav-item" onclick="openNotesHistory()">
+                    <span class="material-symbols-rounded">history_edu</span>
+                    <span>JOURNAL</span>
+                </div>
+            </div>
+
+            <div class="zone-right">
+
+
+
+
+                <div class="panel-card althea-panel">
+    <!-- Starting a pack and setting the dose time happen once every few
+         weeks. Logging a tablet happens every day. The two were sharing
+         the top of the card; now the settings sit behind this icon and
+         the card's face is only what's true today.
+
+         edit_calendar rather than a gear or three dots: everything in
+         there is a date or an hour, so the icon can say what it opens
+         instead of just "options". -->
+    <button class="pack-gear" id="pillPackGear" onclick="togglePackSettings()"
+            title="Pack schedule" aria-label="Pack schedule" aria-expanded="false">
+        <span class="material-symbols-rounded">edit_calendar</span>
+    </button>
+
+    <h3 class="panel-title">ALTHEA PILL</h3>
+    <div class="streak-count">STREAK: <span id="pillStreak">0 Days</span></div>
+
+    <!-- Read-only. Where the pack is, and when today's tablet is due.
+         See packPosition() in flo-cycle-analysis.js — while a pack is
+         running the schedule is the pack's, not a natural cycle's. -->
+    <div class="pack-status" id="pillPackStatus"></div>
+    <div class="dose-line" id="pillDoseLine"></div>
+
+    <div class="pill-actions">
+        <button class="btn-pill" id="btnPillOntime" onclick="setPill('ontime')">ON TIME</button>
+        <button class="btn-pill" id="btnPillLate" onclick="setPill('late')">LATE</button>
+        <button class="btn-pill" id="btnPillStock" onclick="setPill('nostock')">NO STOCK</button>
+        <button class="btn-pill" id="btnPillMissed" onclick="setPill('missed')">MISSED</button>
+    </div>
+
+</div>
+
+                <div class="log-header">
+    <span>Daily Log</span>
+    
+    <span class="btn-reset-today" onclick="goToToday()">
+        GO BACK TO TODAY &#8634;
+    </span>
+</div>
+
+                    <div class="log-list">
+                        <div class="log-row"><span class="key">MOOD:</span> <span class="val accent">CALM</span></div>
+                        <div class="log-row"><span class="key">FLOW:</span> <span class="val accent">NORMAL</span></div>
+                        <div class="log-row"><span class="key">ACTIVITY:</span> <span class="val">PREFER NOT TO SAY</span></div>
+                        <div class="log-row"><span class="key">SYMPTOMS:</span> <span class="val accent">HEADACHE</span></div>
+                        <div class="log-row"><span class="key">MEDICINE:</span> <span class="val accent">DECOLGEN</span></div>
+                        <div class="log-row"><span class="key">BASAL TEMP:</span> <span class="val">N/A</span></div>
+                        <div class="log-row"><span class="key">DISCHARGE:</span> <span class="val accent">NORMAL BLEEDING</span></div>
+                        <div class="log-row"><span class="key">NOTES:</span> <span class="val accent">YES</span></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+<div id="periodModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+        <h2 id="modalTitle">Cycle Check</h2>
+        <p id="modalMessage" class="modal-msg">Calculating cycle data...</p>
+        
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn-primary" onclick="confirmPeriodStart()">Confirm Start</button>
+        </div>
+    </div>
+</div>
+
+<!-- Pack settings. These are touched once every few weeks, so they get
+     a modal like every other occasional job on this page, rather than
+     competing for room on a card that is read several times a day. -->
+<div id="pillPackModal" class="modal-backdrop hidden">
+    <div class="modal-card pack-card">
+        <button class="close-icon" onclick="closePackSettings()">&times;</button>
+        <h2>Pill Pack</h2>
+
+        <label class="pack-toggle">
+            <input type="checkbox" id="pillPackToggle" onchange="togglePillPack()">
+            <span>On a pack</span>
+        </label>
+
+        <label class="pack-field" id="pillStartField">
+            <span>First tablet</span>
+            <input type="date" id="pillPackStart" class="pack-date"
+                   onchange="setPillPackStart(this.value)">
+        </label>
+
+        <label class="pack-field" id="pillTimeField">
+            <span>Due at</span>
+            <input type="time" id="pillDoseTime" class="pack-date"
+                   onchange="setPillDoseTime(this.value)">
+        </label>
+
+        <!-- The break rolls into the next pack on its own. This is for
+             when the real world disagrees with the schedule. -->
+        <button class="btn-newpack" id="btnNewPack" onclick="startNewPack()">
+            START A NEW PACK TODAY
+        </button>
+        <div class="pack-hint" id="pillPackHint"></div>
+
+        <div class="modal-actions">
+            <button class="btn-primary" onclick="closePackSettings()">Done</button>
+        </div>
+    </div>
+</div>
+
+<div id="moodModal" class="modal-backdrop hidden">
+    <div class="modal-card mood-card-size">
+        <button class="close-icon" onclick="closeMoodModal()">&times;</button>
+        
+        <h2 class="modal-header-text">How are you feeling today, Jen?</h2>
+        
+        <div class="mood-grid">
+            <div class="mood-col">
+                <div class="mood-item" onclick="selectMood(this, 'ELATED')">
+                    <span class="material-symbols-rounded">sentiment_excited</span>
+                    <span>ELATED</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'EXCITED')">
+                    <span class="material-symbols-rounded">sentiment_very_satisfied</span>
+                    <span>EXCITED</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'HAPPY')">
+                    <span class="material-symbols-rounded">mood</span>
+                    <span>HAPPY</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'OKAY')">
+                    <span class="material-symbols-rounded">sentiment_satisfied</span>
+                    <span>OKAY</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'CALM')">
+                    <span class="material-symbols-rounded">sentiment_calm</span>
+                    <span>CALM</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'MEH')">
+                    <span class="material-symbols-rounded">sentiment_neutral</span>
+                    <span>MEH</span>
+                </div>
+            </div>
+
+            <div class="mood-col">
+                <div class="mood-item" onclick="selectMood(this, 'HOLDING ON')">
+                    <span class="material-symbols-rounded">sentiment_content</span>
+                    <span>HOLDING ON</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'NOT OKAY')">
+                    <span class="material-symbols-rounded">sentiment_dissatisfied</span>
+                    <span>NOT OKAY</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'CONFUSED')">
+                    <span class="material-symbols-rounded">mood_bad</span>
+                    <span>CONFUSED</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'SAD')">
+                    <span class="material-symbols-rounded">sentiment_sad</span>
+                    <span>SAD</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'DEPRESSED')">
+                    <span class="material-symbols-rounded">sentiment_frustrated</span>
+                    <span>DEPRESSED</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'STRESSED')">
+                    <span class="material-symbols-rounded">sentiment_stressed</span>
+                    <span>STRESSED</span>
+                </div>
+            </div>
+
+            <div class="mood-col">
+                <div class="mood-item" onclick="selectMood(this, 'ANXIOUS')">
+                    <span class="material-symbols-rounded">sentiment_very_dissatisfied</span>
+                    <span>ANXIOUS</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'SICK')">
+                    <span class="material-symbols-rounded">sick</span>
+                    <span>SICK</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'IRATE')">
+                    <span class="material-symbols-rounded">sentiment_extremely_dissatisfied</span>
+                    <span>IRATE</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'PLAYFUL')">
+                    <span class="material-symbols-rounded">face_6</span>
+                    <span>PLAYFUL</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'HUMPY')">
+                    <span class="material-symbols-rounded">cruelty_free</span>
+                    <span>HUMPY</span>
+                </div>
+                <div class="mood-item" onclick="selectMood(this, 'NEUTRAL')">
+                    <span class="material-symbols-rounded">filter_drama</span>
+                    <span>NEUTRAL</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-primary full-width-btn" onclick="saveMoodEntry()">LOG MOOD</button>
+    </div>
+</div>
+
+<div id="flowModal" class="modal-backdrop hidden">
+    <div class="modal-card mood-card-size">
+        <button class="close-icon" onclick="closeFlowModal()">&times;</button>
+        
+        <h2 class="modal-header-text" style="margin-bottom: 10px;">FLOW</h2>
+        <p class="modal-msg" style="text-align: left; margin-bottom: 30px;">Select intensity</p>
+        
+        <div class="flow-list">
+            <div class="flow-item" onclick="selectFlow(this, 'SPOTTING')">
+                <div class="drop-container">
+                    <span class="material-symbols-rounded">water_drop</span>
+                </div>
+                <span class="flow-label">SPOTTING</span>
+            </div>
+
+            <div class="flow-item" onclick="selectFlow(this, 'LIGHT')">
+                <div class="drop-container">
+                    <span class="material-symbols-rounded">water_drop</span>
+                    <span class="material-symbols-rounded">water_drop</span>
+                </div>
+                <span class="flow-label">LIGHT</span>
+            </div>
+
+            <div class="flow-item" onclick="selectFlow(this, 'NORMAL')">
+                <div class="drop-container">
+                    <span class="material-symbols-rounded">water_drop</span>
+                    <span class="material-symbols-rounded">water_drop</span>
+                    <span class="material-symbols-rounded">water_drop</span>
+                </div>
+                <span class="flow-label">NORMAL</span>
+            </div>
+
+            <div class="flow-item" onclick="selectFlow(this, 'HEAVY')">
+                <div class="drop-container">
+                    <span class="material-symbols-rounded">water_drop</span>
+                    <span class="material-symbols-rounded">water_drop</span>
+                    <span class="material-symbols-rounded">water_drop</span>
+                    <span class="material-symbols-rounded">water_drop</span>
+                </div>
+                <span class="flow-label">HEAVY</span>
+            </div>
+
+            <div class="flow-item" onclick="selectFlow(this, 'VERY HEAVY')">
+                <div class="drop-container">
+                    <span class="material-symbols-rounded">water_drop</span>
+                    <span class="material-symbols-rounded">water_drop</span>
+                    <span class="material-symbols-rounded">water_drop</span>
+                    <span class="material-symbols-rounded">water_drop</span>
+                    <span class="material-symbols-rounded">water_drop</span>
+                </div>
+                <span class="flow-label">VERY HEAVY</span>
+            </div>
+        </div>
+
+        <button class="btn-primary full-width-btn" onclick="saveFlowEntry()">LOG FLOW</button>
+    </div>
+</div>
+
+<div id="activityModal" class="modal-backdrop hidden">
+    <div class="modal-card mood-card-size">
+        <button class="close-icon" onclick="closeActivityModal()">&times;</button>
+        
+        <h2 class="modal-header-text" style="color: #8E4A4E;">Sexual Activity</h2>
+        
+        <div class="activity-list">
+            <div class="activity-item" onclick="selectActivity(this, 'LOW DRIVE')">
+                <span class="material-symbols-rounded icon-lg">battery_low</span>
+                <span class="activity-label">LOW DRIVE</span>
+            </div>
+
+            <div class="activity-item" onclick="selectActivity(this, 'NEUTRAL DRIVE')">
+                <span class="material-symbols-rounded icon-lg">fireplace</span>
+                <span class="activity-label">NEUTRAL DRIVE</span>
+            </div>
+
+            <div class="activity-item" onclick="selectActivity(this, 'HIGH DRIVE')">
+                <span class="material-symbols-rounded icon-lg">local_fire_department</span>
+                <span class="activity-label">HIGH DRIVE</span>
+            </div>
+
+            <div class="activity-item" onclick="selectActivity(this, 'PROTECTED SEX')">
+                <span class="material-symbols-rounded icon-lg">shield_with_heart</span>
+                <span class="activity-label">PROTECTED SEX</span>
+            </div>
+
+            <div class="activity-item" onclick="selectActivity(this, 'UNPROTECTED SEX')">
+                <span class="material-symbols-rounded icon-lg">partner_heart</span>
+                <span class="activity-label">UNPROTECTED SEX</span>
+            </div>
+
+            <div class="activity-item" onclick="selectActivity(this, 'SELF-LOVING')">
+                <span class="material-symbols-rounded icon-lg">volunteer_activism</span>
+                <span class="activity-label">SELF-LOVING</span>
+            </div>
+
+            <div class="activity-item" onclick="selectActivity(this, 'PREFER NOT TO SAY')">
+                <span class="material-symbols-rounded icon-lg">heart_smile</span>
+                <span class="activity-label">PREFER NOT TO SAY</span>
+            </div>
+        </div>
+
+        <button class="btn-primary full-width-btn" onclick="saveActivityEntry()">LOG ACTIVITY</button>
+    </div>
+</div>
+
+<div id="symptomsModal" class="modal-backdrop hidden">
+    <div class="modal-card mood-card-size">
+        <button class="close-icon" onclick="closeSymptomsModal()">&times;</button>
+        
+        <h2 class="modal-header-text" style="color: #8E4A4E; margin-bottom: 10px;">SYMPTOMS</h2>
+        
+        <div class="symptom-master-toggle" onclick="toggleSymptom(this, 'EVERYTHING IS FINE')">
+            <span>EVERYTHING IS FINE</span>
+            <span class="material-symbols-rounded">thumb_up</span>
+        </div>
+
+        <div class="symptoms-grid">
+            <div class="symptom-col">
+                <div class="s-item" onclick="toggleSymptom(this, 'ACNE')">ACNE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'HAIRFALL')">HAIRFALL</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'NAUSEA')">NAUSEA</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'DIZZINESS')">DIZZINESS</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'FATIGUE')">FATIGUE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'HEADACHE')">HEADACHE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'MIGRAINE')">MIGRAINE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'CHILLS')">CHILLS</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'ITCHINESS')">ITCHINESS</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'DRYNESS')">DRYNESS</div>
+            </div>
+
+            <div class="symptom-col">
+                <div class="s-item" onclick="toggleSymptom(this, 'CRAMPS')">CRAMPS</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'WEARING DIAPER')">WEARING DIAPER</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'TENDER BREAST')">TENDER BREAST</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'BLOATING')">BLOATING</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'DIARRHEA')">DIARRHEA</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'CONSTIPATION')">CONSTIPATION</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'BACKACHE')">BACKACHE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'BODY ACHE')">BODY ACHE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'STOMACHACHE')">STOMACHACHE</div>
+                <div class="s-item" onclick="toggleSymptom(this, 'FEVERISH')">FEVERISH</div>
+            </div>
+        </div>
+
+        <div class="specify-group">
+            <label>SPECIFY:</label>
+            <input type="text" id="symptomSpecify" placeholder="...">
+        </div>
+
+        <button class="btn-primary full-width-btn" onclick="saveSymptomsEntry()">LOG SYMPTOMS</button>
+    </div>
+</div>
+
+<div id="medicineModal" class="modal-backdrop hidden">
+    <div class="modal-card mood-card-size">
+        <button class="close-icon" onclick="closeMedicineModal()">&times;</button>
+        
+        <h2 class="modal-header-text" style="color: #8E4A4E; margin-bottom: 20px;">MEDICATION</h2>
+        
+        <div class="med-list">
+            <div class="med-item" onclick="toggleMedicine(this, 'PROPAN WITH IRON')">
+                <span class="material-symbols-rounded">pill</span>
+                <span>PROPAN WITH IRON</span>
+            </div>
+            <div class="med-item" onclick="toggleMedicine(this, 'ASCORBIC ACID')">
+                <span class="material-symbols-rounded">pill</span>
+                <span>ASCORBIC ACID</span>
+            </div>
+            <div class="med-item" onclick="toggleMedicine(this, 'BIOGESIC')">
+                <span class="material-symbols-rounded">pill</span>
+                <span>BIOGESIC</span>
+            </div>
+            <div class="med-item" onclick="toggleMedicine(this, 'EMIDOL')">
+                <span class="material-symbols-rounded">pill</span>
+                <span>EMIDOL</span>
+            </div>
+            <div class="med-item" onclick="toggleMedicine(this, 'DECOLGEN')">
+                <span class="material-symbols-rounded">pill</span>
+                <span>DECOLGEN</span>
+            </div>
+            <div class="med-item" onclick="toggleMedicine(this, 'QUETIAPINE')">
+                <span class="material-symbols-rounded">pill</span>
+                <span>QUETIAPINE</span>
+            </div>
+        </div>
+
+        <div class="specify-group">
+            <label>SPECIFY:</label>
+            <input type="text" id="medSpecify" placeholder="...">
+        </div>
+
+        <button class="btn-primary full-width-btn" onclick="saveMedicineEntry()">LOG MEDICINE</button>
+    </div>
+</div>
+
+<div id="tempModal" class="modal-backdrop hidden">
+    <div class="modal-card mood-card-size">
+        <button class="close-icon" onclick="closeTempModal()">&times;</button>
+        
+        <h2 class="modal-header-text" style="color: #8E4A4E; margin-bottom: 30px;">BASAL TEMPERATURE</h2>
+        
+        <div class="specify-group" style="margin-bottom: 40px; justify-content: center;">
+            <label>READING:</label>
+            <input type="number" step="0.01" id="tempInput" placeholder="e.g. 36.5" style="text-align: center; font-size: 16px; font-weight: 600;">
+        </div>
+
+        <button class="btn-primary full-width-btn" onclick="saveTempEntry()">LOG TEMPERATURE</button>
+    </div>
+</div>
+
+<div id="dischargeModal" class="modal-backdrop hidden">
+    <div class="modal-card mood-card-size">
+        <button class="close-icon" onclick="closeDischargeModal()">&times;</button>
+        
+        <h2 class="modal-header-text" style="color: #8E4A4E; margin-bottom: 25px;">DISCHARGE</h2>
+        
+        <div class="discharge-list">
+            <!-- Descriptive rather than clinical. The stored value is the
+                 label itself, so the two fertile-mucus types keep the words
+                 WATERY and STRETCHY that flo-cycle-analysis.js looks for. -->
+            <div class="d-item" onclick="selectDischarge(this, 'CLEAR &amp; WATERY')">CLEAR &amp; WATERY</div>
+            <div class="d-item" onclick="selectDischarge(this, 'CLEAR &amp; STRETCHY')">CLEAR &amp; STRETCHY</div>
+            <div class="d-item" onclick="selectDischarge(this, 'MILKY OR CREAMY')">MILKY OR CREAMY</div>
+            <div class="d-item" onclick="selectDischarge(this, 'THICK &amp; CLUMPY')">THICK &amp; CLUMPY</div>
+            <div class="d-item" onclick="selectDischarge(this, 'YELLOW, GREEN, OR GRAY')">YELLOW, GREEN, OR GRAY</div>
+            <div class="d-item" onclick="selectDischarge(this, 'BROWN OR DARK RED')">BROWN OR DARK RED</div>
+            <div class="d-item" onclick="selectDischarge(this, 'SPOTTING')">SPOTTING</div>
+            <div class="d-item" onclick="selectDischarge(this, 'NORMAL BLEEDING')">NORMAL BLEEDING</div>
+            <div class="d-item" onclick="selectDischarge(this, 'HEAVY BLOOD CLOT')">HEAVY BLOOD CLOT</div>
+        </div>
+
+        <button class="btn-primary full-width-btn" onclick="saveDischargeEntry()">LOG DISCHARGE</button>
+    </div>
+</div>
+<div id="notesModal" class="modal-backdrop hidden">
+    <div class="modal-card mood-card-size">
+        <button class="close-icon" onclick="closeNotesModal()">&times;</button>
+        
+        <h2 class="modal-header-text" style="color: #8E4A4E; margin-bottom: 20px;">ADD NOTE+</h2>
+        
+        <div class="notes-wrapper">
+            <textarea id="dailyNoteInput" placeholder="How was your day, Jen?"></textarea>
+        </div>
+
+        <button class="btn-primary full-width-btn" onclick="saveNotesEntry()">SAVE ENTRY</button>
+    </div>
+</div>
+
+<div id="calendarView" class="view-overlay hidden">
+    <div class="calendar-card-glass">
+        
+        <div class="cal-header-clean">
+            <button class="btn-nav-arrow" onclick="changeMonth(-1)">
+                <span class="material-symbols-rounded">chevron_left</span>
+            </button>
+            <h2 id="calMonthTitle">DECEMBER 2025</h2>
+            <button class="btn-nav-arrow" onclick="changeMonth(1)">
+                <span class="material-symbols-rounded">chevron_right</span>
+            </button>
+        </div>
+
+        <div class="cal-body-split">
+            <div class="cal-grid-section">
+                <div class="cal-week-names">
+                    <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+                </div>
+                <div class="cal-days-container" id="calendarGrid">
+                    </div>
+            </div>
+
+
+            <div class="cal-sidebar-clean">
+                
+                <div class="toggle-row-clean">
+                    <span class="t-text">PHASE CYCLE</span>
+                    <label class="switch-clean">
+                        <input type="checkbox" id="togglePhase" checked onchange="renderCalendar()"> 
+                        <span class="slider-clean"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row-clean">
+                    <span class="t-text">ALTHEA PILLS</span>
+                    <label class="switch-clean">
+                        <input type="checkbox" id="togglePills" checked onchange="renderCalendar()"> 
+                        <span class="slider-clean"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row-clean">
+                    <span class="t-text">FLOW DROPS</span>
+                    <label class="switch-clean">
+                        <input type="checkbox" id="toggleFlow" checked onchange="renderCalendar()"> 
+                        <span class="slider-clean"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row-clean">
+                    <span class="t-text">MOOD</span>
+                    <label class="switch-clean">
+                        <input type="checkbox" id="toggleMood" checked onchange="renderCalendar()"> 
+                        <span class="slider-clean"></span>
+                    </label>
+                </div>
+
+                <div class="sidebar-divider"></div>
+                
+                <div class="toggle-row-clean">
+                    <span class="t-text">ACTIVITY</span>
+                    <label class="switch-clean">
+                        <input type="checkbox" id="toggleActivity" onchange="switchFocusMode('toggleActivity')"> 
+                        <span class="slider-clean"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row-clean">
+                    <span class="t-text">SYMPTOMS</span>
+                    <label class="switch-clean">
+                        <input type="checkbox" id="toggleSymptoms" onchange="switchFocusMode('toggleSymptoms')"> 
+                        <span class="slider-clean"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row-clean">
+                    <span class="t-text">MEDICINE</span>
+                    <label class="switch-clean">
+                        <input type="checkbox" id="toggleMed" onchange="switchFocusMode('toggleMed')"> 
+                        <span class="slider-clean"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row-clean">
+                    <span class="t-text">BASAL TEMP</span>
+                    <label class="switch-clean">
+                        <input type="checkbox" id="toggleTemp" onchange="switchFocusMode('toggleTemp')"> 
+                        <span class="slider-clean"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row-clean">
+                    <span class="t-text">DISCHARGE</span>
+                    <label class="switch-clean">
+                        <input type="checkbox" id="toggleDischarge" onchange="switchFocusMode('toggleDischarge')"> 
+                        <span class="slider-clean"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row-clean">
+                    <span class="t-text">NOTES</span>
+                    <label class="switch-clean">
+                        <input type="checkbox" id="toggleNotes" onchange="switchFocusMode('toggleNotes')"> 
+                        <span class="slider-clean"></span>
+                    </label>
+                </div>
+
+            </div>
+        </div>
+
+        <button class="btn-close-cal" onclick="closeCalendarView()">&times;</button>
+    </div>
+</div>
+
+
+<!-- THE JOURNAL
+     Every note she has written, newest first, with just enough of the
+     day around it to know what she was writing about. Searchable,
+     because a journal you cannot search is a drawer. -->
+<div id="notesHistoryModal" class="modal-backdrop hidden">
+    <div class="modal-card nh-card">
+        <button class="close-icon" onclick="closeNotesHistory()">&times;</button>
+
+        <h2 class="modal-header-text nh-title">JOURNAL</h2>
+
+        <div class="nh-tools">
+            <span class="material-symbols-rounded nh-search-icon">search</span>
+            <input type="search" id="nhSearch" class="nh-search"
+                   placeholder="Search your notes&hellip;" autocomplete="off"
+                   oninput="renderNotesHistory()">
+        </div>
+        <div class="nh-count" id="nhCount"></div>
+
+        <div class="nh-list" id="nhList"></div>
+    </div>
+</div>
+
+<div id="statsModal" class="modal-backdrop hidden">
+    <div class="modal-card stats-card-wide">
+        <button class="close-icon" onclick="closeStatsModal()">&times;</button>
+        
+        <h2 class="modal-header-text" style="text-align: center; margin-bottom: 40px;">PHASE STATISTICS</h2>
+        
+        <div class="charts-container">
+            <div class="chart-wrapper">
+                <h4 class="chart-label">MOOD</h4>
+                <div class="donut" id="donutMood" style="--p1:0; --p2:0; --p3:0;">
+                    <div class="hole"></div>
+                </div>
+                <div class="chart-legend">
+                    <span><span class="dot" style="background: #ffcd8a;"></span>Happy</span>
+                    <span><span class="dot" style="background: #fff5eb;"></span>Neutral</span>
+                    <span><span class="dot" style="background: #ffaa8a;"></span>Friction</span>
+                </div>
+            </div>
+
+            <div class="chart-wrapper">
+        <h4 class="chart-label">LIBIDO</h4>
+        <div class="donut" id="donutLibido" style="--p1:0; --p2:0;">
+            <div class="hole"></div>
+        </div>
+
+        <div class="chart-legend">
+            <span><span class="dot" style="background: #ff709f;"></span>High</span>
+            <span><span class="dot" style="background: #ffa4c5;"></span>Neutral</span>
+            <span><span class="dot" style="background: #ffd6d8;"></span>Low</span>
+        </div>
+    </div>
+
+    <div class="chart-wrapper">
+        <h4 class="chart-label">FLOW</h4>
+        <div class="donut" id="donutFlow" style="--p1:0; --p2:0;">
+            <div class="hole"></div>
+        </div>
+        <div class="chart-legend">
+            <span><span class="dot" style="background: #ff3131;"></span>Heavy</span>
+            <span><span class="dot" style="background: #ff6c75;"></span>Normal</span>
+            <span><span class="dot" style="background: #f7a6a6;"></span>Light</span>
+        </div>
+    </div>
+
+</div>
+    </div>
+</div>
+
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('LifeHub SW Registered!', reg.scope))
+                    .catch(err => console.log('LifeHub SW Failed:', err));
+            });
+        }
+    </script>
+
+</body>
+</html>

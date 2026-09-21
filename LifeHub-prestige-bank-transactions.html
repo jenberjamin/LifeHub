@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="JS/lifehub-tv-frame.js"></script>
+    <title>Prestige | Transactions</title>
+    
+    <link rel="icon" type="image/png" href="CSS/files/LifeHub-logo.png">
+    <link rel="stylesheet" href="CSS/lifehub-prestige-bank-transactions.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Red+Hat+Display:wght@300;400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- ONE Firebase SDK, once. The 9.23.0 pair that used to sit above the
+     viewer at the bottom of this page replaced the global `firebase`
+     object and pulled the namespace out from under
+     lifehub-navigation-core.js. -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="JS/lifehub-navigation-core.js"></script>
+</head>
+<body>
+
+    <div class="sidebar-container">
+    <img src="CSS/files/LifeHub-logo.png" alt="LifeHub Logo" class="logo">
+
+        <nav class="nav-menu">
+            <a href="LifeHub.html" class="nav-item"> Home <span class="arrow">→</span></a>
+            <!-- is-unbuilt: dimmed and unclickable until the page exists. -->
+            <a href="#" class="nav-item is-unbuilt" aria-disabled="true"> Dashboard <span class="arrow">→</span></a>
+            <a href="LifeHub-prestige-bank.html" class="nav-item active"> Prestige Bank <span class="arrow">→</span></a>
+            <a href="#" class="nav-item is-unbuilt" aria-disabled="true"> Tools <span class="arrow">→</span></a>
+            <a href="LifeHub-trackers.html" class="nav-item"> Trackers <span class="arrow">→</span></a>
+            <a href="#" class="nav-item is-unbuilt" aria-disabled="true"> Logs <span class="arrow">→</span></a>
+        </nav>
+        <div class="add-btn">+</div>
+    </div>
+    <div class="main-stage">
+        <div class="ledger-container"> 
+            <div class="ledger-header">
+                <div class="page-title">Statement</div>
+                <div class="ledger-id">ACC: JEN-BERJAMIN</div>
+            </div>
+
+<div class="filter-deck" style="margin-bottom: 30px; display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.05); padding: 15px 25px; border-radius: 12px; border: 1px solid rgba(212, 175, 55, 0.2);">
+    
+    <div class="input-group" style="display: flex; align-items: center; gap: 10px;">
+        <span style="color: #8b857e; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Filter Date:</span>
+        <input type="date" id="date-filter" style="background: transparent; border: 1px solid #555; color: #D4AF37; padding: 6px; border-radius: 6px; font-family: inherit; outline: none; text-transform: uppercase;">
+    </div>
+
+    <div class="daily-summary" id="daily-stats-box" style="margin-left: 20px; display: flex; align-items: center; gap: 15px;">
+        <span style="color: #8b857e; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Selected Total:</span>
+        <span id="daily-total" style="color: #fff; font-size: 18px; font-weight: 500; text-shadow: 0 0 10px rgba(255,255,255,0.2);">0.00</span>
+    </div>
+
+    <div class="view-toggle-container" style="margin-left: auto; display: flex; gap: 10px;">
+        <button id="clear-filter" style="background: transparent; border: none; color: #8b857e; cursor: pointer; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Reset</button>
+        
+        <button id="view-mode-btn" style="background: rgba(212, 175, 55, 0.1); border: 1px solid #D4AF37; color: #D4AF37; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;">
+            <span id="view-mode-text">Daily Summary</span>
+        </button>
+    </div>
+</div>
+
+<div class="table-headers">
+                <div class="th-item">Date</div>
+                <div class="th-item">Description</div>
+                <div class="th-item">Source</div>
+                <div class="th-item th-right">Amount</div>
+            </div>
+
+            <div class="transaction-list" id="transaction-list">
+            </div></div></div>
+
+    <!-- The SDK is already loaded in the head. This runs at the end of the
+         body because it writes into #transaction-list, which has to exist
+         by the time it does.
+
+         The ledger module comes first: the statement colours a row by what
+         KIND of row it is, and that classification lives there. -->
+    <script src="JS/lifehub-prestige-ledger.js"></script>
+    <script src="JS/lifehub-transactions-viewer.js"></script>
+
+</body>
+</html>

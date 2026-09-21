@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — Navigation entry</title>
+<style>
+    body {
+        background: #f2e8e2; font-family: 'Century Gothic', sans-serif;
+        margin: 0; padding: 32px; color: #333;
+    }
+    .box {
+        max-width: 720px; margin: 0 auto; background: #fdf8f4;
+        border: 1px solid #e3cfb8; border-radius: 12px; padding: 26px 30px;
+    }
+    h1 { font-size: 17px; color: #9c6b4f; letter-spacing: 2px; margin: 0 0 4px; }
+    .sub { font-size: 11px; color: #b08a6c; text-transform: uppercase; letter-spacing: 1px; }
+    p { font-size: 13px; line-height: 1.65; color: #6b5a4d; }
+    .warn {
+        background: #fdf1e4; border: 1px solid #e8d3b8; border-radius: 8px;
+        padding: 12px 15px; font-size: 12.5px; line-height: 1.6; color: #8a5a3f;
+    }
+    button {
+        padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
+        font-weight: bold; font-family: inherit; font-size: 13px;
+        background: #b8866f; color: #fff; margin-top: 16px;
+    }
+    button:hover { background: #a0705a; }
+    button:disabled { background: #d6c4b8; cursor: default; }
+    #log {
+        margin-top: 18px; font-family: Consolas, monospace; font-size: 12px;
+        line-height: 1.8; color: #6b5a4d; white-space: pre-wrap;
+    }
+    .ok  { color: #4c7a4c; }
+    .new { color: #9c6b4f; font-weight: bold; }
+    .err { color: #c0392b; }
+    ol { font-size: 13px; line-height: 1.8; color: #6b5a4d; }
+    code { background: #f3e6d8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>↩️ SEED NAVIGATION ENTRY</h1>
+    <div class="sub">PoppyEngine · one-time setup</div>
+
+    <p>
+        One entry that lets Poppy move Jen between screens — the thing Alexa
+        has always been able to do and Poppy couldn't. Writes into the
+        editor's Firebase, not into <code>PoppyEngine-core.js</code>, which
+        is generated.
+    </p>
+
+    <div class="warn">
+        Just the one entry, on purpose. The list of 48 destinations is
+        <strong>not</strong> in here — it's built at runtime from
+        <code>JS/lifehub-destinations.js</code> and shipped with the action
+        spec, so adding a screen there needs no re-seed and no re-export.
+    </div>
+
+    <p>
+        Matched <strong>by name</strong>, so a second run updates it rather
+        than creating a duplicate. Your other entries are never read or
+        changed.
+    </p>
+
+    <p><strong>After it finishes:</strong> open the editor, read it through, then
+        <strong>Export PoppyEngine.js</strong> over <code>JS/poppy/PoppyEngine-core.js</code>.</p>
+
+    <button id="go">Write the navigation entry</button>
+    <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, update }
+    from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157"
+};
+
+const db = getDatabase(initializeApp(cfg));
+
+const CATEGORY = "Navigation";
+
+/* The verbs that turn a mention of a screen into a request to be taken
+   there. This is the whole gate: "sleep" alone must never fire this,
+   or every question about last night becomes a page jump. */
+const GOING = [
+    "open", "go", "goto", "take me", "bring me", "switch", "switch to",
+    "show me", "pull up", "bring up", "navigate", "jump", "launch",
+    "load", "visit", "head", "back to", "get me", "put me"
+];
+
+const RULE = "═══════════════════════════════════════════════════════════════";
+
+const HEAD = (title, action) =>
+    RULE + "\n↩️ " + title + (action ? " ; " + action : "") + "\n" + RULE + "\n";
+
+const ENTRIES = [
+
+/* ── TAKE ME THERE ────────────────────────────────────────────────
+   window: 1. An action must never read stale words — "open my sleep
+   tracker" three messages ago must not combine with "hydration" now
+   and jump somewhere she never asked for.
+
+   fetchTargets carries poppy/surface so she knows which screen is
+   already up. Without it she can't tell "open Scribble" from "open
+   Scribble" said while looking at Scribble, and the action's own
+   already-there check would be the first thing to notice. */
+{
+    name: "Navigation: Take me there",
+    intent: "NAVIGATE",
+    blockType: "instruction",
+    priority: 4,
+    window: 1,
+    keywords: GOING,
+    requireAny: GOING,
+    fetchTargets: ["poppy/surface"],
+    writeFields: ["action"],
+    guidelines:
+HEAD("Jen wants to be somewhere else", "navigate") +
+`She's asking you to change what's on her screen. The ids and the block shape are in the ACTIONS section — read the list there and pick from it.
+
+── THE ONE THING TO GET RIGHT ──
+A question about a tracker is not a request to open it.
+
+  "how did I sleep last night"        → answer it. No block.
+  "open my sleep tracker"             → navigate. SLEEP.
+  "am I behind on water"              → answer it. No block.
+  "pull up hydration"                 → navigate. HYDRATION.
+  "what's in my recycle bin"          → answer it. No block.
+  "take me to the recycle bin"        → navigate. SCRIBBLE-BIN.
+
+If she wanted to look at it herself, she'd have said so. When she asks
+for a number, give her the number — moving her to a page she then has
+to read is not answering, it's deflecting.
+
+── PICK THE SPECIFIC ONE ──
+"my food history" is FOODHUB-HISTORY, not FOODHUB. "my measurements" is
+FITNESS-MEASUREMENT, not FITNESS. Go one level deeper when she named a
+level.
+
+── WHEN NOTHING FITS ──
+Say so and name the nearest screen. Don't invent an id — one that isn't
+on the list comes back refused, and she'll have watched you announce a
+jump that never happened.
+
+── SAY WHERE SHE'S GOING ──
+Name the screen in your reply, briefly, above the block. The jump is
+instant, so if you picked wrong she needs to be able to see that you
+picked wrong.
+
+── ALREADY THERE ──
+Check the Active surface line first. If she's asking for the screen
+she's already on, say so instead of sending the block.` + "\n" + RULE
+
+}
+
+];
+
+const logEl = document.getElementById('log');
+const say = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+};
+
+document.getElementById('go').onclick = async () => {
+    const btn = document.getElementById('go');
+    btn.disabled = true;
+    logEl.textContent = '';
+
+    try {
+        const catSnap = await get(ref(db, 'poppyEngine/categories'));
+        const cats = catSnap.val() || {};
+        if (!Object.values(cats).includes(CATEGORY)) {
+            await push(ref(db, 'poppyEngine/categories'), CATEGORY);
+            say('+ category "' + CATEGORY + '"', 'new');
+        } else {
+            say('- category "' + CATEGORY + '" already there', 'ok');
+        }
+
+        const intentPatch = {};
+        ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
+        await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
+        say('- ' + ENTRIES.length + ' intent registered', 'ok');
+
+        const entSnap = await get(ref(db, 'poppyEngine/entries'));
+        const existing = entSnap.val() || {};
+        const byName = {};
+        Object.entries(existing).forEach(([id, e]) => {
+            if (e && e.name) byName[e.name] = id;
+        });
+
+        let n = Object.keys(existing).length;
+
+        for (const src of ENTRIES) {
+            const id = byName[src.name];
+            const was = id ? existing[id] : null;
+
+            const entry = {
+                name:         src.name,
+                category:     CATEGORY,
+                intent:       src.intent,
+                keywords:     src.keywords || [],
+                priority:     src.priority || 4,
+                order:        was && was.order != null ? was.order : n++,
+                hidden:       false,
+                window:       src.window != null ? src.window : null,
+                cooldown:     src.cooldown || 0,
+                blockType:    src.blockType || "instruction",
+                guidelines:   src.guidelines,
+                Shifts:       [],
+                fetchTargets: src.fetchTargets || [],
+                writeFields:  src.writeFields || [],
+                requireAny:   src.requireAny  || [],
+                requireAll:   src.requireAll  || [],
+                requireNone:  src.requireNone || [],
+                notAll:       src.notAll      || [],
+                updatedAt:    Date.now()
+            };
+
+            if (id) {
+                entry.createdAt = was.createdAt || Date.now();
+                await set(ref(db, 'poppyEngine/entries/' + id), entry);
+                say('~ updated  ' + src.name, 'ok');
+            } else {
+                entry.createdAt = Date.now();
+                await push(ref(db, 'poppyEngine/entries'), entry);
+                say('+ created  ' + src.name, 'new');
+            }
+        }
+
+        say('');
+        say('Done. Open the editor, then Export PoppyEngine.js and paste it', 'new');
+        say('over JS/poppy/PoppyEngine-core.js.', 'new');
+
+    } catch (err) {
+        say('');
+        say('Failed: ' + err.message, 'err');
+        say('The entry is matched by name, so just run it again.', 'err');
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

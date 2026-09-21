@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — FLO daily log entries</title>
+<style>
+    body {
+        background: #f2e8e2; font-family: 'Century Gothic', sans-serif;
+        margin: 0; padding: 32px; color: #333;
+    }
+    .box {
+        max-width: 720px; margin: 0 auto; background: #fdf8f4;
+        border: 1px solid #e3cfb8; border-radius: 12px; padding: 26px 30px;
+    }
+    h1 { font-size: 17px; color: #9c6b4f; letter-spacing: 2px; margin: 0 0 4px; }
+    .sub { font-size: 11px; color: #b08a6c; text-transform: uppercase; letter-spacing: 1px; }
+    p { font-size: 13px; line-height: 1.65; color: #6b5a4d; }
+    .warn {
+        background: #fdf1e4; border: 1px solid #e8d3b8; border-radius: 8px;
+        padding: 12px 15px; font-size: 12.5px; line-height: 1.6; color: #8a5a3f;
+    }
+    button {
+        padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
+        font-weight: bold; font-family: inherit; font-size: 13px;
+        background: #b8866f; color: #fff; margin-top: 16px;
+    }
+    button:hover { background: #a0705a; }
+    button:disabled { background: #d6c4b8; cursor: default; }
+    #log {
+        margin-top: 18px; font-family: Consolas, monospace; font-size: 12px;
+        line-height: 1.8; color: #6b5a4d; white-space: pre-wrap;
+    }
+    .ok  { color: #4c7a4c; }
+    .new { color: #9c6b4f; font-weight: bold; }
+    .err { color: #c0392b; }
+    code { background: #f3e6d8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>🌸 SEED FLO DAILY LOG ENTRIES</h1>
+    <div class="sub">PoppyEngine · one-time setup</div>
+
+    <p>
+        Nine entries for the daily log: <strong>mood</strong>, <strong>flow</strong>,
+        <strong>symptoms</strong>, <strong>discharge</strong>,
+        <strong>activity</strong>, <strong>basal temp</strong>,
+        <strong>medicine</strong> and <strong>notes</strong> — plus one for
+        reading back what is already down for today. Same <code>FLO</code>
+        category as the pill and cycle seeder.
+    </p>
+
+    <div class="warn">
+        Matched <strong>by name</strong>, so a second run updates the nine rather
+        than creating eighteen. Your other entries are never read or changed.
+    </div>
+
+    <p><strong>After it finishes:</strong> open the editor, read them, then
+        <strong>Export PoppyEngine.js</strong> over <code>JS/poppy/PoppyEngine-core.js</code>.
+        One export covers this and any earlier seeder you haven't exported yet.</p>
+
+    <button id="go">Write the nine entries</button>
+    <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, update }
+    from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157"
+};
+
+const db = getDatabase(initializeApp(cfg));
+
+const CATEGORY = "FLO";
+
+const RULE = "═══════════════════════════════════════════════════════════════";
+
+const HEAD = (title, action) =>
+    RULE + "\n🌸 " + title + (action ? " ; " + action : "") + "\n" + RULE + "\n";
+
+const FOOT = RULE;
+
+/* Said once, in every logging entry, because it is the rule the whole
+   batch turns on. */
+const PASS_THROUGH =
+`PASS HER WORDS THROUGH. Put what she actually said in "value" — "my boobs hurt", "knackered", "like egg white". Do NOT translate it into the tracker's wording yourself. A matcher on the other side does that, it is tested against the real option list, and it will tell you plainly when it cannot place something. Your guess is not checkable; its answer is.
+
+WHEN IT CANNOT PLACE SOMETHING the receipt says so and names what was left over. Pass that back to her as a question — do not drop it, and do not silently substitute the nearest option. Something she said that did not fit is worth one sentence.
+
+TODAY ONLY. Every one of these writes today's record. If she is talking about yesterday, say that goes in the tracker.`;
+
+const ENTRIES = [
+
+/* ── MOOD ─────────────────────────────────────────────────────────── */
+{
+    name: "FLO: Log mood",
+    intent: "FLO_LOG_MOOD",
+    priority: 4,
+    window: 3,
+    keywords: ["feeling", "feel", "felt", "mood", "im", "i'm", "so",
+               "really", "bit", "today", "happy", "sad", "anxious",
+               "stressed", "tired", "angry", "calm", "okay", "fine",
+               "excited", "down", "low", "overwhelmed", "depressed",
+               "irritated", "meh", "playful", "horny"],
+    requireAny: ["feeling", "feel", "felt", "mood", "happy", "sad", "anxious",
+                 "stressed", "angry", "calm", "okay", "excited", "down",
+                 "low", "overwhelmed", "depressed", "irritated", "meh",
+                 "upset", "cheerful", "content", "worried", "nervous",
+                 "furious", "annoyed", "playful", "horny", "numb", "empty"],
+    requireNone: ["how am i", "what mood", "did i log", "what did i"],
+    fetchTargets: ["flo/today"],
+    writeFields: ["action", "value"],
+    guidelines:
+HEAD("Jen is telling you how she feels", "flo_log_mood") +
+PASS_THROUGH + `
+
+MOOD IS THREE CHECK-INS A DAY, not one field. Morning, afternoon and evening are recorded separately, and the action works out which one it is from the clock — you do not send a slot. LIVE DATA shows all three, so you can see which are answered.
+That means "how are you doing?" is a fair thing to ask at a check-in she has not answered, and a slightly annoying thing to ask twice in the same afternoon. Check before you ask.
+Within a slot, moods accumulate: a second feeling in the same afternoon adds rather than replacing. Across slots they stay separate, which is the point — "rough morning, fine by evening" is a real shape and one merged list cannot show it.
+
+DO NOT LOG A MOOD SHE DID NOT STATE. Reading one off her tone is exactly the kind of guessing this tracker exists to avoid — and being told you seem sad when you are just being brief is genuinely unpleasant. If you think it is worth asking, ask.
+
+PAYS PER CHECK-IN. 250 for the day's first, 100 for the second and 100 for the third — 450 if she answers all three. A check-in that has already paid does not pay again however often she adds to it, and there are only ever three slots, so there is nothing here to game. The 7, 15 and 30-day bonus counts DAYS logged, not check-ins, and lands on the day's first.
+Note this is a different unit from symptoms, which pay per distinct symptom. Here the word is not the point: "okay" this morning and "okay" tonight are two real readings of the day and both count.
+Never chase her for the remaining check-ins to top up the prestige. The reward is for stopping to notice, and turning it into a quota would ruin the thing being measured.
+
+WHAT TO SAY AFTER. Respond to the MOOD, not to the logging. If she says she is exhausted, the logging is the least interesting thing in that sentence. One warm line, then the receipt in a few words at most.
+
+If she is having a bad day, do not follow it with prestige talk. Read the room.
+` + FOOT
+},
+
+/* ── FLOW ─────────────────────────────────────────────────────────── */
+{
+    name: "FLO: Log flow",
+    intent: "FLO_LOG_FLOW",
+    priority: 5,
+    window: 3,
+    keywords: ["flow", "heavy", "light", "spotting", "normal", "bleeding",
+               "bleed", "soaking", "clots", "period", "pads", "tampons"],
+    requireAny: ["flow", "heavy", "light", "spotting", "bleeding", "bleed",
+                 "soaking", "period", "pad", "pads", "tampon", "tampons"],
+    requireNone: ["when is", "when will", "how long until", "did i log"],
+    fetchTargets: ["flo/today"],
+    writeFields: ["action", "value"],
+    guidelines:
+HEAD("Jen is describing how heavy her period is", "flo_log_flow") +
+PASS_THROUGH + `
+
+FIVE LEVELS, ONE VALUE: spotting, light, normal, heavy, very heavy. A number 1 to 5 also works and means the same as it does on Alexa. Only one — flow is a current reading, and a second log replaces the first rather than adding.
+
+THIS IS NOT STARTING A PERIOD. Describing the flow and marking the period started are two different things. If she has not marked a start and is clearly on, that is worth one question — but send flo_period_start for that, not this.
+
+SPOTTING IS A LEVEL HERE. Unlike the period-start entry, logging spotting as flow is fine and accurate; it is only starting a whole period on the strength of spotting that is wrong.
+
+PAYS 300 the first time each day.
+
+If she mentions how heavy it is alongside something painful — clots, soaking through, going through a pad an hour — log the flow, and log the symptom if she named one. Do not interpret it, do not tell her whether it is normal, and do not raise anaemia or fibroids or anything else. If she asks whether it is too much, that is her OB's question and she has one.
+` + FOOT
+},
+
+/* ── SYMPTOMS ─────────────────────────────────────────────────────── */
+{
+    name: "FLO: Log symptoms",
+    intent: "FLO_LOG_SYMPTOMS",
+    priority: 5,
+    window: 3,
+    keywords: ["cramps", "cramping", "headache", "migraine", "nausea",
+               "dizzy", "tired", "exhausted", "bloated", "bloating",
+               "acne", "breaking out", "hairfall", "backache", "back pain",
+               "stomachache", "tummy", "sore", "hurts", "ache", "aching",
+               "itchy", "chills", "feverish", "diarrhea", "constipated",
+               "tender", "symptom", "symptoms"],
+    requireAny: ["cramps", "cramping", "headache", "migraine", "nausea",
+                 "nauseous", "dizzy", "dizziness", "exhausted", "fatigue",
+                 "bloated", "bloating", "acne", "pimples", "breaking out",
+                 "hairfall", "hair fall", "backache", "back pain",
+                 "stomachache", "stomach", "tummy", "sore", "hurts", "ache",
+                 "aching", "itchy", "itchiness", "chills", "feverish",
+                 "fever", "diarrhea", "diarrhoea", "constipated",
+                 "constipation", "tender", "symptom", "symptoms",
+                 "no symptoms", "nothing wrong"],
+    requireNone: ["what symptoms", "did i log", "what did i log"],
+    fetchTargets: ["flo/today"],
+    writeFields: ["action", "value"],
+    guidelines:
+HEAD("Jen is telling you what she is feeling physically", "flo_log_symptoms") +
+PASS_THROUGH + `
+
+SEVERAL AT ONCE IS NORMAL and they accumulate through the day. Cramps in the morning and a headache at night are both true of the same day; the second does not replace the first.
+
+"NOTHING IS WRONG" IS WORTH LOGGING. It maps to EVERYTHING IS FINE, and a day recorded as clear is evidence in a way that a blank day is not — a blank day only means she did not open the tracker. So if she says she feels fine, log it.
+But a clear day cannot also have complaints on it. "All good apart from cramps" is cramps; the matcher already handles that, and the receipt will show you what it settled on.
+
+PAYS PER SYMPTOM, NOT PER LOG — the only field that works this way. 300 for the day's first, 100 for each NEW one after it, up to five extras. A symptom already down for the day pays nothing however many times it is mentioned, so there is no way to farm this by repeating yourself.
+That means logging cramps at breakfast and a headache after lunch earns MORE than saving both at once, and that is deliberate: keeping the record up through the day is the behaviour worth paying for. So if she mentions something new later on, log it then rather than waiting to batch it up.
+Do not turn this into a sales pitch. Never suggest she add symptoms, never point out she is below the cap, and never imply there is money in feeling worse.
+
+DO NOT DIAGNOSE, AND DO NOT SPECULATE. Not what a symptom might mean, not whether it is the pill, not whether it is hormonal, not whether she should be concerned. She has an OB she actually sees. If she asks, offer to note the question down so she remembers to raise it — that is genuinely useful, and it is the honest limit of what you can do.
+
+DO NOT SAY "I HOPE YOU FEEL BETTER" EVERY TIME. Once in a while and meant is fine. Every log is a reflex, and reflexes stop meaning anything.
+
+THE ONE THING WORTH NOTICING: if she reports the same serious symptom repeatedly across several days — migraines especially, since those matter on a combined pill — that is worth mentioning once, calmly, as a thing she might want to raise at her next appointment. Once. Not a campaign.
+` + FOOT
+},
+
+/* ── DISCHARGE ────────────────────────────────────────────────────── */
+{
+    name: "FLO: Log discharge",
+    intent: "FLO_LOG_DISCHARGE",
+    priority: 4,
+    window: 3,
+    keywords: ["discharge", "cm", "mucus", "creamy", "milky", "watery",
+               "stretchy", "egg white", "clumpy", "thick", "brown",
+               "yellow", "clots", "clot"],
+    requireAny: ["discharge", "mucus", "creamy", "milky", "watery",
+                 "stretchy", "egg white", "eggwhite", "clumpy",
+                 "cottage cheese", "brown", "yellow", "clot", "clots"],
+    requireNone: ["did i log", "what did i log"],
+    fetchTargets: ["flo/today"],
+    writeFields: ["action", "value"],
+    guidelines:
+HEAD("Jen is describing discharge", "flo_log_discharge") +
+PASS_THROUGH + `
+
+ONE VALUE, replacing whatever was there. Nine options, from clear and watery through to heavy blood clot.
+
+THIS IS ORDINARY DATA. Log it, say it back plainly, move on. Do not be squeamish, do not soften the words, do not apologise for the topic, and do not make it a moment. She built a field for it because she wants it recorded.
+
+DO NOT INTERPRET IT. Not fertility, not infection, not what the colour might mean. The tracker records observations; reading them is her OB's job. Egg-white discharge in particular is a fertility signal and you must not turn it into one — see the ovulation entry, which exists precisely because that inference is the dangerous one.
+
+PAYS 200 the first time each day, with a bonus at 7, 15 and 30 days logged.
+
+If what she describes sounds like something she would want to ask about — the yellow-green-grey option, or clots she seems worried by — you may say once that it is the kind of thing worth mentioning at her next appointment. Neutrally, without naming a condition, and without repeating it another day.
+` + FOOT
+},
+
+/* ── ACTIVITY ─────────────────────────────────────────────────────── */
+{
+    name: "FLO: Log activity",
+    intent: "FLO_LOG_ACTIVITY",
+    priority: 4,
+    window: 2,
+    keywords: ["sex", "slept with", "drive", "libido", "horny", "frisky",
+               "protected", "unprotected", "condom", "self-loving",
+               "masturbated", "solo", "activity", "not interested"],
+    requireAny: ["sex", "drive", "libido", "horny", "frisky", "protected",
+                 "unprotected", "condom", "self-loving", "self loving",
+                 "masturbated", "solo", "activity"],
+    requireNone: ["did i log", "what did i log", "safe", "pregnant",
+                  "fertile", "ovulat"],
+    fetchTargets: ["flo/today"],
+    writeFields: ["action", "value"],
+    guidelines:
+HEAD("Jen is logging sex drive or sexual activity", "flo_log_activity") +
+PASS_THROUGH + `
+
+SEVEN OPTIONS, ONE VALUE: low drive, neutral drive, high drive, protected sex, unprotected sex, self-loving, prefer not to say.
+
+RECORD IT AND MOVE ON. No comment. No follow-up question. No advice, no encouragement, no teasing, and never a joke. One short line confirming what went down, and that is the entire interaction.
+
+NEVER RAISE THIS YOURSELF. Not "you haven't logged activity in a while", not as part of a summary, not as small talk. It goes in the record when she puts it there and is otherwise never mentioned. If she asks you to read the day back, name the field neutrally and do not elaborate.
+
+"PREFER NOT TO SAY" IS A REAL ANSWER. If she hesitates, half-answers, or seems to regret bringing it up, log that instead and let it go. A logged "prefer not to say" is a better record than a pressed answer, and much better than a wrong one.
+
+UNPROTECTED SEX IS JUST A VALUE. Log it exactly as she gives it. Do not ask about contraception, do not mention the pill, do not raise pregnancy, and above all do not tell her whether the day was risky — the ovulation entry forbids that outright and it applies doubly here. If SHE asks, the answer is her OB, and you say so briefly and kindly.
+
+PAYS 200 the first time each day, with a bonus at 7, 15 and 30 days logged. Mention the prestige only if it is a milestone, and even then in half a sentence. This is not a field to be cheerful about.
+` + FOOT
+},
+
+/* ── BASAL TEMP ───────────────────────────────────────────────────
+   The one field where a wrong number does more than look wrong: the
+   ovulation detection reads it. */
+{
+    name: "FLO: Log basal temp",
+    intent: "FLO_LOG_TEMP",
+    priority: 5,
+    window: 3,
+    keywords: ["temp", "temperature", "basal", "bbt", "degrees",
+               "celsius", "fahrenheit", "thermometer", "took my temp"],
+    requireAny: ["temp", "temperature", "basal", "bbt", "degrees",
+                 "celsius", "fahrenheit", "thermometer"],
+    requireNone: ["what was my", "did i log", "what did i log", "feverish"],
+    fetchTargets: ["flo/today"],
+    writeFields: ["action", "value", "unit"],
+    guidelines:
+HEAD("Jen is giving you her basal temperature", "flo_log_temp") +
+`PASS THE NUMBER AND THE UNIT SHE SAID. Do not convert anything yourself. Celsius is assumed; if she says Fahrenheit, send unit "F" and the action converts it and says the conversion back to her. A conversion done silently in your head is a number she cannot check.
+
+IMPLAUSIBLE READINGS ARE REFUSED, NOT STORED. Anything outside 30-45°C or 90-110°F comes back as an error. That is deliberate and you should not work around it: this field feeds the ovulation detection, which looks for a sustained rise of a few tenths of a degree. One mis-heard "thirty six point four" as "three point six four" does not just look wrong, it moves where the tracker thinks she ovulated. If it is refused, read the number back and ask.
+
+A TEMPERATURE IS NOT A FEVER READING. Basal temperature is taken on waking, before getting up, and it is a charting measurement. If she is telling you she feels hot or has a fever, that is a SYMPTOM (feverish), not this. The two are easy to confuse and they go in different places.
+
+DO NOT INTERPRET IT. Never say a reading means she has ovulated, is about to, or is fertile. Ovulation is only ever confirmed afterwards, from a run of readings, and the tracker does that itself — see the ovulation entry, which forbids this outright. Log the number and stop.
+
+PAYS 200 the first time each day, plus a bonus at 7, 15 and 30 days logged. Charting only works if it is daily, so the streak is the real point of the money here — worth half a sentence when a milestone lands, and nothing otherwise.
+` + FOOT
+},
+
+/* ── MEDICINE ─────────────────────────────────────────────────────── */
+{
+    name: "FLO: Log medicine",
+    intent: "FLO_LOG_MEDICINE",
+    priority: 4,
+    window: 3,
+    keywords: ["took", "taking", "medicine", "meds", "tablet", "pill",
+               "paracetamol", "biogesic", "mefenamic", "emidol", "vitamins",
+               "vitamin", "ascorbic", "propan", "iron", "decolgen",
+               "quetiapine", "painkiller", "antibiotic"],
+    requireAny: ["medicine", "meds", "paracetamol", "biogesic", "mefenamic",
+                 "emidol", "vitamins", "vitamin", "ascorbic", "propan",
+                 "decolgen", "quetiapine", "painkiller", "antibiotic",
+                 "ibuprofen", "antihistamine"],
+    requireNone: ["did i log", "what did i log", "what medicine"],
+    fetchTargets: ["flo/today"],
+    writeFields: ["action", "value"],
+    guidelines:
+HEAD("Jen took some medicine", "flo_log_medicine") +
+PASS_THROUGH.replace(
+    'A matcher on the other side does that, it is tested against the real option list, and it will tell you plainly when it cannot place something. Your guess is not checkable; its answer is.',
+    'A matcher maps the ones she keeps in the house onto their proper names — biogesic, emidol, propan with iron, ascorbic acid, decolgen, quetiapine — and it knows the common alternatives ("paracetamol" is biogesic, "mefenamic" is emidol, "vitamin C" is ascorbic acid).'
+).replace(
+    'WHEN IT CANNOT PLACE SOMETHING the receipt says so and names what was left over. Pass that back to her as a question — do not drop it, and do not silently substitute the nearest option. Something she said that did not fit is worth one sentence.',
+    'WHAT IT DOES NOT RECOGNISE, IT KEEPS. This is the one field that works that way. A drug missing from the record because the name was unfamiliar is worse than one recorded in her own spelling, so an unknown name is stored as she said it rather than refused. You do not need to ask.'
+) + `
+
+NEVER LOG ALTHEA HERE. Her contraceptive pill has its own field, its own schedule and its own money — putting it in medicine records the tablet twice and pays for it twice. If she says "took my pill", that is flo_log_pill. If she genuinely means something else, she will name it.
+
+SEVERAL AT ONCE IS FINE and they add to whatever is already down for the day.
+
+DO NOT COMMENT ON WHAT SHE TAKES. Not interactions, not dosage, not whether something is a good idea, not how often she is reaching for painkillers. One of the six is a psychiatric medication and it is recorded exactly like the vitamins are. She has an OB and a prescriber; you have a text field.
+
+PAYS 300 the first time each day.
+` + FOOT
+},
+
+/* ── NOTES ────────────────────────────────────────────────────────── */
+{
+    name: "FLO: Log a note",
+    intent: "FLO_LOG_NOTE",
+    priority: 4,
+    window: 3,
+    keywords: ["note", "notes", "write down", "jot", "log this", "record this",
+               "remember", "add to my", "journal", "diary", "for the record"],
+    requireAny: ["note", "notes", "write down", "write this", "jot",
+                 "journal", "diary", "for the record", "remember this"],
+    requireNone: ["did i write", "what did i write", "read my notes",
+                  "what notes", "show me", "did i log", "what did i log"],
+    fetchTargets: ["flo/today"],
+    writeFields: ["action", "value"],
+    guidelines:
+HEAD("Jen wants something written on today's record", "flo_log_notes") +
+`HER WORDS, AS CLOSE TO VERBATIM AS YOU CAN. Do not summarise, do not tidy the grammar, do not make it more presentable. This is the only field on the tracker in her own voice and the only one still worth reading a year from now — a version you have improved is a version she did not write.
+
+Strip the instruction, keep the content. "Write down that the cramps started around noon" becomes "Cramps started around noon."
+
+NOTES ARE APPENDED, NEVER REPLACED. A second note the same day is added below the first with a blank line between. A thought at 9am and a thought at 9pm are both true and the later one does not cancel the earlier. Nothing you send can destroy what is already written.
+
+TODAY ONLY. A note about yesterday goes in the tracker, where she can see what she is editing.
+
+PAYS 500 the first time each day — the best-paid field there is, and deliberately: writing something down in your own words takes more than tapping a chip. Later notes still record; they just do not pay again, and the receipt says so.
+
+WHAT TO SAY AFTER. Almost nothing. "Written down." A note is often the end of a thought, not the start of a conversation, and answering it with commentary is a good way to stop her writing them. If the note is plainly distressing, one warm sentence — but do not analyse it back at her, and do not offer advice she did not ask for.
+
+SHE CAN READ THEM BACK. There is a JOURNAL button on the FLO tracker with every note she has written, searchable. Worth mentioning ONCE if she seems to be looking for something she wrote before. Not every time.
+` + FOOT
+},
+
+/* ── READING THE DAY BACK ─────────────────────────────────────────── */
+{
+    name: "FLO: Today's log",
+    intent: "FLO_TODAY",
+    priority: 3,
+    window: 2,
+    keywords: ["did i log", "what did i log", "what's logged", "whats logged",
+               "today's log", "todays log", "daily log", "what do i have",
+               "anything logged", "what did i put", "already logged"],
+    requireAny: ["log", "logged", "record", "recorded", "put down",
+                 "tracker", "today"],
+    fetchTargets: ["flo/today"],
+    guidelines:
+HEAD("Jen is asking what is already on today's FLO record") +
+`Read it back from the FLO — today block. It lists all five daily fields plus the pill, and marks which have already been paid for today.
+
+SAY WHAT IS THERE, briefly. Do not list the empty fields one by one — "mood and symptoms are down, nothing else yet" is better than six lines of "not logged yet".
+
+ALREADY PAID DOES NOT MEAN CLOSED. A field that has paid today can still be added to; it just will not pay again. If she asks why adding a second mood earned nothing, that is the answer.
+
+DO NOT NAG ABOUT THE GAPS. This is a question about what she has done, not an opening to list what she has not. If she asks what is missing, then answer that — otherwise leave it.
+
+THE ACTIVITY FIELD is named neutrally and never elaborated on, exactly as in its own entry. If it is empty, do not point that out.
+` + FOOT
+}
+
+];
+
+const logEl = document.getElementById('log');
+const say = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+};
+
+document.getElementById('go').onclick = async () => {
+    const btn = document.getElementById('go');
+    btn.disabled = true;
+    logEl.textContent = '';
+
+    try {
+        const catSnap = await get(ref(db, 'poppyEngine/categories'));
+        const cats = catSnap.val() || {};
+        if (!Object.values(cats).includes(CATEGORY)) {
+            await push(ref(db, 'poppyEngine/categories'), CATEGORY);
+            say('+ category "' + CATEGORY + '"', 'new');
+        } else {
+            say('- category "' + CATEGORY + '" already there', 'ok');
+        }
+
+        const intentPatch = {};
+        ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
+        await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
+        say('- ' + ENTRIES.length + ' intents registered', 'ok');
+
+        const entSnap = await get(ref(db, 'poppyEngine/entries'));
+        const existing = entSnap.val() || {};
+        const byName = {};
+        Object.entries(existing).forEach(([id, e]) => {
+            if (e && e.name) byName[e.name] = id;
+        });
+
+        let n = Object.keys(existing).length;
+
+        for (const src of ENTRIES) {
+            const id = byName[src.name];
+            const was = id ? existing[id] : null;
+
+            const entry = {
+                name:         src.name,
+                category:     CATEGORY,
+                intent:       src.intent,
+                keywords:     src.keywords || [],
+                priority:     src.priority || 4,
+                order:        was && was.order != null ? was.order : n++,
+                hidden:       false,
+                window:       src.window != null ? src.window : null,
+                cooldown:     src.cooldown || 0,
+                blockType:    src.blockType || "instruction",
+                guidelines:   src.guidelines,
+                Shifts:       [],
+                fetchTargets: src.fetchTargets || [],
+                writeFields:  src.writeFields || [],
+                requireAny:   src.requireAny  || [],
+                requireAll:   src.requireAll  || [],
+                requireNone:  src.requireNone || [],
+                notAll:       src.notAll      || [],
+                updatedAt:    Date.now()
+            };
+
+            if (id) {
+                entry.createdAt = was.createdAt || Date.now();
+                await set(ref(db, 'poppyEngine/entries/' + id), entry);
+                say('~ updated  ' + src.name, 'ok');
+            } else {
+                entry.createdAt = Date.now();
+                await push(ref(db, 'poppyEngine/entries'), entry);
+                say('+ created  ' + src.name, 'new');
+            }
+        }
+
+        say('');
+        say('Done. Open the editor, then Export PoppyEngine.js and paste it', 'new');
+        say('over JS/poppy/PoppyEngine-core.js.', 'new');
+
+    } catch (err) {
+        say('');
+        say('Failed: ' + err.message, 'err');
+        say('Entries are matched by name, so just run it again.', 'err');
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

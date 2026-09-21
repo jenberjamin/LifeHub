@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — Prestige entries</title>
+<style>
+    body {
+        background: #f2e8e2; font-family: 'Century Gothic', sans-serif;
+        margin: 0; padding: 32px; color: #333;
+    }
+    .box {
+        max-width: 720px; margin: 0 auto; background: #fdf8f4;
+        border: 1px solid #e3cfb8; border-radius: 12px; padding: 26px 30px;
+    }
+    h1 { font-size: 17px; color: #9c6b4f; letter-spacing: 2px; margin: 0 0 4px; }
+    .sub { font-size: 11px; color: #b08a6c; text-transform: uppercase; letter-spacing: 1px; }
+    p { font-size: 13px; line-height: 1.65; color: #6b5a4d; }
+    .warn {
+        background: #fdf1e4; border: 1px solid #e8d3b8; border-radius: 8px;
+        padding: 12px 15px; font-size: 12.5px; line-height: 1.6; color: #8a5a3f;
+    }
+    button {
+        padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
+        font-weight: bold; font-family: inherit; font-size: 13px;
+        background: #b8866f; color: #fff; margin-top: 16px;
+    }
+    button:hover { background: #a0705a; }
+    button:disabled { background: #d6c4b8; cursor: default; }
+    #log {
+        margin-top: 18px; font-family: Consolas, monospace; font-size: 12px;
+        line-height: 1.8; color: #6b5a4d; white-space: pre-wrap;
+    }
+    .ok  { color: #4c7a4c; }
+    .new { color: #9c6b4f; font-weight: bold; }
+    .err { color: #c0392b; }
+    ol { font-size: 13px; line-height: 1.8; color: #6b5a4d; }
+    code { background: #f3e6d8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>💎 SEED PRESTIGE ENTRIES</h1>
+    <div class="sub">PoppyEngine · one-time setup</div>
+
+    <p>
+        Three entries that teach Poppy what prestige is, how to answer questions
+        about it, and how to write a manual ledger line. Same mechanism as the
+        sleep seeder: it writes into the editor's Firebase, not into
+        <code>PoppyEngine-core.js</code>, which is generated.
+    </p>
+
+    <div class="warn">
+        Matched <strong>by name</strong>, so a second run updates the three rather
+        than creating six. Your other entries are never read or changed.
+    </div>
+
+    <p><strong>After it finishes:</strong> open the editor, read them through, then
+        <strong>Export PoppyEngine.js</strong> over <code>JS/poppy/PoppyEngine-core.js</code>.
+        If you have not yet exported since running the sleep seeder, one export covers both.</p>
+
+    <button id="go">Write the three entries</button>
+    <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, update }
+    from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157"
+};
+
+const db = getDatabase(initializeApp(cfg));
+
+const CATEGORY = "Prestige";
+
+/* What makes a message about prestige at all. Shared by all three so a
+   word added here reaches every one of them. */
+const ABOUT_PRESTIGE = [
+    "prestige", "points", "point", "balance", "rank", "tier", "class",
+    "net worth", "networth", "worth", "ledger", "bank", "wallet",
+    "earned", "earn", "pts", "rich", "spend", "spent", "afford"
+];
+
+const RULE = "═══════════════════════════════════════════════════════════════";
+
+const HEAD = (title, action) =>
+    RULE + "\n💎 " + title + (action ? " ; " + action : "") + "\n" + RULE + "\n";
+
+const FOOT = RULE;
+
+const ENTRIES = [
+
+/* ── 1. WHAT PRESTIGE IS ──────────────────────────────────────────
+   blockType "context", so this lands in the CONTEXT section of the
+   prompt rather than being read as an order. It is background she
+   needs whenever points come up, in any of the other entries. */
+{
+    name: "Prestige: What it is",
+    intent: "PRESTIGE_LORE",
+    blockType: "context",
+    priority: 3,
+    window: 4,
+    keywords: ABOUT_PRESTIGE,
+    requireAny: ABOUT_PRESTIGE,
+    fetchTargets: [],
+    writeFields: [],
+    guidelines:
+HEAD("What prestige is") +
+`Prestige is LifeHub's own currency. Jen earns it by looking after herself, and it is the way the whole system keeps score. It is not money and it does not leave LifeHub.
+
+TWO NUMBERS, AND THEY ARE NOT THE SAME.
+
+  Balance    spendable points. Goes up when she earns, down when she spends.
+  Lifetime   everything she has ever earned. This is what sets her rank, and
+             spending does NOT lower it — buying something doesn't un-do the
+             work that paid for it. Only a correction to a wrong entry does.
+
+THE TIERS, by lifetime prestige:
+  The Foundation Class    from 0
+  The Sterling Class      100,000
+  The Elite Class         500,000
+  The Executive Class     1,000,000
+  The Tycoon's Circle     10,000,000
+  The Sovereign Class     100,000,000
+
+WHERE IT COMES FROM. Four trackers pay in, and each has its own rates:
+
+  Sleep — paid per night when a log is sealed.
+    under 4h    -2,000      a penalty, not a reward
+    4 to 6h       +500
+    6 to 8.5h   +3,500      the good band
+    8.5 to 9.5h +2,500
+    over 9.5h   +1,000
+    Streak bonuses on top, once each: 3 nights +2,000, 7 nights +10,000,
+    30 nights +50,000.
+
+  Hydration — paid per ounce, as she drinks.
+    10 points an ounce, x2.5 between 4am and 8am (the "first sip" bonus).
+    Goal is 100oz a day, 124oz on a workout day. Meeting it pays +1,000.
+    7-day streak +5,000. 30-day streak +25,000.
+    Under 40oz in a day is fined 500 the next morning — the drought tax.
+
+  Self upkeep — per named task, roughly 25 to 300 points each.
+  Home upkeep — per task and per cleaning session, banked and deposited.
+
+HOW TO TALK ABOUT IT.
+1. Never guess a number. If you have not been given the balance in LIVE DATA, say you would have to look rather than estimating one.
+2. The rates above are the rules, not her history. Knowing sleep pays 3,500 in the good band does not tell you what she earned last night.
+3. It is a game she built for herself, so treat it as one — the tier names are meant to be enjoyed. Don't be solemn about it, and don't turn a low balance into a lecture.
+` + FOOT
+},
+
+/* ── 2. ASKING ABOUT IT ───────────────────────────────────────────── */
+{
+    name: "Prestige: How much do I have",
+    intent: "PRESTIGE_REVIEW",
+    priority: 4,
+    window: 3,
+    keywords: ["how much", "how many", "what", "balance", "rank", "tier",
+               "net worth", "worth", "total", "left", "afford", "earned",
+               "today", "where", "history", "ledger", "recent", "close",
+               "far", "next"],
+    requireAny: ABOUT_PRESTIGE,
+    fetchTargets: ["prestige/standing", "prestige/ledger"],
+    writeFields: [],
+    guidelines:
+HEAD("Jen is asking about her prestige") +
+`A question. Send no action.
+
+LIVE DATA gives you two blocks:
+  Prestige                    balance, lifetime, current tier, how far the next
+                              tier is, what today has paid, and lifetime by source
+  Prestige - recent activity  the actual ledger rows, newest first, with what
+                              each one was and which tracker wrote it
+
+FOUR RULES.
+
+1. Read the right number. "How much do I have" is the BALANCE. "What rank am I" is LIFETIME. They are different numbers and confusing them is the one mistake here that matters.
+2. Only what's in LIVE DATA. It carries the most recent rows, not the whole history. If she asks about something further back, say so plainly instead of reaching for a number.
+3. Don't recite the ledger. Answer the question, and offer the detail only if it helps — "you're at 340,000, so Elite is about 160,000 off" beats fifteen rows.
+4. If she asks where something came from, the source tag on each row is the answer. A row marked (correction) is one that took points back out; say so if it's what she's looking at.
+
+Milestones are worth a word. If she is close to the next tier, or has just crossed one, that is genuinely nice news and she built the tiers to enjoy them.
+` + FOOT
+},
+
+/* ── 3. MANUAL LEDGER ENTRIES ─────────────────────────────────────── */
+{
+    name: "Prestige: Manual ledger entry",
+    intent: "PRESTIGE_WRITE",
+    priority: 5,
+    window: 4,
+    keywords: ["award", "give", "add", "credit", "pay", "reward", "bonus",
+               "spend", "buy", "deduct", "take", "remove", "subtract",
+               "correct", "fix", "wrong", "adjust"],
+    requireAny: ABOUT_PRESTIGE,
+    fetchTargets: ["prestige/standing"],
+    writeFields: ["action", "amount", "reason", "direction"],
+    guidelines:
+HEAD("Jen wants a manual entry on the prestige ledger",
+     "prestige_award / prestige_spend / prestige_correct") +
+`These three are the only way prestige moves without a tracker behind it. That makes them the only way a misheard sentence can change what she is worth, so they carry the same code ceremony as a Scribble merge.
+
+FIVE RULES. These outrank everything below.
+
+1. Send no action until she has given the correct code.
+2. Invent a fresh 4-digit code at Step 3. There is no code written in these instructions to copy.
+3. Two attempts, total. Any reply that is not the correct code spends one.
+4. Never infer an amount. If she did not say a number out loud, ask for it. Don't round it, don't convert it, don't work it out from something else she said.
+5. Never use these to fix a tracker entry. A wrong sleep log is fixed with sleep_amend or sleep_delete, which adjust the ledger themselves — correcting it here as well would double the fix.
+
+WHICH OF THE THREE. This is the part to get right, because two of them look identical and behave differently a year later.
+
+  prestige_award    she EARNED something no tracker covers.
+                    Balance up, rank up.
+                    "give me points for", "I deserve", "reward me for"
+
+  prestige_spend    she BOUGHT or claimed something with points.
+                    Balance down, rank UNCHANGED — the work still happened.
+                    "spend", "buy", "cash in", "treat myself to"
+
+  prestige_correct  the ledger is WRONG and should never have said what it says.
+                    Balance and rank move together. Needs direction: "add" or "remove".
+                    "that shouldn't be there", "it double-counted", "you paid me twice"
+
+If her words fit more than one, ASK. "Is that you spending them, or fixing a number that was wrong?" The difference is invisible today and permanent.
+
+STEP 1 — Work out which action, the amount, and the reason.
+Missing amount: ask. Missing reason: ask — the ledger line needs one.
+Unclear which action: ask, as above. Wait each time.
+
+STEP 2 — Read it back, with the consequence spelled out.
+award:   "{amount} prestige for {reason}. That goes on your rank too. Yes?"
+spend:   "{amount} off your balance for {reason}. Your rank stays where it is. Yes?"
+correct: "{add or remove} {amount} — {reason}. This moves your rank as well. Yes?"
+No, or a change of subject: "Left it alone." Transaction over.
+
+STEP 3 — Issue the code.
+"Last step - send this code back to me: [ # # # # ]"
+Replace the hashes with the four digits you just invented. Wait.
+
+STEP 4 — Read her reply. The digits may be anywhere in a sentence.
+Correct code: SEND THE ACTION NOW, then say what landed in one line.
+Wrong, first time: "That's not it - one attempt left. Send the code back: [ same four digits ]"
+Wrong, second time: "That's twice. I'm suspending this one." Send no action.
+
+A suspended or cancelled entry stays dead. Asking again later starts at Step 1 with a new code.
+
+The action refuses anything over 250,000 in one line, and refuses a spend larger than the balance. Those come back as a sentence - pass it on rather than trying a smaller number on her behalf.
+` + FOOT
+}
+
+];
+
+const logEl = document.getElementById('log');
+const say = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+};
+
+document.getElementById('go').onclick = async () => {
+    const btn = document.getElementById('go');
+    btn.disabled = true;
+    logEl.textContent = '';
+
+    try {
+        const catSnap = await get(ref(db, 'poppyEngine/categories'));
+        const cats = catSnap.val() || {};
+        if (!Object.values(cats).includes(CATEGORY)) {
+            await push(ref(db, 'poppyEngine/categories'), CATEGORY);
+            say('+ category "' + CATEGORY + '"', 'new');
+        } else {
+            say('- category "' + CATEGORY + '" already there', 'ok');
+        }
+
+        const intentPatch = {};
+        ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
+        await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
+        say('- ' + ENTRIES.length + ' intents registered', 'ok');
+
+        const entSnap = await get(ref(db, 'poppyEngine/entries'));
+        const existing = entSnap.val() || {};
+        const byName = {};
+        Object.entries(existing).forEach(([id, e]) => {
+            if (e && e.name) byName[e.name] = id;
+        });
+
+        let n = Object.keys(existing).length;
+
+        for (const src of ENTRIES) {
+            const id = byName[src.name];
+            const was = id ? existing[id] : null;
+
+            const entry = {
+                name:         src.name,
+                category:     CATEGORY,
+                intent:       src.intent,
+                keywords:     src.keywords || [],
+                priority:     src.priority || 4,
+                order:        was && was.order != null ? was.order : n++,
+                hidden:       false,
+                window:       src.window != null ? src.window : null,
+                cooldown:     src.cooldown || 0,
+                blockType:    src.blockType || "instruction",
+                guidelines:   src.guidelines,
+                Shifts:       [],
+                fetchTargets: src.fetchTargets || [],
+                writeFields:  src.writeFields || [],
+                requireAny:   src.requireAny  || [],
+                requireAll:   src.requireAll  || [],
+                requireNone:  src.requireNone || [],
+                notAll:       src.notAll      || [],
+                updatedAt:    Date.now()
+            };
+
+            if (id) {
+                entry.createdAt = was.createdAt || Date.now();
+                await set(ref(db, 'poppyEngine/entries/' + id), entry);
+                say('~ updated  ' + src.name, 'ok');
+            } else {
+                entry.createdAt = Date.now();
+                await push(ref(db, 'poppyEngine/entries'), entry);
+                say('+ created  ' + src.name, 'new');
+            }
+        }
+
+        say('');
+        say('Done. Open the editor, then Export PoppyEngine.js and paste it', 'new');
+        say('over JS/poppy/PoppyEngine-core.js.', 'new');
+
+    } catch (err) {
+        say('');
+        say('Failed: ' + err.message, 'err');
+        say('Entries are matched by name, so just run it again.', 'err');
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

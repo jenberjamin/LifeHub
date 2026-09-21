@@ -1,0 +1,2639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>WordBook</title>
+
+    <link rel="icon" type="image/png" href="css/files/Wordbook.png">
+    <link rel="stylesheet" href="css/wordbook.css">
+    <link rel="manifest" href="./manifest-wordbook.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Century+Gothic:wght@400;700&display=swap">
+    <meta name="theme-color" content="#f2e8e2">
+
+
+</head>
+	<body>
+
+<a href="../../LifeHub.html" class="back-nav">â† LifeHub</a>
+    <main class="main-stage">
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <p>Loading your Wordbook...</p>
+            <p id="loadingMessage" style="font-size: 16px; font-weight: normal; margin-top: 10px;"></p>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <div class="view-container active" id="homeView">
+            <div class="home-view">
+                <div class="header">
+                    <div class="logo">
+                        <div class="jenn">
+                            <span>J</span>
+                            <span>E</span>
+                            <span>N</span>
+                        </div>
+                        <div class="wordbook">WORDBOOK</div>
+                    </div>
+                </div>
+			
+                <div class="home-search-wrapper">
+                    <div class="search-container">
+                        <span class="material-icons play-icon dropdown-icon" id="dropdownToggle">arrow_right</span>
+                        <input type="text" class="search-box" id="searchBox" placeholder="Search for a word">
+                        <span class="material-icons search-icon">search</span>
+                    </div>
+                    <button class="list-nav-btn" id="goToListBtn" title="View Word Bank">
+                        <span class="material-symbols-outlined">list</span>
+                    </button>
+                </div>
+
+                <div class="expand-section" id="expandSection">
+                    <div class="expand-label">
+                        <strong>Expand with:</strong>
+                    </div>
+                    <input type="text" class="tag-input" id="homeTagFilter" placeholder="Type tags here (e.g. #pancake)">
+                    
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <span class="material-icons filter-icon">filter_list</span>
+                            <select class="filter-select category-select" id="homeCategoryFilter">
+                                </select>
+                            <span class="material-icons dropdown-arrow">arrow_drop_down</span>
+                        </div>
+                        <div class="filter-group">
+                            <span class="material-icons filter-icon">filter_list</span>
+                            <select class="filter-select type-select" id="homeTypeFilter">
+                                </select>
+                            <span class="material-icons dropdown-arrow">arrow_drop_down</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="view-container" id="wordBankView">
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0px; gap: 10px; padding-top: 5px;">
+                
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="back-btn" data-target-view="homeView">
+                        <span class="material-icons">arrow_back</span>
+                    </button>
+                    <h1 style="font-weight: bold; font-family: 'Century Gothic', sans-serif; font-size: 30px; margin: 0; white-space: nowrap;">WordBook</h1>
+                </div>
+
+                <div class="bank-search-container" style="margin: 0; width: 100%; max-width: 500px;">
+                    <span class="material-icons">search</span>
+                    <input type="text" class="bank-search-input" id="bankSearchBox" placeholder="Search for a new word...">
+                </div>
+
+            </div>
+
+            <div class="results-controls">
+                <div class="expand-with">
+                    <label>Expand with:</label>
+                    <input type="text" class="expand-tags-input" id="bankTagFilter" placeholder="type tags here">
+                </div>
+                <div class="results-filters">
+                    <div class="results-filter-group">
+                        <span class="material-icons filter-icon">filter_list</span>
+                        <select class="results-filter-select category-select" id="bankCategoryFilter">
+                            <option value="0">All</option>
+                        </select>
+                        <span class="material-icons dropdown-arrow">arrow_drop_down</span>
+                    </div>
+                    <div class="results-filter-group">
+                        <span class="material-icons filter-icon">filter_list</span>
+                        <select class="results-filter-select type-select" id="bankTypeFilter">
+                            <option value="0">All</option>
+                        </select>
+                        <span class="material-icons dropdown-arrow">arrow_drop_down</span>
+                    </div>
+                    
+                    <div class="results-filter-group" style="flex: 1.5;"> 
+                        <div class="combobox-wrapper" data-source="subCategories" data-target-input="bankSubCatSelect">
+                            <span class="material-icons filter-icon" style="z-index: 2;">filter_list</span>
+                            <input type="text" class="results-filter-input combobox-input" id="bankSubCatVisible" placeholder="Sub-Categories">
+                            <input type="hidden" id="bankSubCatSelect" value="0">
+                            <div class="combobox-options"></div>
+                        </div>
+                    </div>
+
+                    <div class="results-filter-group" style="flex: 1.5;">
+                        <div class="combobox-wrapper" id="bankClusterWrapper" data-target-input="bankClusterSelect">
+                            <span class="material-icons filter-icon" style="z-index: 2;">filter_list</span>
+                            <input type="text" class="results-filter-input combobox-input" id="bankClusterVisible" placeholder="Clusters" disabled style="background-color: #f9f9f9; cursor: not-allowed; opacity: 0.7;">
+                            <input type="hidden" id="bankClusterSelect" value="0">
+                            <div class="combobox-options" id="bankClusterOptions"></div>
+                        </div>
+                    </div>
+					</div>
+                
+                <button class="clear-filters-btn" id="clearFiltersBtn" title="Clear All Filters">
+                    <span class="material-icons">filter_alt_off</span>
+                </button>
+            </div>
+
+            <div class="results-section">
+                <h2 class="results-title">Results</h2>
+                <div id="resultsContainer">
+                    </div>
+                <div class="pagination-controls" id="paginationControls">
+                    </div>
+            </div>
+        </div>
+
+        <div class="view-container" id="categoriesView">
+            <div class="mgmt-header">
+                <button class="back-btn" data-target-view="homeView">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h1><span class="material-symbols-outlined">category</span> Categories</h1>
+            </div>
+            <div class="mgmt-list" id="categoriesList">
+                </div>
+        </div>
+
+        <div class="view-container" id="typesView">
+            <div class="mgmt-header">
+                <button class="back-btn" data-target-view="homeView">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h1><span class="material-symbols-outlined">type_specimen</span> Types</h1>
+            </div>
+            <div class="mgmt-list" id="typesList">
+                </div>
+        </div>
+        
+        <div class="view-container" id="subCategoriesView">
+            <div class="mgmt-header">
+                <button class="back-btn" data-target-view="homeView">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h1><span class="material-symbols-outlined">category_search</span> Sub-Categories</h1>
+            </div>
+            <div class="mgmt-list" id="subCategoriesList">
+                </div>
+        </div>
+        
+        <div class="view-container" id="expandedSubCategoryView">
+            <div class="mgmt-header">
+                <button class="back-btn" data-target-view="subCategoriesView">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h1 id="expandedSubCatTitle">Expanded Sub-Category</h1>
+            </div>
+            <div class="mgmt-list" id="expandedSubCatList">
+                </div>
+        </div>
+
+        <div class="view-container" id="tagsView">
+            <div class="mgmt-header">
+                <button class="back-btn" data-target-view="homeView">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h1><span class="material-symbols-outlined">tag</span> Tags</h1>
+            </div>
+            <div class="mgmt-list" id="tagsList">
+                </div>
+        </div>
+
+    </div>
+
+    <div class="fab-container" id="fabContainer">
+        <div class="fab-menu" id="fabMenu">
+            <div class="fab-menu-item" id="fabCatBtn">
+                <span>Categories</span>
+                <span class="material-symbols-outlined">category</span>
+            </div>
+            <div class="fab-menu-item" id="fabTypeBtn">
+                <span>Types</span>
+                <span class="material-symbols-outlined">type_specimen</span>
+            </div>
+            <div class="fab-menu-item" id="fabSubCatBtn">
+                <span>Sub-Categories</span>
+                <span class="material-symbols-outlined">category_search</span>
+            </div>
+            <div class="fab-menu-item" id="fabTagBtn">
+                <span>Tags</span>
+                <span class="material-symbols-outlined">tag</span>
+            </div>
+        </div>
+        <div class="fab-main-buttons">
+            <div class="fab" id="addBtn">
+                <span class="material-icons">add</span>
+            </div>
+            <div class="fab" id="fabToggleBtn">
+                <span class="material-icons">expand_less</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="newEntryModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span>+ New Entry</span>
+                <button class="modal-close">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <div class="combobox-wrapper" data-source="categories" data-target-input="newCategory">
+                        <input type="text" class="combobox-input" placeholder="Type or select a category...">
+                        <input type="hidden" id="newCategory">
+                        <div class="combobox-options"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <div class="combobox-wrapper" data-source="types" data-target-input="newType">
+                        <input type="text" class="combobox-input" placeholder="Type or select a type...">
+                        <input type="hidden" id="newType">
+                        <div class="combobox-options"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+    <label class="form-label">Sub-Category</label>
+    <div class="combobox-wrapper" data-source="subCategories" data-target-input="filterSubCatParent">
+        <input type="text" class="combobox-input" id="parentSubCatInput" placeholder="Select a category first (e.g. Smile)...">
+        <input type="hidden" id="filterSubCatParent">
+        <div class="combobox-options"></div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Cluster (Specifics)</label>
+    <div class="multi-select-wrapper" id="newSubCategoryMulti">
+        <div class="selected-items-container"></div>
+        
+        <div class="combobox-wrapper">
+            <input type="text" class="combobox-input" id="clusterInput" placeholder="Now select the specific type..." disabled style="background: #f9f9f9; cursor: not-allowed;">
+            <div class="combobox-options" id="clusterOptions"></div>
+        </div>
+    </div>
+</div>
+
+
+<div class="form-group" style="margin-top: 20px;">
+                    <textarea class="text-area" id="newText" placeholder="Enter your text here..."></textarea>
+                </div>
+
+
+				
+<div style="display: flex; justify-content: flex-end; margin-bottom: 5px;">
+    <button type="button" class="smart-tag-btn" onclick="triggerAutoTag('new')">
+        âœ¨ Auto-Detect Tags
+    </button>
+</div>
+
+                <div class="form-group" style="position: relative;">
+        <input type="text" class="tags-input" id="newTags" placeholder="Add Tags Here (e.g. #cooking #pancake)" autocomplete="off">
+        <div class="tag-suggestions" id="newTagsSuggestions"></div>
+    </div>
+    </div> <div class="modal-footer">
+                <div class="footer-left">
+                    <button class="icon-btn nsfw-btn" id="newNsfwBtn" title="Toggle Spiciness (NSFW)">
+    <span class="material-icons">whatshot</span>
+</button>
+                </div>
+                <button class="save-btn" id="saveNewEntry">
+                    <span class="material-icons">save</span>
+                    Save Entry
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editEntryModal">
+        <div class="modal" data-entry-id="">
+            <div class="modal-header">
+                <span>Edit</span>
+                <button class="modal-close">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <div class="combobox-wrapper" data-source="categories" data-target-input="editCategory">
+                        <input type="text" class="combobox-input" placeholder="Type or select a category...">
+                        <input type="hidden" id="editCategory">
+                        <div class="combobox-options"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <div class="combobox-wrapper" data-source="types" data-target-input="editType">
+                        <input type="text" class="combobox-input" placeholder="Type or select a type...">
+                        <input type="hidden" id="editType">
+                        <div class="combobox-options"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+    <label class="form-label">Sub-Category</label>
+    <div class="combobox-wrapper" data-source="subCategories" data-target-input="editFilterSubCatParent">
+        <input type="text" class="combobox-input" id="editParentSubCatInput" placeholder="Select a category first (e.g. Smile)...">
+        <input type="hidden" id="editFilterSubCatParent">
+        <div class="combobox-options"></div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Cluster (Specifics)</label>
+    <div class="multi-select-wrapper" id="editSubCategoryMulti">
+        <div class="selected-items-container"></div>
+        
+        <div class="combobox-wrapper">
+            <input type="text" class="combobox-input" id="editClusterInput" placeholder="Now select the specific type..." disabled style="background: #f9f9f9; cursor: not-allowed;">
+            <div class="combobox-options" id="editClusterOptions"></div>
+        </div>
+    </div>
+</div>
+
+
+
+				
+<div class="form-group" style="margin-top: 20px;">
+                    <textarea class="text-area" id="editText"></textarea>
+                </div>
+
+				
+<div style="display: flex; justify-content: flex-end; margin-bottom: 5px;">
+    <button type="button" class="smart-tag-btn" onclick="triggerAutoTag('edit')">
+        âœ¨ Auto-Detect Tags
+    </button>
+</div>
+
+                <div class="form-group" style="position: relative;">
+    <input type="text" class="tags-input" id="editTags" placeholder="Add Tags Here #" autocomplete="off">
+    <div class="tag-suggestions" id="editTagsSuggestions"></div>
+</div>
+            <div class="modal-footer">
+                <div class="footer-left">
+                    <button class="icon-btn nsfw-btn" id="editNsfwBtn" title="Toggle Spiciness (NSFW)">
+    <span class="material-icons">whatshot</span>
+</button>
+                    <button class="icon-btn delete-btn" id="deleteEntryBtn">
+                        <span class="material-icons">delete</span>
+                    </button>
+                </div>
+                <button class="save-btn" id="saveEditEntry">
+                    <span class="material-icons">save</span>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="confirm-modal-overlay" id="confirmModal">
+        <div class="confirm-modal">
+            <p id="confirmText">Are you sure?</p>
+            <div class="confirm-actions">
+                <button class="confirm-btn" id="confirmYes">YES</button>
+                <button class="confirm-btn" id="confirmNo">NO</button>
+            </div>
+        </div>
+    </div>
+
+
+<script src="js/TAGBOOK-auto-taglist.js"></script>
+
+    <!-- 
+      START OF FIREBASE MIGRATION SCRIPT 
+    -->
+
+<script type="module">              
+
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+    getAuth, 
+    signInAnonymously, 
+    signInWithCustomToken, 
+    onAuthStateChanged,
+    GoogleAuthProvider,
+    signInWithPopup,
+    linkWithPopup
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            getDocs,
+            addDoc, 
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            collection, 
+            query, 
+            where,
+            writeBatch,
+            arrayRemove,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// --- SAM'S BRIDGE TO THE BRAIN ---
+window.triggerAutoTag = function(mode) {
+    // 1. Identify which inputs we are talking to
+    const textId = mode === 'new' ? 'newText' : 'editText';
+    const tagId = mode === 'new' ? 'newTags' : 'editTags';
+    
+    const textField = document.getElementById(textId);
+    const tagField = document.getElementById(tagId);
+    
+    // 2. Ask the Brain for help
+    // (generateSmartTags comes from brain.js)
+    const suggestions = generateSmartTags(textField.value);
+    
+    // 3. Apply the tags
+    if (suggestions) {
+        const currentTags = tagField.value.trim();
+        // Don't duplicate tags if they are already there
+        const combined = currentTags ? currentTags + " " + suggestions : suggestions;
+        
+        // Clean up duplicates in the final string
+        const uniqueSet = new Set(combined.split(" ").filter(t => t.trim() !== ""));
+        tagField.value = Array.from(uniqueSet).join(" ");
+    } else {
+        alert("ðŸ§  The brain didn't find any keywords it knows yet!");
+    }
+};
+
+        // --- FIREBASE SETUP ---
+        const userProvidedConfig = {
+            apiKey: "AIzaSyCTc5nvEKAhSytX_TSAyTQUv-yQJmOk96I",
+            authDomain: "wordbook-8087b.firebaseapp.com",
+            databaseURL: "https://wordbook-8087b-default-rtdb.firebaseio.com",
+            projectId: "wordbook-8087b",
+            storageBucket: "wordbook-8087b.firebasestorage.app",
+            messagingSenderId: "746574723269",
+            appId: "1:746574723269:web:90b0a2cd1f563ed923d8ac",
+            measurementId: "G-JTXH9PSX1P"
+        };
+        
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : userProvidedConfig;
+            
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        setLogLevel('Debug');
+
+
+		// --- SAM'S SYNC SYSTEM ---
+        const provider = new GoogleAuthProvider();
+
+        async function triggerGoogleSync() {
+    alert("Public Mode Active: Your data is automatically syncing to the cloud using the Jen_Master_User profile.");
+}
+
+
+	function restoreSession() {
+            const lastView = localStorage.getItem('wordbook_lastView');
+            const savedFilters = localStorage.getItem('wordbook_lastFilters');
+
+            // 1. Restore Filters if we are going back to the Word Bank
+            if (lastView === 'wordBankView' && savedFilters) {
+                try {
+                    const parsedFilters = JSON.parse(savedFilters);
+                    activeFilters = parsedFilters;
+
+                    // Restore visual inputs so you see what you searched for
+                    if(searchBox) searchBox.value = activeFilters.search;
+                    if(document.getElementById('bankSearchBox')) document.getElementById('bankSearchBox').value = activeFilters.search;
+                    if(document.getElementById('searchQueryDisplay')) document.getElementById('searchQueryDisplay').textContent = activeFilters.search ? `"${activeFilters.search}"` : "Word Bank";
+                    
+                    if(bankCategoryFilter) bankCategoryFilter.value = activeFilters.category || '0';
+                    if(bankTypeFilter) bankTypeFilter.value = activeFilters.type || '0';
+                    if(bankTagFilter) bankTagFilter.value = (activeFilters.tags || []).map(t => `#${t}`).join(' ');
+
+                    // Restore Sub-Cat/Cluster (Complex because of the dropdowns)
+                    if (document.getElementById('bankSubCatSelect')) {
+                         document.getElementById('bankSubCatSelect').value = activeFilters.subCategory || ''; // Note: activeFilters structure might vary, adapting to current use
+                         // Note: We might need to trigger the change event to unlock clusters, 
+                         // but for now let's just restore the basic view so we don't crash.
+                    }
+
+                    renderResults();
+                } catch (e) {
+                    console.log("Session restore error", e);
+                }
+            }
+
+            // 2. Go to the right room
+            if (lastView && document.getElementById(lastView)) {
+                showView(lastView);
+            } else {
+                showView('homeView');
+            }
+        }
+	
+        // Expose to window so our HTML button can see it
+        window.triggerGoogleSync = triggerGoogleSync;
+	
+        let userId = null;
+        let unsubscribes = [];
+        let actionListenersAttached = false; // <-- **FIX** Flag to prevent re-attaching listeners
+
+        // --- FIREBASE COLLECTION PATHS ---
+        const entriesCol = (uid) => `artifacts/${appId}/users/${uid}/entries`;
+        const categoriesCol = (uid) => `artifacts/${appId}/users/${uid}/categories`;
+        const typesCol = (uid) => `artifacts/${appId}/users/${uid}/types`;
+        const subCategoriesCol = (uid) => `artifacts/${appId}/users/${uid}/subCategories`;
+        const subCategoryItemsCol = (uid) => `artifacts/${appId}/users/${uid}/subCategoryItems`;
+        const tagsCol = (uid) => `artifacts/${appId}/users/${uid}/tags`;
+        const metaDoc = (uid) => `artifacts/${appId}/users/${uid}/meta/userData`; // For migration flag
+
+        // --- LOCAL DATA STATE ---
+        let entries = [];
+        let categories = [];
+        let types = [];
+        let subCategories = [];
+        let subCategoryItems = [];
+        let tags = [];
+
+        // --- DOM ELEMENTS ---
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const homeView = document.getElementById('homeView');
+        const wordBankView = document.getElementById('wordBankView');
+        const searchBox = document.getElementById('searchBox');
+        const goToListBtn = document.getElementById('goToListBtn');
+        const queryText = document.getElementById('searchQueryDisplay');
+        const dropdownToggle = document.getElementById('dropdownToggle');
+        const expandSection = document.getElementById('expandSection');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const paginationControls = document.getElementById('paginationControls');
+        const allViews = document.querySelectorAll('.view-container');
+        const homeCategoryFilter = document.getElementById('homeCategoryFilter');
+        const homeTypeFilter = document.getElementById('homeTypeFilter');
+        const homeTagFilter = document.getElementById('homeTagFilter');
+        const bankCategoryFilter = document.getElementById('bankCategoryFilter');
+        const bankTypeFilter = document.getElementById('bankTypeFilter');
+        const bankSubCategoryFilterInput = document.getElementById('bankSubCatSelect');
+        const bankTagFilter = document.getElementById('bankTagFilter');
+        const newEntryModal = document.getElementById('newEntryModal');
+        const editEntryModal = document.getElementById('editEntryModal');
+        const allModals = document.querySelectorAll('.modal-overlay');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmText = document.getElementById('confirmText');
+        const fabContainer = document.getElementById('fabContainer');
+        const fabToggleBtn = document.getElementById('fabToggleBtn');
+        const addBtn = document.getElementById('addBtn');
+        const fabCatBtn = document.getElementById('fabCatBtn');
+        const fabTypeBtn = document.getElementById('fabTypeBtn');
+        const fabSubCatBtn = document.getElementById('fabSubCatBtn');
+        const fabTagBtn = document.getElementById('fabTagBtn');
+        const newCategory = document.getElementById('newCategory');
+        const newType = document.getElementById('newType');
+        const newSubCategoryMulti = document.getElementById('newSubCategoryMulti');
+        const newText = document.getElementById('newText');
+        const newTags = document.getElementById('newTags');
+        const newNsfwBtn = document.getElementById('newNsfwBtn');
+        const saveNewEntryBtn = document.getElementById('saveNewEntry');
+        const editCategory = document.getElementById('editCategory');
+        const editType = document.getElementById('editType');
+        const editSubCategoryMulti = document.getElementById('editSubCategoryMulti');
+        const editText = document.getElementById('editText');
+        const editTags = document.getElementById('editTags');
+        const editNsfwBtn = document.getElementById('editNsfwBtn');
+        const saveEditEntryBtn = document.getElementById('saveEditEntry');
+        const deleteEntryBtn = document.getElementById('deleteEntryBtn');
+        const categoriesList = document.getElementById('categoriesList');
+        const typesList = document.getElementById('typesList');
+        const subCategoriesList = document.getElementById('subCategoriesList');
+        const tagsList = document.getElementById('tagsList');
+        const expandedSubCatTitle = document.getElementById('expandedSubCatTitle');
+        const expandedSubCatList = document.getElementById('expandedSubCatList');
+
+        // --- FIREBASE AUTH & DATA LOADING ---
+
+        async function initAuth() {
+    loadingOverlay.classList.add('active');
+    loadingMessage.textContent = 'Bypassing Auth & Connecting to Cloud...';
+
+    // We set a permanent ID for this laptop/user.
+    // This ensures your data stays in the same Firebase folder.
+    userId = "Jen_Master_User"; 
+    
+    console.log('âœ… Auth Protocol Disabled. Running in Public Firebase Mode.');
+
+    // We skip the migration and go straight to loading
+    loadAllDataFromFirebase();
+}
+
+        /**
+         * One-time migration from localStorage to Firestore (FIXED)
+         */
+        async function runLocalStorageMigration() {
+            if (!userId) return;
+
+            // FIX: Check local storage *first*
+            if (localStorage.getItem('wordbookDB_migrated') === 'true') {
+                console.log('Migration already complete (local flag). Skipping.');
+                return;
+            }
+
+            const metaRef = doc(db, metaDoc(userId));
+            try {
+                // Check remote flag
+                const metaSnap = await getDoc(metaRef);
+                if (metaSnap.exists() && metaSnap.data().migratedFromLocalStorage) {
+                    console.log('Migration already complete (remote flag). Skipping.');
+                    localStorage.setItem('wordbookDB_migrated', 'true');
+                    if (localStorage.getItem('wordbookDB')) {
+                        localStorage.removeItem('wordbookDB');
+                    }
+                    return;
+                }
+
+                // Remote flag not set, check for local data
+                const oldDBString = localStorage.getItem('wordbookDB');
+                if (!oldDBString) {
+                    console.log('No localStorage data found. Skipping migration.');
+                    await setDoc(metaRef, { migratedFromLocalStorage: true }, { merge: true });
+                    localStorage.setItem('wordbookDB_migrated', 'true');
+                    return;
+                }
+
+                console.log('--- STARTING LOCALSTORAGE MIGRATION ---');
+                loadingMessage.textContent = 'Migrating old data... (Please wait)';
+                const oldDB = JSON.parse(oldDBString);
+                const batch = writeBatch(db);
+                const mapping = {};
+
+                // 1. Migrate Categories
+                if (oldDB.categories) {
+                    for (const cat of oldDB.categories) {
+                        const newRef = doc(collection(db, categoriesCol(userId)));
+                        mapping[cat.id] = newRef.id;
+                        batch.set(newRef, { name: cat.name });
+                    }
+                }
+                
+                // 2. Migrate Types
+                if (oldDB.types) {
+                    for (const type of oldDB.types) {
+                        const newRef = doc(collection(db, typesCol(userId)));
+                        mapping[type.id] = newRef.id;
+                        batch.set(newRef, { name: type.name });
+                    }
+                }
+
+                // 3. Migrate Tags
+                if (oldDB.tags) {
+                    for (const tag of oldDB.tags) {
+                        const newRef = doc(collection(db, tagsCol(userId)));
+                        mapping[tag.id] = newRef.id;
+                        batch.set(newRef, { name: tag.name });
+                    }
+                }
+
+                // 4. Migrate SubCategories (Parents)
+                if (oldDB.subCategories) {
+                     for (const subCat of oldDB.subCategories) {
+                        const newRef = doc(collection(db, subCategoriesCol(userId)));
+                        mapping[subCat.id] = newRef.id;
+                        batch.set(newRef, { name: subCat.name });
+                    }
+                }
+                
+                // 5. Migrate SubCategoryItems (Children)
+                if (oldDB.subCategoryItems) {
+                    for (const item of oldDB.subCategoryItems) {
+                        const newRef = doc(collection(db, subCategoryItemsCol(userId)));
+                        mapping[item.id] = newRef.id;
+                        batch.set(newRef, { 
+                            name: item.name, 
+                            parentId: mapping[item.parentId] || null
+                        });
+                    }
+                }
+
+                // 6. Migrate Entries
+                if (oldDB.entries) {
+                    for (const entry of oldDB.entries) {
+                        const newRef = doc(collection(db, entriesCol(userId)));
+                        
+                        const newTags = Array.isArray(entry.tags) 
+                            ? entry.tags.map(t => mapping[t]).filter(Boolean) 
+                            : [];
+                        const newSubCategories = Array.isArray(entry.subCategories)
+                            ? entry.subCategories.map(s => mapping[s]).filter(Boolean)
+                            : [];
+
+                        batch.set(newRef, {
+                            text: entry.text || "",
+                            category: mapping[entry.category] || null,
+                            type: mapping[entry.type] || null,
+                            tags: newTags,
+                            subCategories: newSubCategories,
+                            favorite: entry.favorite || false,
+                            createdAt: new Date()
+                        });
+                    }
+                }
+
+                // 7. Set migration flag
+                batch.set(metaRef, { migratedFromLocalStorage: true, migrationDate: new Date() }, { merge: true });
+
+                // 8. Commit
+                await batch.commit();
+                console.log('--- MIGRATION COMPLETE ---');
+                loadingMessage.textContent = 'Migration complete!';
+                
+                // 9. Clean up local storage
+                localStorage.removeItem('wordbookDB');
+                localStorage.setItem('wordbookDB_migrated', 'true');
+
+            } catch (error) {
+                console.error("Error during migration:", error);
+                loadingMessage.textContent = 'Error during migration. Data may be incomplete.';
+            }
+        }
+
+        /**
+         * Sets up a real-time snapshot listener for a collection.
+         */
+        function setupSnapshot(collectionPath, targetArray, renderCallback) {
+            const q = query(collection(db, collectionPath));
+            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                console.log(`Snapshot received for: ${collectionPath}`);
+                targetArray.length = 0;
+                querySnapshot.forEach((doc) => {
+                    targetArray.push({ id: doc.id, ...doc.data() });
+                });
+                renderCallback();
+            }, (error) => {
+                console.error(`Error listening to ${collectionPath}:`, error);
+                loadingOverlay.classList.add('active');
+                loadingMessage.textContent = 'Error loading data. Please refresh.';
+            });
+            unsubscribes.push(unsubscribe);
+        }
+        
+        /**
+         * **FIX**: Sets up all listeners for the management pages.
+         * This is now called *after* userId is confirmed.
+         */
+        function setupActionListeners() {
+if (actionListenersAttached) return;
+            if (actionListenersAttached || !userId) return; // Guard
+            console.log('Attaching action listeners...');
+
+            // --- Management Page "Add New" Listeners ---
+            categoriesList.addEventListener('click', e => {
+                if (e.target.matches('.add-new-item')) {
+                    handleMgmtAdd(categoriesList, categoriesCol(userId), "New Category...", renderCategoriesPage);
+                }
+            });
+            typesList.addEventListener('click', e => {
+                if (e.target.matches('.add-new-item')) {
+                    handleMgmtAdd(typesList, typesCol(userId), "New Type...", renderTypesPage);
+                }
+            });
+            subCategoriesList.addEventListener('click', e => {
+                if (e.target.matches('.add-new-item')) {
+                    handleMgmtAdd(subCategoriesList, subCategoriesCol(userId), "New Sub-Category...", renderSubCategoriesPage);
+                }
+            });
+            tagsList.addEventListener('click', e => {
+                if (e.target.matches('.add-new-item')) {
+                    handleMgmtAdd(tagsList, tagsCol(userId), "New Tag...", renderTagsPage, '#');
+                }
+            });
+            expandedSubCatList.addEventListener('click', e => {
+                if (e.target.matches('.add-new-item')) {
+                    handleMgmtAdd(expandedSubCatList, subCategoryItemsCol(userId), "New Item...", () => renderExpandedSubCategoryPage(currentExpandedSubCat), '', { parentId: currentExpandedSubCat });
+                }
+            });
+            
+            // --- Management Page Action Listeners (Delete/Rename/Expand) ---
+            handleMgmtActions(categoriesList, categoriesCol(userId), renderCategoriesPage, 'category');
+            handleMgmtActions(typesList, typesCol(userId), renderTypesPage, 'type');
+            handleMgmtActions(tagsList, tagsCol(userId), renderTagsPage, 'tag');
+            handleMgmtActions(subCategoriesList, subCategoriesCol(userId), renderSubCategoriesPage, 'subCategoryParent');
+            handleMgmtActions(expandedSubCatList, subCategoryItemsCol(userId), () => renderExpandedSubCategoryPage(currentExpandedSubCat), 'subCategoryItem');
+
+            actionListenersAttached = true; // Set flag
+        }
+
+        /**
+         * Loads all data from Firebase using snapshot listeners.
+         */
+        function loadAllDataFromFirebase() {
+            if (!userId) return;
+
+            // **FIX**: Call listener setup *after* userId is known
+            setupActionListeners();
+
+            unsubscribes.forEach(unsub => unsub());
+            unsubscribes = [];
+            
+            let loadCount = 0;
+            const totalCollections = 6;
+
+            const renderAll = () => {
+                loadCount++;
+                
+                // Wait until ALL 6 collections are loaded before we render
+                if (loadCount >= totalCollections) {
+                    loadingOverlay.classList.remove('active');
+                    
+                    triggerFullRender();
+                    populateFilterDropdowns();
+                    
+                    // SAM'S FIX: Restore the session only after EVERYTHING is loaded
+                    // This function must exist in your code for this to work!
+                    restoreSession(); 
+                }
+            };
+
+            setupSnapshot(entriesCol(userId), entries, renderAll);
+            setupSnapshot(categoriesCol(userId), categories, renderAll);
+            setupSnapshot(typesCol(userId), types, renderAll);
+            setupSnapshot(subCategoriesCol(userId), subCategories, renderAll);
+            setupSnapshot(subCategoryItemsCol(userId), subCategoryItems, renderAll);
+            setupSnapshot(tagsCol(userId), tags, renderAll);
+        }
+
+        // --- GLOBAL STATE ---
+        let currentPage = 1;
+        const entriesPerPage = 20;
+        let activeFilters = {
+            search: '',
+            category: '0',
+            type: '0',
+            subCategory: '',
+            tags: []
+        };
+        let currentExpandedSubCat = null; 
+
+        // --- CONFIRMATION MODAL ---
+        let confirmCallback = null;
+        
+        function showConfirm(text, callback) {
+            confirmText.textContent = text;
+            confirmCallback = callback;
+            confirmModal.classList.add('active');
+        }
+
+        // --- NAVIGATION & MODALS ---
+        function showView(viewId) {
+            allViews.forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(viewId).classList.add('active');
+            fabContainer.classList.remove('open');
+            
+            // SAM'S MEMORY SAVE: Remember where we are
+            localStorage.setItem('wordbook_lastView', viewId);
+        }
+
+function prefillNewEntry() {
+            // 1. Check which view is active to decide which filters to grab
+            const isHome = document.getElementById('homeView').classList.contains('active');
+            const isBank = document.getElementById('wordBankView').classList.contains('active');
+
+            let catId = '0', typeId = '0', subCatId = '0', clusterId = '0';
+
+            // 2. Grab the values based on where you are
+            if (isBank) {
+                // We are in the Word Bank
+                catId = document.getElementById('bankCategoryFilter').value;
+                typeId = document.getElementById('bankTypeFilter').value;
+                
+                const subEl = document.getElementById('bankSubCatSelect');
+                const clusEl = document.getElementById('bankClusterSelect');
+                if (subEl) subCatId = subEl.value;
+                if (clusEl) clusterId = clusEl.value;
+
+            } else if (isHome) {
+                // We are in the Home/Lobby
+                catId = document.getElementById('homeCategoryFilter').value;
+                typeId = document.getElementById('homeTypeFilter').value;
+            }
+
+            // 3. Apply them to the Modal
+            const modal = document.getElementById('newEntryModal');
+
+            // Set Category
+            if (catId && catId !== '0') {
+                const wrapper = modal.querySelector('[data-target-input="newCategory"]');
+                setComboboxValue(wrapper, catId);
+            }
+
+            // Set Type
+            if (typeId && typeId !== '0') {
+                const wrapper = modal.querySelector('[data-target-input="newType"]');
+                setComboboxValue(wrapper, typeId);
+            }
+
+            // Set Sub-Category (The Room)
+            if (subCatId && subCatId !== '0') {
+                const wrapper = modal.querySelector('[data-target-input="filterSubCatParent"]');
+                setComboboxValue(wrapper, subCatId);
+            }
+
+            // Set Cluster (The Specific Item) -> Adds it to the multi-select tag list
+            if (clusterId && clusterId !== '0') {
+                const item = subCategoryItems.find(i => i.id === clusterId);
+                if (item) {
+                    const container = document.getElementById('newSubCategoryMulti').querySelector('.selected-items-container');
+                    // Only add if not already there
+                    if (!container.querySelector(`[data-id="${item.id}"]`)) {
+                        addMultiSelectTag(container, item.id, item.name);
+                    }
+                }
+            }
+        }
+
+	
+        function openModal(modal) {
+            modal.classList.add('active');
+        }
+
+        function closeModal(modal) {
+            modal.classList.remove('active');
+            modal.querySelectorAll('.combobox-input').forEach(input => {
+                input.value = '';
+                input.closest('.combobox-wrapper').classList.remove('active');
+            });
+            modal.querySelectorAll('.selected-items-container').forEach(container => {
+                container.innerHTML = '';
+            });
+            modal.querySelectorAll('.text-area, .tags-input').forEach(input => input.value = '');
+        }
+
+        // --- DYNAMIC DATA RENDERING ---
+
+       function populateFilterDropdowns() {
+            // SAM'S FIX: Added backticks (`) below
+            const filterDefaultOption = `<option value="0" style="font-style: italic;">All</option>`;
+            
+            // 1. Categories
+            const catOptions = [...categories]
+                .sort((a,b) => a.name.localeCompare(b.name))
+                .map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+            document.querySelectorAll('.category-select').forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = filterDefaultOption + catOptions;
+                select.value = currentVal;
+            });
+
+            // 2. Types
+            const typeOptions = [...types]
+                .sort((a,b) => a.name.localeCompare(b.name))
+                .map(type => `<option value="${type.id}">${type.name}</option>`).join('');
+            document.querySelectorAll('.type-select').forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = filterDefaultOption + typeOptions;
+                select.value = currentVal;
+            });
+
+            // 3. Sub-Categories (NEW)
+            const subCatSelect = document.getElementById('bankSubCatSelect');
+            if (subCatSelect) {
+                const currentVal = subCatSelect.value;
+                const subCatOptions = [...subCategories]
+                    .sort((a,b) => a.name.localeCompare(b.name))
+                    .map(sc => `<option value="${sc.id}">${sc.name}</option>`).join('');
+                
+                // SAM'S FIX: Added backticks (`) below
+                subCatSelect.innerHTML = `<option value="0" style="font-style: italic;">All Sub-Categories</option>` + subCatOptions;
+                subCatSelect.value = currentVal;
+            }
+        }
+        
+/* --- SAM'S BANK FILTER LOGIC (FIXED) --- */
+        function setupBankCascading() {
+            const subCatHidden = document.getElementById('bankSubCatSelect');
+            const subCatVisible = document.getElementById('bankSubCatVisible');
+            const clusterHidden = document.getElementById('bankClusterSelect');
+            const clusterVisible = document.getElementById('bankClusterVisible');
+            const clusterOptions = document.getElementById('bankClusterOptions');
+
+            if (!subCatHidden || !clusterHidden) return;
+
+            // Helper to Render Options (Handles filter text + Parent ID)
+            function renderClusterOptions(filterText = '') {
+                const parentId = subCatHidden.value;
+                clusterOptions.innerHTML = '';
+                
+                // 1. Find matches based on Parent AND Text
+                const matchingItems = subCategoryItems.filter(item => {
+                    const matchesParent = item.parentId === parentId;
+                    const matchesText = item.name.toLowerCase().includes(filterText.toLowerCase());
+                    return matchesParent && matchesText;
+                });
+
+                if (matchingItems.length === 0) {
+                     clusterOptions.innerHTML = '<div style="padding:10px; color:#999; italic">No clusters found.</div>';
+                } else {
+                    matchingItems.sort((a, b) => String(a.name).localeCompare(String(b.name))).forEach(item => {
+                        clusterOptions.insertAdjacentHTML('beforeend', `
+                            <div class="combobox-option" data-id="${item.id}">${item.name}</div>
+                        `);
+                    });
+                }
+            }
+
+            // 1. Listen for "change" events on Parent (Unlock & Reset)
+            subCatHidden.addEventListener('change', () => {
+                const parentId = subCatHidden.value;
+                
+                clusterHidden.value = '0';
+                clusterVisible.value = '';
+                
+                if (parentId && parentId !== '0') {
+                    // Unlock
+                    clusterVisible.disabled = false;
+                    clusterVisible.style.backgroundColor = 'white';
+                    clusterVisible.style.cursor = 'text';
+                    clusterVisible.style.opacity = '1';
+                    clusterVisible.placeholder = "Search Clusters...";
+                    
+                    // Initial Render
+                    renderClusterOptions();
+                } else {
+                    // Lock
+                    clusterVisible.disabled = true;
+                    clusterVisible.style.backgroundColor = '#f9f9f9';
+                    clusterVisible.style.cursor = 'not-allowed';
+                    clusterVisible.style.opacity = '0.7';
+                    clusterVisible.placeholder = "All Clusters";
+                    clusterOptions.innerHTML = '';
+                }
+                renderResults(); // Trigger search
+            });
+
+            // 2. Child Focus (RE-POPULATE to override the generic wipe)
+            clusterVisible.addEventListener('focus', () => {
+                const parentId = subCatHidden.value;
+                if(parentId && parentId !== '0') {
+                    renderClusterOptions(clusterVisible.value);
+                    clusterVisible.closest('.combobox-wrapper').classList.add('active');
+                }
+            });
+
+            // 3. Child Input (Filter as you type)
+            clusterVisible.addEventListener('input', () => {
+                const parentId = subCatHidden.value;
+                if(parentId && parentId !== '0') {
+                    renderClusterOptions(clusterVisible.value);
+                }
+            });
+
+            // 4. Trigger search when a Cluster is picked manually
+            clusterHidden.addEventListener('change', () => {
+                renderResults();
+            });
+        }
+
+        // --- FILTER & PAGINATION LOGIC ---
+        
+       function parseTags(tagString) {
+    // Sam's Update: Split by hash (#) OR space to be more forgiving
+    return tagString.toLowerCase().split(/[\s#]+/).filter(t => t.trim());
+}
+
+        function renderResults() {
+            // 1. Get Filter Values
+			localStorage.setItem('wordbook_lastFilters', JSON.stringify(activeFilters));
+            activeFilters.category = bankCategoryFilter.value;
+            activeFilters.type = bankTypeFilter.value;
+            
+            // NEW: Get values from dropdowns (Safe Check)
+            const subCatEl = document.getElementById('bankSubCatSelect');
+            const clusterEl = document.getElementById('bankClusterSelect');
+            
+            const subCatId = subCatEl ? subCatEl.value : '0';
+            const clusterId = clusterEl ? clusterEl.value : '0';
+            
+            activeFilters.tags = parseTags(bankTagFilter.value);
+
+            let filteredEntries = entries;
+
+            // 2. Apply "Stacking" Filters
+            if (activeFilters.search) {
+                filteredEntries = filteredEntries.filter(e => e.text.toLowerCase().includes(activeFilters.search.toLowerCase()));
+            }
+            if (activeFilters.category !== '0') {
+                filteredEntries = filteredEntries.filter(e => e.category === activeFilters.category);
+            }
+            if (activeFilters.type !== '0') {
+                filteredEntries = filteredEntries.filter(e => e.type === activeFilters.type);
+            }
+
+            // --- NEW SUB-CATEGORY & CLUSTER LOGIC ---
+            if (clusterId && clusterId !== '0') {
+                filteredEntries = filteredEntries.filter(e => e.subCategories && e.subCategories.includes(clusterId));
+            } else if (subCatId && subCatId !== '0') {
+                const childIds = subCategoryItems.filter(i => i.parentId === subCatId).map(i => i.id);
+                filteredEntries = filteredEntries.filter(e => {
+                    return e.subCategories && e.subCategories.some(id => childIds.includes(id));
+                });
+            }
+            
+            if (activeFilters.tags.length > 0) {
+    // 1. Find all Tag IDs that match what you typed (Partial Match allowed)
+    const matchingTagIds = tags
+        .filter(tag => {
+            const dbTagName = tag.name.substring(1).toLowerCase(); // Remove # from DB tag
+            // Check if the DB tag contains the search term (e.g. typing "pan" matches "pancake")
+            return activeFilters.tags.some(searchTerm => dbTagName.includes(searchTerm));
+        })
+        .map(tag => tag.id);
+
+    // 2. Filter entries that have ANY of the matching tags
+    if (matchingTagIds.length > 0) {
+        filteredEntries = filteredEntries.filter(e => {
+            return e.tags && e.tags.some(tagId => matchingTagIds.includes(tagId));
+        });
+    } else {
+        // If we typed a tag but it doesn't exist in the system at all, show nothing
+        filteredEntries = []; 
+    }
+}
+            
+            // 3. Render Entries for Current Page
+            const totalEntries = filteredEntries.length;
+            if (totalEntries === 0) {
+                resultsContainer.innerHTML = `<p style="font-size: 20px; color: #555; text-align: center; padding: 50px;">Term not found. No entries match your criteria.</p>`;
+                paginationControls.innerHTML = '';
+                return;
+            }
+
+            const totalPages = Math.ceil(totalEntries / entriesPerPage);
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages; 
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * entriesPerPage;
+            const endIndex = startIndex + entriesPerPage;
+            const pageEntries = filteredEntries.slice(startIndex, endIndex);
+
+            /* SAM'S LABELED CARD BUILDER */
+            resultsContainer.innerHTML = pageEntries.map(entry => {
+                // A. Handle Fire Icon
+                const nsfwIcon = entry.nsfw 
+                    ? '<span class="material-icons nsfw-indicator" title="NSFW">whatshot</span>' 
+                    : ''; 
+
+                // B. Handle Label (Fetch the Name)
+                let labelHtml = '';
+                if (entry.subCategories && entry.subCategories.length > 0) {
+                    // Look up the first assigned sub-category item
+                    const itemId = entry.subCategories[0];
+                    const itemObj = subCategoryItems.find(i => i.id === itemId);
+                    
+                    if (itemObj) {
+                        labelHtml = `<span class="entry-label">${itemObj.name}</span>`;
+                    }
+                }
+
+                return `
+                <div class="result-card" data-id="${entry.id}">
+                    ${labelHtml}
+                    ${formatText(entry.text)}
+                    ${nsfwIcon} 
+                </div>
+                `;
+            }).join('');
+
+            // 4. Render Pagination Controls
+            renderPagination(totalPages);
+
+            // 5. Re-attach listeners
+            document.querySelectorAll('.result-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (e.target.matches('.edit-icon')) return; 
+                    const entryId = this.dataset.id;
+                    const entry = entries.find(e => e.id === entryId);
+                    if (entry) {
+                        openEditModal(entry);
+                    }
+                });
+            });
+        }
+        
+        function renderPagination(totalPages) {
+            if (totalPages <= 1) {
+                paginationControls.innerHTML = '';
+                return;
+            }
+            
+            // 1. Build the Button Array logic
+            let buttons = [];
+            
+            // Always show Prev
+            buttons.push(`<button class="page-btn" id="prevPage" ${currentPage === 1 ? 'disabled' : ''}>&lt;</button>`);
+
+            // Logic to show: 1 ... [Current-1] [Current] [Current+1] ... [Last]
+            const range = 1; // How many neighbors to show on each side
+            
+            // Always show Page 1
+            buttons.push(createPageBtn(1, currentPage));
+
+            // Left Gap
+            if (currentPage - range > 2) {
+                buttons.push(`<span class="pagination-gap">...</span>`);
+            }
+
+            // The Middle Window
+            for (let i = Math.max(2, currentPage - range); i <= Math.min(totalPages - 1, currentPage + range); i++) {
+                buttons.push(createPageBtn(i, currentPage));
+            }
+
+            // Right Gap
+            if (currentPage + range < totalPages - 1) {
+                buttons.push(`<span class="pagination-gap">...</span>`);
+            }
+
+            // Always show Last Page (if we have more than 1 page)
+            if (totalPages > 1) {
+                buttons.push(createPageBtn(totalPages, currentPage));
+            }
+
+            // Always show Next
+            buttons.push(`<button class="page-btn" id="nextPage" ${currentPage === totalPages ? 'disabled' : ''}>&gt;</button>`);
+
+            // 2. Add the Teleporter (Jump to Page)
+            const teleporterHtml = `
+                <div class="jump-wrapper">
+                    <span class="jump-label">Go to:</span>
+                    <input type="number" class="jump-input" id="jumpInput" min="1" max="${totalPages}" placeholder="#">
+                    <button class="jump-btn" id="jumpGoBtn">GO</button>
+                </div>
+            `;
+
+            // 3. Render
+            paginationControls.innerHTML = buttons.join('') + teleporterHtml;
+        }
+
+	// --- 6. Clear Filters Button ---
+            const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+            if (clearFiltersBtn) {
+                clearFiltersBtn.addEventListener('click', () => {
+                    // 1. Reset all UI inputs
+                    bankCategoryFilter.value = '0';
+                    bankTypeFilter.value = '0';
+                    if (bankSubCategoryFilterInput) bankSubCategoryFilterInput.value = '0';
+                    bankTagFilter.value = '';
+                    if (bankSearchBox) bankSearchBox.value = '';
+
+                    // 2. Lock and reset the Cluster dropdown logic
+                    const clusterSelect = document.getElementById('bankClusterSelect');
+                    if (clusterSelect) {
+                        clusterSelect.value = '0';
+                        clusterSelect.innerHTML = '<option value="0">All Clusters</option>';
+                        clusterSelect.disabled = true;
+                        clusterSelect.style.backgroundColor = '#f9f9f9';
+                        clusterSelect.style.cursor = 'not-allowed';
+                        clusterSelect.style.opacity = '0.7';
+                    }
+
+                    // 3. Reset internal filter state
+                    activeFilters = {
+                        search: '',
+                        category: '0',
+                        type: '0',
+                        subCategory: '',
+                        tags: []
+                    };
+                    
+                    // 4. Render
+                    if(document.getElementById('searchQueryDisplay')) document.getElementById('searchQueryDisplay').textContent = "Word Bank";
+					if (document.getElementById('bankSubCatSelect')) document.getElementById('bankSubCatSelect').value = '0';
+                    if (document.getElementById('bankSubCatVisible')) document.getElementById('bankSubCatVisible').value = ''; // Clear text
+                    
+                    if (document.getElementById('bankClusterSelect')) document.getElementById('bankClusterSelect').value = '0';
+                    if (document.getElementById('bankClusterVisible')) document.getElementById('bankClusterVisible').value = ''; // Clear text
+                    currentPage = 1;
+                    renderResults();
+                });
+            }
+        // Helper to create the standard button HTML
+        function createPageBtn(pageNum, current) {
+            return `<button class="page-btn ${pageNum === current ? 'active' : ''}" data-page="${pageNum}">${pageNum}</button>`;
+        }
+
+        // --- ENTRY MANAGEMENT (CRUD) ---
+
+        async function getTagIdsFromSting(tagString) {
+            if (!userId) return [];
+            const tagNames = parseTags(tagString); 
+            
+            return await Promise.all(tagNames.map(async (name) => {
+                const tagString = `#${name}`;
+                let tag = tags.find(t => String(t.name).toLowerCase() === tagString);
+                if (!tag) {
+                    try {
+                        const newTag = { name: tagString };
+                        const docRef = await addDoc(collection(db, tagsCol(userId)), newTag);
+                        return docRef.id;
+                    } catch (error) {
+                        console.error("Error creating new tag:", error);
+                        return null;
+                    }
+                }
+                return tag.id;
+            }));
+        }
+        
+        function getSubCatIdsFromContainer(container) {
+            return Array.from(container.querySelectorAll('.selected-item-tag'))
+                .map(tagEl => tagEl.dataset.id);
+        }
+
+       // CREATE (With Duplicate Checker)
+        saveNewEntryBtn.addEventListener('click', async function() {
+            if (!userId) return;
+
+            const text = newText.value.trim();
+            const category = newCategory.value || null;
+            const type = newType.value || null;
+            
+            const subCategories = getSubCatIdsFromContainer(newSubCategoryMulti);
+            const tagIds = await getTagIdsFromSting(newTags.value);
+            
+            // 1. Basic Validation
+            if (!text) {
+                alert("Please write something first!");
+                return;
+            }
+
+            // 2. --- SAM'S DUPLICATE CHECKER ---
+            // We check against the local 'entries' array which is always up to date.
+            // We convert to lowercase to catch "Hello" vs "hello" duplicates.
+            const cleanText = text.toLowerCase();
+            const isDuplicate = entries.some(entry => entry.text.trim().toLowerCase() === cleanText);
+
+            if (isDuplicate) {
+                // Shake the screen or alert the user
+                alert("âš ï¸ Duplicate Detected!\n\nYou already have this text in your Wordbook. Save cancelled.");
+                return; // STOP THE SAVE
+            }
+            // ---------------------------------
+
+            const newEntry = {
+                text: text,
+                category: category,
+                type: type,
+                subCategories: subCategories.filter(id => id),
+                tags: tagIds.filter(id => id),
+                nsfw: newNsfwBtn.classList.contains('active'),
+                createdAt: new Date()
+            };
+            
+		// --- SAM'S MEMORY LOGIC (Save preferences) ---
+            if (category) localStorage.setItem('wordbook_lastCategory', category);
+            if (type) localStorage.setItem('wordbook_lastType', type);
+            
+            // For Sub-Cat Parent (The Room)
+            const parentInput = document.getElementById('filterSubCatParent');
+            if (parentInput && parentInput.value) {
+                localStorage.setItem('wordbook_lastSubCatParent', parentInput.value);
+            }
+
+            // For Cluster (The Item) - We take the first one if multiple are selected
+            if (subCategories.length > 0) {
+                localStorage.setItem('wordbook_lastCluster', subCategories[0]);
+            }
+            // ---------------------------------------------
+
+
+
+            try {
+                // Change button text briefly to show activity
+                const originalText = saveNewEntryBtn.innerHTML;
+                saveNewEntryBtn.innerHTML = '<span class="material-icons">hourglass_empty</span> Saving...';
+                
+                await addDoc(collection(db, entriesCol(userId)), newEntry);
+                
+                // Reset button
+                saveNewEntryBtn.innerHTML = originalText;
+                closeModal(newEntryModal);
+                
+            } catch (error) {
+                console.error("Error saving new entry:", error);
+                alert("Error saving. Check console.");
+                saveNewEntryBtn.innerHTML = '<span class="material-icons">save</span> Save Entry';
+            }
+        });
+
+        // REPLACE your existing 'openEditModal' function with this:
+
+function openEditModal(entry) {
+    console.log("Attempting to open edit for:", entry); // Sanity check in console
+
+    try {
+        // 1. Grab the elements FRESH
+        const modal = document.getElementById('editEntryModal');
+        const textInput = document.getElementById('editText');
+        const nsfwBtn = document.getElementById('editNsfwBtn');
+        
+        // 2. Set Basic Data
+        modal.dataset.entryId = entry.id;
+        textInput.value = entry.text || ""; // Safety check for null text
+
+        // 3. Set Category and Type (Safe Mode)
+        setComboboxValue(modal.querySelector('[data-target-input="editCategory"]'), entry.category);
+        setComboboxValue(modal.querySelector('[data-target-input="editType"]'), entry.type);
+
+        // 4. --- SMART PRE-FILL LOGIC ---
+        // A. Reset sub-category inputs
+        const parentInput = document.getElementById('editParentSubCatInput');
+        const parentHidden = document.getElementById('editFilterSubCatParent');
+        const clusterInput = document.getElementById('editClusterInput');
+        const clusterOptions = document.getElementById('editClusterOptions');
+
+        parentInput.value = '';
+        parentHidden.value = '';
+        clusterInput.disabled = true;
+        clusterInput.style.background = '#f9f9f9';
+
+        // B. Render Chips (Safely handle if subCategories is missing)
+        const safeSubCats = Array.isArray(entry.subCategories) ? entry.subCategories : [];
+        renderMultiSelectTags(document.getElementById('editSubCategoryMulti'), safeSubCats);
+
+        // C. Unlock Cluster Manually if data exists
+        if (safeSubCats.length > 0) {
+            const firstItemId = safeSubCats[0];
+            const firstItem = subCategoryItems.find(i => i.id === firstItemId);
+
+            if (firstItem && firstItem.parentId) {
+                const parent = subCategories.find(p => p.id === firstItem.parentId);
+                if (parent) {
+                    parentInput.value = parent.name;
+                    parentHidden.value = parent.id;
+
+                    // Unlock
+                    clusterInput.disabled = false;
+                    clusterInput.style.background = 'white';
+                    clusterInput.style.cursor = 'text';
+                    clusterInput.placeholder = "Select specifics...";
+
+                    // Populate options
+                    clusterOptions.innerHTML = '';
+                    const matchingItems = subCategoryItems.filter(item => item.parentId === parent.id);
+                    matchingItems.sort((a, b) => String(a.name).localeCompare(String(b.name))).forEach(item => {
+                        clusterOptions.insertAdjacentHTML('beforeend', `
+                            <div class="combobox-option" data-id="${item.id}" data-name="${item.name}">${item.name}</div>
+                        `);
+                    });
+                }
+            }
+        }
+
+        // 5. Handle Hashtags (Safe Mode)
+        const tagsInput = document.getElementById('editTags');
+        const safeTags = Array.isArray(entry.tags) ? entry.tags : [];
+        tagsInput.value = safeTags.map(tagId => {
+            const tag = tags.find(t => t.id === tagId);
+            return tag ? tag.name : '';
+        }).join(' ');
+
+        // 6. Handle Spiciness
+        if (entry.nsfw) {
+            nsfwBtn.classList.add('active');
+        } else {
+            nsfwBtn.classList.remove('active');
+        }
+
+        // 7. Show the Modal
+        openModal(modal);
+
+    } catch (error) {
+        console.error("CRASH PREVENTED in openEditModal:", error);
+        alert("There was a glitch loading this entry, but I prevented a crash. Check console for details.");
+    }
+}
+
+
+
+        // UPDATE
+        saveEditEntryBtn.addEventListener('click', async function() {
+            if (!userId) return;
+
+            const entryId = editEntryModal.dataset.entryId;
+            if (!entryId) return;
+
+            const text = editText.value.trim();
+            const category = editCategory.value || null;
+            const type = editType.value || null;
+            
+            const subCategories = getSubCatIdsFromContainer(editSubCategoryMulti);
+            const tagIds = await getTagIdsFromSting(editTags.value);
+            
+            if (!text) {
+                console.error("Please fill out the text.");
+                return;
+            }
+
+            const entryRef = doc(db, entriesCol(userId), entryId);
+            
+            try {
+                await updateDoc(entryRef, {
+                    text: text,
+                    category: category,
+                    type: type,
+                    subCategories: subCategories.filter(id => id),
+                    tags: tagIds.filter(id => id),
+                    nsfw: editNsfwBtn.classList.contains('active')
+                });
+                closeModal(editEntryModal);
+            } catch (error) {
+                console.error("Error updating entry:", error);
+            }
+        });
+
+        // DELETE
+        deleteEntryBtn.addEventListener('click', function() {
+            if (!userId) return;
+            const entryId = editEntryModal.dataset.entryId;
+            
+            showConfirm("Are you sure you want to delete this entry?", async () => {
+                try {
+                    await deleteDoc(doc(db, entriesCol(userId), entryId));
+                    closeModal(editEntryModal);
+                } catch (error) {
+                    console.error("Error deleting entry:", error);
+                }
+            });
+        });
+
+        [newNsfwBtn, editNsfwBtn].forEach(btn => {
+    btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+        // Icon stays 'whatshot', we just change color via CSS class
+    });
+});
+
+	
+        // --- COMBOBOX (SEARCHABLE DROPDOWN) LOGIC ---
+        
+        function initComboboxes() {
+            document.querySelectorAll('.combobox-wrapper').forEach(wrapper => {
+                const input = wrapper.querySelector('.combobox-input');
+                const optionsContainer = wrapper.querySelector('.combobox-options');
+                const hiddenInput = wrapper.dataset.targetInput ? document.getElementById(wrapper.dataset.targetInput) : null;
+                
+                input.addEventListener('focus', () => {
+                    populateComboboxOptions(wrapper, '');
+                    wrapper.classList.add('active');
+                });
+                
+                input.addEventListener('input', () => {
+                    populateComboboxOptions(wrapper, input.value);
+                });
+
+                optionsContainer.addEventListener('mousedown', e => {
+                    const option = e.target.closest('.combobox-option');
+                    if (!option) return;
+                    
+                    e.preventDefault();
+                    
+                    const id = option.dataset.id;
+                    const name = option.textContent;
+
+                    input.value = name;
+                    
+                    if(hiddenInput) {
+                        hiddenInput.value = id;
+                        // SAM'S FIX: Shout "Change!" so the other boxes hear it
+                        hiddenInput.dispatchEvent(new Event('change'));
+                    }
+                    
+                    wrapper.classList.remove('active');
+                });
+                
+                input.addEventListener('blur', () => {
+                    setTimeout(() => wrapper.classList.remove('active'), 150);
+                });
+            });
+        }
+        
+        function populateComboboxOptions(wrapper, filter) {
+            const optionsContainer = wrapper.querySelector('.combobox-options');
+            const sourceName = wrapper.dataset.source;
+            let sourceData;
+
+            switch(sourceName) {
+                case 'categories': sourceData = categories; break;
+                case 'types': sourceData = types; break;
+                case 'subCategories': sourceData = subCategories; break;
+                default: sourceData = [];
+            }
+            
+            optionsContainer.innerHTML = '';
+            const filterLower = filter.toLowerCase();
+            
+            // --- SAM'S RECENCY SORTING ---
+            // 1. Check if we are in the "New Entry" modal
+            const isNewEntryContext = wrapper.closest('#newEntryModal');
+            let pinnedId = null;
+
+            if (isNewEntryContext) {
+                if (sourceName === 'categories') pinnedId = localStorage.getItem('wordbook_lastCategory');
+                if (sourceName === 'types') pinnedId = localStorage.getItem('wordbook_lastType');
+                if (sourceName === 'subCategories') pinnedId = localStorage.getItem('wordbook_lastSubCatParent');
+            }
+
+            // 2. Sort: Pinned ID first, then Alphabetical
+            const filteredData = [...sourceData]
+                .filter(item => String(item.name).toLowerCase().includes(filterLower))
+                .sort((a,b) => {
+                    // If A is the pinned item, it wins (-1)
+                    if (a.id === pinnedId) return -1;
+                    // If B is the pinned item, it wins (1)
+                    if (b.id === pinnedId) return 1;
+                    // Otherwise, standard alphabetical
+                    return String(a.name).localeCompare(String(b.name));
+                }); 
+            // -----------------------------
+            
+            filteredData.forEach(item => {
+                // Add a little star or style to show it's "Recent" (Optional, kept clean for now)
+                const isRecent = item.id === pinnedId;
+                const style = isRecent ? 'font-weight: bold; color: #b8866f; background-color: #fffbf5;' : '';
+                
+                optionsContainer.insertAdjacentHTML('beforeend', `
+                    <div class="combobox-option" data-id="${item.id}" style="${style}">${item.name}</div>
+                `);
+            });
+        }
+        
+        function setComboboxValue(wrapper, id) {
+            const sourceName = wrapper.dataset.source;
+            let sourceData;
+            switch(sourceName) {
+                case 'categories': sourceData = categories; break;
+                case 'types': sourceData = types; break;
+                case 'subCategories': sourceData = subCategories; break; // Added this just in case
+                default: sourceData = [];
+            }
+
+            const item = sourceData.find(i => i.id === id);
+            
+            const input = wrapper.querySelector('.combobox-input');
+            const hiddenInput = document.getElementById(wrapper.dataset.targetInput);
+            
+            if (item) {
+                input.value = item.name;
+                hiddenInput.value = item.id;
+                // SAM'S FIX: Trigger the change event here too!
+                hiddenInput.dispatchEvent(new Event('change'));
+            } else {
+                input.value = '';
+                hiddenInput.value = '';
+                hiddenInput.dispatchEvent(new Event('change'));
+            }
+        }
+
+        // --- MULTI-SELECT COMBOBOX LOGIC ---
+        
+        function initMultiSelects() {
+            document.querySelectorAll('.multi-select-wrapper').forEach(wrapper => {
+                const input = wrapper.querySelector('.combobox-input');
+                const optionsContainer = wrapper.querySelector('.combobox-options');
+                const selectedContainer = wrapper.querySelector('.selected-items-container');
+                
+                input.addEventListener('focus', () => {
+                    populateMultiSelectOptions(wrapper, '');
+                    wrapper.querySelector('.combobox-wrapper').classList.add('active');
+                });
+                
+                input.addEventListener('input', () => {
+                    populateMultiSelectOptions(wrapper, input.value);
+                });
+
+                optionsContainer.addEventListener('mousedown', e => {
+                    const option = e.target.closest('.combobox-option');
+                    if (!option) return;
+                    
+                    e.preventDefault();
+                    
+                    const id = option.dataset.id;
+                    const name = option.dataset.name;
+                    
+                    if (!selectedContainer.querySelector(`.selected-item-tag[data-id="${id}"]`)) {
+                        addMultiSelectTag(selectedContainer, id, name);
+                    }
+                    input.value = '';
+                    populateMultiSelectOptions(wrapper, '');
+                    input.focus();
+                });
+                
+                input.addEventListener('blur', () => {
+                    setTimeout(() => wrapper.querySelector('.combobox-wrapper').classList.remove('active'), 150);
+                });
+                
+                selectedContainer.addEventListener('click', e => {
+                    if (e.target.matches('.remove-tag')) {
+                        e.target.closest('.selected-item-tag').remove();
+                    }
+                });
+            });
+        }
+
+        /* --- SAM'S SMART FILTER LOGIC --- */
+        function setupCascadingDropdowns() {
+            const parentHiddenId = document.getElementById('filterSubCatParent');
+            const clusterInput = document.getElementById('clusterInput');
+            const clusterOptions = document.getElementById('clusterOptions');
+            
+            if (!parentHiddenId || !clusterInput) return; 
+
+            // Helper to Render
+            function updateClusterOptions(parentId, filterText = '') {
+                clusterOptions.innerHTML = '';
+                const matchingItems = subCategoryItems.filter(item => 
+                    item.parentId === parentId && 
+                    item.name.toLowerCase().includes(filterText.toLowerCase())
+                );
+                
+                if (matchingItems.length === 0) {
+                    clusterOptions.insertAdjacentHTML('beforeend', '<div style="padding:10px; color:#999; font-style:italic;">No clusters found.</div>');
+                    return;
+                }
+
+                // Sort: Recents first, then alphabetical
+                const lastUsedClusterId = localStorage.getItem('wordbook_lastCluster');
+                matchingItems.sort((a, b) => {
+                    if (a.id === lastUsedClusterId) return -1;
+                    if (b.id === lastUsedClusterId) return 1;
+                    return String(a.name).localeCompare(String(b.name));
+                });
+
+                matchingItems.forEach(item => {
+                    const isRecent = item.id === lastUsedClusterId;
+                    const style = isRecent ? 'font-weight: bold; color: #b8866f; background-color: #fffbf5;' : '';
+                    clusterOptions.insertAdjacentHTML('beforeend', `
+                        <div class="combobox-option" data-id="${item.id}" data-name="${item.name}" style="${style}">${item.name}</div>
+                    `);
+                });
+            }
+
+            // 1. Parent Change
+            parentHiddenId.addEventListener('change', () => {
+                const parentId = parentHiddenId.value;
+                if (parentId) {
+                    clusterInput.disabled = false;
+                    clusterInput.style.background = 'white';
+                    clusterInput.style.cursor = 'text';
+                    clusterInput.placeholder = "Select specifics...";
+                    updateClusterOptions(parentId);
+                } else {
+                    clusterInput.disabled = true;
+                    clusterInput.style.background = '#f9f9f9';
+                    clusterInput.style.cursor = 'not-allowed';
+                    clusterInput.placeholder = "Select a Sub-Category first...";
+                    clusterInput.value = ""; 
+                    clusterOptions.innerHTML = ""; 
+                }
+            });
+
+            // 2. Child Focus (Re-populate)
+            clusterInput.addEventListener('focus', () => {
+                const parentId = parentHiddenId.value;
+                if(parentId) {
+                    updateClusterOptions(parentId, clusterInput.value);
+                    clusterInput.closest('.combobox-wrapper').classList.add('active');
+                }
+            });
+
+            // 3. Child Input (Typing)
+            clusterInput.addEventListener('input', () => {
+                const parentId = parentHiddenId.value;
+                if(parentId) {
+                    updateClusterOptions(parentId, clusterInput.value);
+                }
+            });
+        }
+        
+        function addMultiSelectTag(container, id, name) {
+            container.insertAdjacentHTML('beforeend', `
+                <span class="selected-item-tag" data-id="${id}">
+                    ${name}
+                    <span class="material-icons remove-tag">close</span>
+                </span>
+            `);
+        }
+        
+        function populateMultiSelectOptions(wrapper, filter) {
+            const optionsContainer = wrapper.querySelector('.combobox-options');
+            optionsContainer.innerHTML = '';
+            const filterLower = filter.toLowerCase();
+            
+            const sortedParents = [...subCategories].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+            sortedParents.forEach(parent => {
+                const items = subCategoryItems
+                    .filter(item => item.parentId === parent.id && String(item.name).toLowerCase().includes(filterLower));
+                
+                if (items.length > 0) {
+                    optionsContainer.insertAdjacentHTML('beforeend', `
+                        <div class="combobox-option-group">${parent.name}</div>
+                    `);
+                    const sortedItems = [...items].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+                    sortedItems.forEach(item => {
+                        optionsContainer.insertAdjacentHTML('beforeend', `
+                            <div class="combobox-option" data-id="${item.id}" data-name="${item.name}">${item.name}</div>
+                        `);
+                    });
+                }
+            });
+        }
+        
+        function renderMultiSelectTags(wrapper, itemIds) {
+            const selectedContainer = wrapper.querySelector('.selected-items-container');
+            selectedContainer.innerHTML = '';
+            if (!itemIds) return;
+            
+            itemIds.forEach(id => {
+                const item = subCategoryItems.find(i => i.id === id);
+                if (item) {
+                    addMultiSelectTag(selectedContainer, item.id, item.name);
+                }
+            });
+        }
+
+/* --- SAM'S SMART FILTER LOGIC (EDIT MODE) --- */
+function setupEditCascadingDropdowns() {
+            const parentHiddenId = document.getElementById('editFilterSubCatParent');
+            const clusterInput = document.getElementById('editClusterInput');
+            const clusterOptions = document.getElementById('editClusterOptions');
+
+            if (!parentHiddenId || !clusterInput) return;
+
+            // Helper
+            function updateEditClusterOptions(parentId, filterText = '') {
+                clusterOptions.innerHTML = '';
+                const matchingItems = subCategoryItems.filter(item => 
+                    item.parentId === parentId && 
+                    item.name.toLowerCase().includes(filterText.toLowerCase())
+                );
+                
+                if (matchingItems.length === 0) {
+                    clusterOptions.insertAdjacentHTML('beforeend', '<div style="padding:10px; color:#999; font-style:italic;">No clusters found.</div>');
+                    return;
+                }
+
+                matchingItems.sort((a, b) => String(a.name).localeCompare(String(b.name))).forEach(item => {
+                    clusterOptions.insertAdjacentHTML('beforeend', `
+                        <div class="combobox-option" data-id="${item.id}" data-name="${item.name}">${item.name}</div>
+                    `);
+                });
+            }
+
+            // 1. Parent Change
+            parentHiddenId.addEventListener('change', () => {
+                const parentId = parentHiddenId.value;
+                if (parentId) {
+                    clusterInput.disabled = false;
+                    clusterInput.style.background = 'white';
+                    clusterInput.style.cursor = 'text';
+                    clusterInput.placeholder = "Select specifics...";
+                    updateEditClusterOptions(parentId);
+                } else {
+                    clusterInput.disabled = true;
+                    clusterInput.style.background = '#f9f9f9';
+                    clusterInput.style.cursor = 'not-allowed';
+                    clusterInput.placeholder = "Select a Sub-Category first...";
+                    clusterInput.value = "";
+                    clusterOptions.innerHTML = "";
+                }
+            });
+
+            // 2. Focus
+            clusterInput.addEventListener('focus', () => {
+                const parentId = parentHiddenId.value;
+                if(parentId) {
+                    updateEditClusterOptions(parentId, clusterInput.value);
+                    clusterInput.closest('.combobox-wrapper').classList.add('active');
+                }
+            });
+
+            // 3. Input
+            clusterInput.addEventListener('input', () => {
+                const parentId = parentHiddenId.value;
+                if(parentId) {
+                    updateEditClusterOptions(parentId, clusterInput.value);
+                }
+            });
+        }
+
+        // --- MANAGEMENT PAGE RENDERING ---
+        
+        function getUsageCounts() {
+            const counts = {
+                category: new Map(),
+                type: new Map(),
+                subCategories: new Map(),
+                subCategoryItems: new Map(),
+                tags: new Map()
+            };
+            
+            for (const entry of entries) {
+                if (entry.category) counts.category.set(entry.category, (counts.category.get(entry.category) || 0) + 1);
+                if (entry.type) counts.type.set(entry.type, (counts.type.get(entry.type) || 0) + 1);
+                
+                (entry.tags || []).forEach(tagId => {
+                    counts.tags.set(tagId, (counts.tags.get(tagId) || 0) + 1);
+                });
+                
+                (entry.subCategories || []).forEach(subCatItemId => {
+                    counts.subCategoryItems.set(subCatItemId, (counts.subCategoryItems.get(subCatItemId) || 0) + 1);
+                    const item = subCategoryItems.find(i => i.id === subCatItemId);
+                    if (item && item.parentId) {
+                        counts.subCategories.set(item.parentId, (counts.subCategories.get(item.parentId) || 0) + 1);
+                    }
+                });
+            }
+            return counts;
+        }
+
+        function renderCategoriesPage() {
+            const counts = getUsageCounts().category;
+            const sortedData = [...categories].sort((a, b) => (counts.get(b.id) || 0) - (counts.get(a.id) || 0));
+            
+            categoriesList.innerHTML = sortedData.map(item => `
+                <div class="mgmt-item" data-id="${item.id}">
+                    <span class="mgmt-item-name">${item.name}</span>
+                    <div class="mgmt-item-details">
+                        <span class="mgmt-item-count">#${counts.get(item.id) || 0}</span>
+                        <div class="mgmt-item-actions">
+                            <span class="material-symbols-outlined rename-icon" title="Rename">drive_file_rename_outline</span>
+                            <span class="material-symbols-outlined delete-icon" title="Delete">delete</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            categoriesList.insertAdjacentHTML('beforeend', `<div class="add-new-item">+ Add New Category</div>`);
+        }
+        
+        function renderTypesPage() {
+            const counts = getUsageCounts().type;
+            const sortedData = [...types].sort((a, b) => (counts.get(b.id) || 0) - (counts.get(a.id) || 0));
+            
+            typesList.innerHTML = sortedData.map(item => `
+                <div class="mgmt-item" data-id="${item.id}">
+                    <span class="mgmt-item-name">${item.name}</span>
+                    <div class="mgmt-item-details">
+                        <span class="mgmt-item-count">#${counts.get(item.id) || 0}</span>
+                        <div class="mgmt-item-actions">
+                            <span class="material-symbols-outlined rename-icon" title="Rename">drive_file_rename_outline</span>
+                            <span class="material-symbols-outlined delete-icon" title="Delete">delete</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            typesList.insertAdjacentHTML('beforeend', `<div class="add-new-item">+ Add New Type</div>`);
+        }
+        
+        function renderSubCategoriesPage() {
+            const counts = getUsageCounts().subCategories;
+            const sortedData = [...subCategories].sort((a, b) => (counts.get(b.id) || 0) - (counts.get(a.id) || 0));
+            
+            subCategoriesList.innerHTML = sortedData.map(item => `
+                <div class="mgmt-item" data-id="${item.id}" data-name="${item.name}">
+                    <span class="mgmt-item-name">${item.name}</span>
+                    <div class="mgmt-item-details">
+                        <span class="mgmt-item-count">#${counts.get(item.id) || 0}</span>
+                        <div class="mgmt-item-actions">
+                            <span class="material-symbols-outlined expand-icon" title="Expand">open_in_new</span>
+                            <span class="material-symbols-outlined rename-icon" title="Rename">drive_file_rename_outline</span>
+                            <span class="material-symbols-outlined delete-icon" title="Delete">delete</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            subCategoriesList.insertAdjacentHTML('beforeend', `<div class="add-new-item">+ Add New Sub-Category</div>`);
+        }
+        
+        function renderExpandedSubCategoryPage(parentId) {
+            currentExpandedSubCat = parentId;
+            const parent = subCategories.find(p => p.id === parentId);
+            if(!parent) {
+                showView('subCategoriesView');
+                return;
+            }
+            expandedSubCatTitle.textContent = parent.name;
+            
+            const counts = getUsageCounts().subCategoryItems;
+            const items = subCategoryItems.filter(i => i.parentId === parentId);
+            const sortedData = items.sort((a, b) => (counts.get(b.id) || 0) - (counts.get(a.id) || 0));
+            
+            expandedSubCatList.innerHTML = sortedData.map(item => `
+                <div class="mgmt-item" data-id="${item.id}">
+                    <span class="mgmt-item-name">${item.name}</span>
+                    <div class="mgmt-item-details">
+                        <span class="mgmt-item-count">#${counts.get(item.id) || 0}</span>
+                        <div class="mgmt-item-actions">
+                            <span class="material-symbols-outlined rename-icon" title="Rename">drive_file_rename_outline</span>
+                            <span class="material-symbols-outlined delete-icon" title="Delete">delete</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            expandedSubCatList.insertAdjacentHTML('beforeend', `<div class="add-new-item">+ Add New Item</div>`);
+        }
+
+        function renderTagsPage() {
+            const counts = getUsageCounts().tags;
+            const sortedData = [...tags].sort((a, b) => (counts.get(b.id) || 0) - (counts.get(a.id) || 0));
+            
+            tagsList.innerHTML = sortedData.map(item => `
+                <div class="mgmt-item" data-id="${item.id}">
+                    <span class="mgmt-item-name" style="font-style: italic;">${item.name}</span>
+                    <div class="mgmt-item-details">
+                        <span class="mgmt-item-count">#${counts.get(item.id) || 0}</span>
+                        <div class="mgmt-item-actions">
+                            <span class="material-symbols-outlined rename-icon" title="Rename">drive_file_rename_outline</span>
+                            <span class="material-symbols-outlined delete-icon" title="Delete">delete</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            tagsList.insertAdjacentHTML('beforeend', `<div class="add-new-item">+ Add New Tag</div>`);
+        }
+
+        function triggerFullRender() {
+            if(document.getElementById('categoriesView').classList.contains('active')) renderCategoriesPage();
+            if(document.getElementById('typesView').classList.contains('active')) renderTypesPage();
+            if(document.getElementById('subCategoriesView').classList.contains('active')) renderSubCategoriesPage();
+            if(document.getElementById('tagsView').classList.contains('active')) renderTagsPage();
+            if(document.getElementById('expandedSubCategoryView').classList.contains('active') && currentExpandedSubCat) renderExpandedSubCategoryPage(currentExpandedSubCat);
+        }
+
+        // --- MANAGEMENT PAGE "ADD NEW" (Inline) ---
+        
+        async function handleMgmtAdd(listElement, collectionPath, placeholder, renderFn, namePrefix = '', extraProps = {}) {
+            if (!userId) return;
+
+            const addItemBtn = listElement.querySelector('.add-new-item');
+            if (!addItemBtn) return;
+            
+            const inputItem = document.createElement('div');
+            inputItem.className = 'mgmt-item';
+            inputItem.dataset.isSaving = 'false';
+            inputItem.innerHTML = `<input type="text" class="add-new-item-input" placeholder="${placeholder}">`;
+            
+            listElement.replaceChild(inputItem, addItemBtn);
+            
+            const inputField = inputItem.querySelector('input');
+            inputField.focus();
+
+            async function saveNewItem() {
+                if (inputItem.dataset.isSaving === 'true') return;
+
+                const newName = inputField.value.trim();
+                if (newName) {
+                    inputItem.dataset.isSaving = 'true';
+                    
+                    const newObj = {
+                        name: namePrefix + newName,
+                        ...extraProps 
+                    };
+                    
+                    try {
+                        await addDoc(collection(db, collectionPath), newObj);
+                    } catch (error) {
+                        console.error("Error adding new item:", error);
+                        renderFn();
+                    }
+                } else {
+                     renderFn();
+                }
+            }
+            
+            inputField.addEventListener('blur', saveNewItem);
+            inputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    saveNewItem();
+                }
+            });
+        }
+
+        // --- MANAGEMENT PAGE "DELETE" / "RENAME" / "EXPAND" ---
+        
+        function handleMgmtActions(listElement, collectionPath, renderFn, specialDeleteKey = null) {
+            // SAM'S FIX: "Prestige Protocol" Enabled. 
+            // Safety Lock set to 50 entries.
+            const PRESTIGE_LIMIT = 50; 
+
+            listElement.addEventListener('click', async e => {
+                if (!userId) return;
+
+                // 1. Find the Main Item Container
+                const itemEl = e.target.closest('.mgmt-item');
+                if (!itemEl) return; 
+                
+                // If this is the "Add New" button, ignore it here (handled elsewhere)
+                if (itemEl.querySelector('input')) return;
+
+                const id = itemEl.dataset.id;
+                
+                // 2. Identify the array we are working with
+                let localArray;
+                if (collectionPath.includes('categories')) localArray = categories;
+                else if (collectionPath.includes('types')) localArray = types;
+                else if (collectionPath.includes('subCategories')) localArray = subCategories;
+                else if (collectionPath.includes('tags')) localArray = tags;
+                else if (collectionPath.includes('subCategoryItems')) localArray = subCategoryItems;
+                else localArray = [];
+                
+                const item = localArray.find(i => i.id === id);
+                if (!item) return;
+
+                // 3. Check exactly what was clicked
+                const isRename = e.target.closest('.rename-icon');
+                const isDelete = e.target.closest('.delete-icon');
+                const isExpand = e.target.closest('.expand-icon');
+
+                // --- NEW: NAVIGATION LOGIC (The Portal) ---
+                // If we clicked the box, but NOT an icon, we navigate!
+                if (!isRename && !isDelete && !isExpand) {
+                    
+                    // A. Reset all filters first for a clean slate
+                    bankCategoryFilter.value = '0';
+                    bankTypeFilter.value = '0';
+                    if(bankSubCategoryFilterInput) bankSubCategoryFilterInput.value = '0';
+                    if(document.getElementById('bankClusterSelect')) {
+                         document.getElementById('bankClusterSelect').innerHTML = '<option value="0">All Clusters</option>';
+                         document.getElementById('bankClusterSelect').disabled = true;
+                    }
+                    bankTagFilter.value = '';
+                    searchBox.value = '';
+                    if(document.getElementById('searchQueryDisplay')) document.getElementById('searchQueryDisplay').textContent = "Word Bank";
+
+                    // B. Set the specific filter based on what page we are on
+                    if (specialDeleteKey === 'category') {
+                        bankCategoryFilter.value = id;
+                    } 
+                    else if (specialDeleteKey === 'type') {
+                        bankTypeFilter.value = id;
+                    }
+                    else if (specialDeleteKey === 'subCategoryParent') {
+                        const subCatHidden = document.getElementById('bankSubCatSelect');
+                        const subCatVisible = document.getElementById('bankSubCatVisible');
+                        if(subCatHidden) {
+                            subCatHidden.value = id;
+                            if(subCatVisible) subCatVisible.value = item.name; // <--- FILL THE TEXT
+                        }
+                    }
+                    else if (specialDeleteKey === 'subCategoryItem') {
+                         const clusterItem = subCategoryItems.find(i => i.id === id);
+                         if(clusterItem) {
+                             const subCatHidden = document.getElementById('bankSubCatSelect');
+                             const subCatVisible = document.getElementById('bankSubCatVisible');
+                             const clusterHidden = document.getElementById('bankClusterSelect');
+                             const clusterVisible = document.getElementById('bankClusterVisible');
+                             
+                             // 1. Set Parent
+                             const parent = subCategories.find(p => p.id === clusterItem.parentId);
+                             if (parent && subCatHidden) {
+                                 subCatHidden.value = parent.id;
+                                 if(subCatVisible) subCatVisible.value = parent.name;
+                             }
+                             
+                             // 2. Wait a split second for the observer to unlock the cluster box, then set it
+                             setTimeout(() => {
+                                 if(clusterHidden) {
+                                     clusterHidden.value = id;
+                                     if(clusterVisible) clusterVisible.value = item.name;
+                                 }
+                             }, 100);
+                         }
+                    }
+                    else if (specialDeleteKey === 'tag') {
+                        // For tags, we populate the text search
+                        // Remove the hash if it exists in the data name, then add it back for the input
+                        const cleanName = item.name.replace('#', '');
+                        bankTagFilter.value = '#' + cleanName;
+                    }
+
+                    // C. Go to Word Bank and Render
+                    showView('wordBankView');
+                    currentPage = 1;
+                    renderResults();
+                    return; // Stop function here
+                }
+                // ------------------------------------------
+
+                // Handle RENAME
+                if (isRename) {
+                    const currentName = item.name.startsWith('#') ? item.name.substring(1) : item.name;
+                    let newName = prompt(`Rename "${currentName}":`, currentName);
+                     if (newName && newName.trim()) {
+                        const updatedName = item.name.startsWith('#') ? '#' + newName.trim() : newName.trim();
+                        try {
+                            const itemRef = doc(db, collectionPath, id);
+                            await updateDoc(itemRef, { name: updatedName });
+                        } catch (error) {
+                            console.error("Error renaming item:", error);
+                        }
+                    }
+                }
+                
+                // Handle DELETE (With Prestige Lock)
+                else if (isDelete) {
+                    // A. Calculate Usage
+                    let usageCount = 0;
+                    
+                    if (specialDeleteKey === 'category') {
+                        usageCount = entries.filter(e => e.category === id).length;
+                    } else if (specialDeleteKey === 'type') {
+                        usageCount = entries.filter(e => e.type === id).length;
+                    } else if (specialDeleteKey === 'tag') {
+                        usageCount = entries.filter(e => e.tags && e.tags.includes(id)).length;
+                    } else if (specialDeleteKey === 'subCategoryItem') {
+                        usageCount = entries.filter(e => e.subCategories && e.subCategories.includes(id)).length;
+                    } else if (specialDeleteKey === 'subCategoryParent') {
+                        // Check if any children are being used
+                        const childIds = subCategoryItems.filter(i => i.parentId === id).map(i => i.id);
+                        usageCount = entries.filter(e => e.subCategories && e.subCategories.some(subId => childIds.includes(subId))).length;
+                    }
+
+                    // B. The Lock Check
+                    if (usageCount >= PRESTIGE_LIMIT) {
+                        alert(`ðŸ”’ WORLD LOCKED IN\n\n"${item.name}" is used in ${usageCount} entries.\n\nItems with ${PRESTIGE_LIMIT}+ entries become permanent fixtures and cannot be deleted.`);
+                        return; // STOP HERE. Do not proceed to delete.
+                    }
+
+                    // C. Standard Delete (Only if usage is low)
+                    if (window.confirm(`Delete "${item.name}"? This cannot be undone.`)) {
+                        try {
+                            const batch = writeBatch(db);
+                            const itemRef = doc(db, collectionPath, id);
+                            batch.delete(itemRef);
+
+                            // Cascading Deletes
+                            if (specialDeleteKey === 'category') {
+                                const q = query(collection(db, entriesCol(userId)), where("category", "==", id));
+                                const snapshot = await getDocs(q);
+                                snapshot.forEach(doc => batch.update(doc.ref, { category: null }));
+                            } 
+                            else if (specialDeleteKey === 'type') {
+                                const q = query(collection(db, entriesCol(userId)), where("type", "==", id));
+                                const snapshot = await getDocs(q);
+                                snapshot.forEach(doc => batch.update(doc.ref, { type: null }));
+                            }
+                            else if (specialDeleteKey === 'tag') {
+                                const q = query(collection(db, entriesCol(userId)), where("tags", "array-contains", id));
+                                const snapshot = await getDocs(q);
+                                snapshot.forEach(doc => batch.update(doc.ref, { tags: arrayRemove(id) }));
+                            }
+                            else if (specialDeleteKey === 'subCategoryItem') {
+                                const q = query(collection(db, entriesCol(userId)), where("subCategories", "array-contains", id));
+                                const snapshot = await getDocs(q);
+                                snapshot.forEach(doc => batch.update(doc.ref, { subCategories: arrayRemove(id) }));
+                            }
+                            else if (specialDeleteKey === 'subCategoryParent') {
+                                const childQuery = query(collection(db, subCategoryItemsCol(userId)), where("parentId", "==", id));
+                                const childSnapshot = await getDocs(childQuery);
+                                childSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+                            }
+
+                            await batch.commit();
+                        } catch (error) {
+                            console.error("Error deleting item:", error);
+                            alert("Error deleting. Check console.");
+                        }
+                    }
+                }
+                
+                // Handle EXPAND
+                else if (isExpand) {
+                    renderExpandedSubCategoryPage(id);
+                    showView('expandedSubCategoryView');
+                }
+            });
+        }
+
+/* --- SAM'S TAG AUTOCOMPLETE LOGIC --- */
+function initTagAutocomplete(inputId, suggestionId) {
+    const input = document.getElementById(inputId);
+    const suggestionBox = document.getElementById(suggestionId);
+    
+    if (!input || !suggestionBox) return;
+
+    input.addEventListener('input', function(e) {
+        const value = this.value;
+        const cursorPosition = this.selectionStart;
+        
+        // 1. Find the word being typed at the cursor
+        // We look backwards from cursor to find the last '#' or space
+        const textBeforeCursor = value.substring(0, cursorPosition);
+        const lastHash = textBeforeCursor.lastIndexOf('#');
+        const lastSpace = textBeforeCursor.lastIndexOf(' ');
+        
+        // If no hash found, or hash is way back behind a space, do nothing
+        if (lastHash === -1 || lastHash < lastSpace) {
+            suggestionBox.classList.remove('active');
+            return;
+        }
+
+        // Extract the search term (e.g. "#cook")
+        const query = textBeforeCursor.substring(lastHash).toLowerCase();
+        
+        // 2. Filter existing tags
+        if (query.length < 2) { // Wait for at least '#' + 1 letter
+            suggestionBox.classList.remove('active');
+            return;
+        }
+
+        const matches = tags.filter(t => t.name.toLowerCase().includes(query) && t.name.toLowerCase() !== query);
+        
+        if (matches.length === 0) {
+            suggestionBox.classList.remove('active');
+            return;
+        }
+
+        // 3. Render Suggestions
+        suggestionBox.innerHTML = matches.map(tag => {
+            // Highlight the part that matches
+            const highlighted = tag.name.replace(new RegExp(`(${query})`, 'gi'), '<span class="match">$1</span>');
+            return `<div class="tag-suggestion-item" data-full="${tag.name}">${highlighted}</div>`;
+        }).join('');
+        
+        suggestionBox.classList.add('active');
+    });
+
+    // 4. Handle Selection
+    suggestionBox.addEventListener('mousedown', function(e) {
+        const item = e.target.closest('.tag-suggestion-item');
+        if (!item) return;
+        
+        e.preventDefault(); // Prevent input blur
+        
+        const fullTag = item.dataset.full;
+        const cursorPosition = input.selectionStart;
+        const textBeforeCursor = input.value.substring(0, cursorPosition);
+        const lastHash = textBeforeCursor.lastIndexOf('#');
+        
+        // Reconstruct the string: Text Before Hash + Full Tag + Text After Cursor
+        const textAfterCursor = input.value.substring(cursorPosition);
+        
+        input.value = input.value.substring(0, lastHash) + fullTag + ' ' + textAfterCursor;
+        
+        suggestionBox.classList.remove('active');
+        suggestionBox.innerHTML = '';
+        input.focus();
+    });
+
+    // Hide when clicking away
+    input.addEventListener('blur', () => {
+        setTimeout(() => suggestionBox.classList.remove('active'), 200);
+    });
+}
+
+/* --- SAM'S TEXT FORMATTER --- */
+        function formatText(text) {
+            if (!text) return '';
+
+            // 1. Sanitize (Security first - prevent HTML injection)
+            let formatted = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            // 2. Bold + Italic (***text***)
+            formatted = formatted.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+
+            // 3. Bold (**text**)
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // 4. Italic (*text*)
+            formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+            // 5. Monospace/Code (`text`)
+            formatted = formatted.replace(/`(.*?)`/g, '<code>$1</code>');
+
+            // 6. Newlines (Enter key)
+            formatted = formatted.replace(/\n/g, '<br>');
+
+            return formatted;
+        }
+
+
+// --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("ðŸš€ System Initialization Started...");
+
+            // --- 1. Navigation & Search Sync ---
+            const bankSearchBox = document.getElementById('bankSearchBox');
+            // Re-fetch these just to be absolutely safe
+            const qText = document.getElementById('searchQueryDisplay'); 
+
+            // Main Home Search Listener
+            if (searchBox) {
+                searchBox.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        activeFilters.search = searchBox.value.trim();
+                        if(bankSearchBox) bankSearchBox.value = activeFilters.search;
+                        
+                        activeFilters.category = homeCategoryFilter.value;
+                        activeFilters.type = homeTypeFilter.value;
+                        activeFilters.tags = parseTags(homeTagFilter.value);
+                        activeFilters.subCategory = '';
+                        
+                        if(qText) qText.textContent = activeFilters.search ? `"${activeFilters.search}"` : "Word Bank";
+                        
+                        // Reset Bank Filters
+                        bankCategoryFilter.value = activeFilters.category;
+                        bankTypeFilter.value = activeFilters.type;
+                        bankTagFilter.value = activeFilters.tags.map(t => `#${t}`).join(' ');
+                        if(bankSubCategoryFilterInput) bankSubCategoryFilterInput.value = '0'; 
+
+                        currentPage = 1;
+                        renderResults();
+                        showView('wordBankView');
+                    }
+                });
+            }
+
+            // Word Bank Quick Search Listener
+            if (bankSearchBox) {
+                bankSearchBox.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        activeFilters.search = bankSearchBox.value.trim();
+                        if(searchBox) searchBox.value = activeFilters.search;
+
+                        if(qText) qText.textContent = activeFilters.search ? `"${activeFilters.search}"` : "Word Bank";
+                        currentPage = 1;
+                        renderResults();
+                    }
+                });
+            }
+            
+            // Go To List Button
+            if (goToListBtn) {
+                goToListBtn.addEventListener('click', () => {
+                    activeFilters = { search: '', category: '0', type: '0', subCategory: '', tags: [] };
+                    if(qText) qText.textContent = "Word Bank";
+                    
+                    // Reset Dropdowns
+                    [homeCategoryFilter, homeTypeFilter, bankCategoryFilter, bankTypeFilter, bankSubCategoryFilterInput].forEach(f => {
+                        if(f) f.value = '0';
+                    });
+                    
+                    // Reset Text Inputs
+                    [homeTagFilter, bankTagFilter, searchBox, bankSearchBox].forEach(f => {
+                        if(f) f.value = '';
+                    });
+
+                    currentPage = 1;
+                    renderResults();
+                    showView('wordBankView');
+                });
+            }
+
+            // Back Buttons
+            document.querySelectorAll('.back-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetView = btn.dataset.targetView;
+                    showView(targetView);
+                });
+            });
+            
+            // --- 2. FAB Menu ---
+            if(fabToggleBtn) fabToggleBtn.addEventListener('click', () => fabContainer.classList.toggle('open'));
+            if(fabCatBtn) fabCatBtn.addEventListener('click', () => { renderCategoriesPage(); showView('categoriesView'); });
+            if(fabTypeBtn) fabTypeBtn.addEventListener('click', () => { renderTypesPage(); showView('typesView'); });
+            if(fabSubCatBtn) fabSubCatBtn.addEventListener('click', () => { renderSubCategoriesPage(); showView('subCategoriesView'); });
+            if(fabTagBtn) fabTagBtn.addEventListener('click', () => { renderTagsPage(); showView('tagsView'); });
+
+            // --- 3. Modals ---
+            if(addBtn) addBtn.addEventListener('click', () => {
+                openModal(newEntryModal);
+                prefillNewEntry(); // <--- SAM'S MAGIC TOUCH
+            });
+            
+            allModals.forEach(modal => {
+                // I removed the background click listener so your data stays safe!
+                // modal.addEventListener('click', function(e) {
+                //    if (e.target === modal) closeModal(modal);
+                // });
+
+                const closeBtn = modal.querySelector('.modal-close');
+                if(closeBtn) closeBtn.addEventListener('click', () => closeModal(modal));
+            });
+            
+            const yesBtn = document.getElementById('confirmYes');
+            const noBtn = document.getElementById('confirmNo');
+            if(yesBtn) yesBtn.addEventListener('click', () => {
+                if (confirmCallback) confirmCallback();
+                confirmModal.classList.remove('active');
+                confirmCallback = null;
+            });
+            if(noBtn) noBtn.addEventListener('click', () => {
+                confirmModal.classList.remove('active');
+                confirmCallback = null;
+            });
+            
+            // --- 4. Filters ---
+            [bankCategoryFilter, bankTypeFilter].forEach(filter => {
+                if(filter) filter.addEventListener('change', () => { currentPage = 1; renderResults(); });
+            });
+            if(bankSubCategoryFilterInput) bankSubCategoryFilterInput.addEventListener('change', () => { currentPage = 1; renderResults(); });
+            if(bankTagFilter) bankTagFilter.addEventListener('input', () => { currentPage = 1; renderResults(); });
+
+            // --- 5. Pagination & Teleporter Listener ---
+            if (paginationControls) {
+                paginationControls.addEventListener('click', e => {
+                    if (e.target.matches('.page-btn')) {
+                        const page = e.target.dataset.page;
+                        if (page) {
+                            currentPage = parseInt(page);
+                        } else if (e.target.id === 'prevPage') {
+                            if(currentPage > 1) currentPage--;
+                        } else if (e.target.id === 'nextPage') {
+                            currentPage++;
+                        }
+                        renderResults();
+                        const resultsSection = document.querySelector('.results-section');
+                        if(resultsSection) resultsSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    
+                    if (e.target.id === 'jumpGoBtn') {
+                        handleJump();
+                    }
+                });
+
+                paginationControls.addEventListener('keypress', e => {
+                    if (e.target.id === 'jumpInput' && e.key === 'Enter') {
+                        handleJump();
+                    }
+                });
+            }
+
+            function handleJump() {
+                const input = document.getElementById('jumpInput');
+                if (!input) return;
+                
+                let targetPage = parseInt(input.value);
+                const maxPage = parseInt(input.getAttribute('max')) || 1;
+
+                if (targetPage >= 1 && targetPage <= maxPage) {
+                    currentPage = targetPage;
+                    renderResults();
+                    const resultsSection = document.querySelector('.results-section');
+                    if(resultsSection) resultsSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    input.style.borderColor = 'red';
+                    setTimeout(() => input.style.borderColor = '#d0d0d0', 1000);
+                }
+            }
+            
+            // --- 6. Home Dropdown ---
+            if (dropdownToggle) {
+                dropdownToggle.addEventListener('click', function() {
+                    this.classList.toggle('open');
+                    expandSection.classList.toggle('open');
+                    // Check if it's a span or button to set text correctly
+                    this.textContent = this.classList.contains('open') ? 'arrow_drop_down' : 'arrow_right';
+                });
+            }
+            
+            // --- 7. Initialize Components ---
+            console.log("âš™ï¸ Initializing Components...");
+            initComboboxes();
+            initMultiSelects();
+            setupCascadingDropdowns();
+            setupEditCascadingDropdowns();
+            setupBankCascading();
+            initTagAutocomplete('newTags', 'newTagsSuggestions');
+            initTagAutocomplete('editTags', 'editTagsSuggestions');
+            
+            // --- 8. Start Auth & Load Data ---
+            console.log("ðŸ”‘ Starting Auth...");
+            initAuth(); 
+            
+            // Set default view
+            showView('homeView');
+            console.log("âœ… Initialization Complete.");
+        });
+    </script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

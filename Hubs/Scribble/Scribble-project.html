@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Scribble | Project</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#5C5C52">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+    <link rel="stylesheet" href="css/scribble.css">
+    <link rel="stylesheet" href="css/scribble-editor.css">
+    <link rel="stylesheet" href="css/scribble-recycle-bin.css">
+    <link rel="stylesheet" href="css/scribble-archive.css">
+    <link rel="stylesheet" href="css/scribble-project.css">
+
+    <!-- Gate + 30-minute idle lock. In <head> and synchronous on
+         purpose: a locked session must redirect before the page paints. -->
+    <script src="js/scribble-guard.js"></script>
+    </head>
+
+<body>
+<header>
+    <div class="header-brand">
+        <span class="brand-name">Scribble</span>
+    </div>
+    <div class="header-right">
+        <!-- ▸ 2026-09-17 — matched to Scribble.html. Was a single button
+             on gotoLifeHub(), which is a console.log stub in
+             js/scribble-project-app.js and went nowhere. Plain links, so
+             they work even if the app script fails to load. -->
+        <a href="../../LifeHub-HomeScreen.html" class="header-lifehub-btn icon-only"
+           title="Home Screen" aria-label="Home Screen">
+            <i class="fa-solid fa-display"></i>
+        </a>
+        <a href="../../LifeHub.html" class="header-lifehub-btn icon-only"
+           title="LifeHub Lobby" aria-label="LifeHub Lobby">
+            <i class="fa-solid fa-house-chimney"></i>
+        </a>
+    </div>
+</header>
+
+<div class="shell">
+
+    <aside id="sidebar">
+        <nav class="nav-group">
+            <div class="nav-item active" id="nav-all" onclick="gotoAllProjects()">
+                <span class="material-symbols-outlined nav-icon">deployed_code</span>
+                <span class="nav-text">All Projects</span>
+            </div>
+            <div class="nav-item" onclick="gotoAllProjects()">
+                <i class="fa-solid fa-layer-group nav-icon"></i>
+                <span class="nav-text">Deployment</span>
+            </div>
+            <div class="nav-add" onclick="gotoAllProjects()">
+                <i class="fa-solid fa-plus nav-icon"></i>
+                <span class="nav-text">Project</span>
+            </div>
+        </nav>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="logs-section">
+            <div class="logs-header" onclick="toggleLogs()">
+                <i class="fa-regular fa-clock logs-icon"></i>
+                <span class="logs-label">Recent</span>
+                <i class="fa-solid fa-chevron-down logs-chevron" id="logs-chevron"></i>
+            </div>
+            <div class="logs-list" id="recent-list">
+                <div class="logs-empty">Loading…</div>
+            </div>
+        </div>
+
+        <div class="sidebar-archive-wrap">
+            <div class="sidebar-archive-btn" title="Archive" onclick="window.location.href='Scribble-archive.html'">
+                <span class="material-symbols-outlined archive-icon">inventory_2</span>
+                <span class="archive-text">Archive</span>
+            </div>
+        </div>
+
+        <div class="sidebar-recycle-wrap">
+            <div class="sidebar-recycle-btn" title="Recycle Bin" onclick="gotoRecycleBin()">
+                <span class="material-symbols-outlined recycle-icon">recycling</span>
+                <span class="recycle-text">Bin</span>
+            </div>
+        </div>
+    </aside>
+
+    <main id="main-panel">
+        <div class="project-view">
+
+            <div class="project-toolbar">
+                <input class="project-search" type="text" id="project-search"
+                       placeholder="Find content…" oninput="filterContents(this.value)">
+                <select class="sort-select" title="Sort by" onchange="applySort(this.value)">
+                    <option value="name_asc">Name (Ascending)</option>
+
+                    <option value="name_desc">Name (Descending)</option>
+
+                    <option value="accessed">Date Accessed</option>
+
+                    <option value="added" selected>Date Added</option>
+
+                    <option value="size">Size</option>
+
+                </select>
+                <button class="records-btn" id="activity-btn" title="Activity — project log"
+                        onclick="openActivityLog()">
+                    <i class="fa-regular fa-clock"></i>
+                    <span>Activity</span>
+                </button>
+                <button class="records-btn" id="records-btn" title="General Record — all storage paths"
+                        onclick="openGeneralRecord()">
+                    <i class="fa-solid fa-hard-drive"></i>
+                    <span>Records</span>
+                </button>
+                <div class="create-wrap" id="create-wrap">
+                    <button class="create-btn" id="create-btn" onclick="toggleCreateDropdown(event)">
+                        <span>Create</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="create-dropdown" id="create-dropdown" style="display:none">
+                        <div class="create-dd-item" onclick="selectCreateOption('module')">
+                            <i class="fa-solid fa-box create-dd-icon"></i>
+                            <span>Module</span>
+                        </div>
+                        <div class="create-dd-item" onclick="selectCreateOption('section')">
+                            <i class="fa-solid fa-folder create-dd-icon"></i>
+                            <span>Section</span>
+                        </div>
+                        <div class="create-dd-divider"></div>
+                        <div class="create-dd-item" onclick="selectCreateOption('html')">
+                            <i class="fa-regular fa-file create-dd-icon"></i>
+                            <span>HTML</span>
+                        </div>
+                        <div class="create-dd-item" onclick="selectCreateOption('js')">
+                            <i class="fa-regular fa-file create-dd-icon"></i>
+                            <span>JS</span>
+                        </div>
+                        <div class="create-dd-item" onclick="selectCreateOption('css')">
+                            <i class="fa-regular fa-file create-dd-icon"></i>
+                            <span>CSS</span>
+                        </div>
+                        <div class="create-dd-item" onclick="selectCreateOption('txt')">
+                            <i class="fa-regular fa-file create-dd-icon"></i>
+                            <span>TXT</span>
+                        </div>
+                        <div class="create-dd-item" onclick="selectCreateOption('json')">
+                            <i class="fa-regular fa-file create-dd-icon"></i>
+                            <span>JSON</span>
+                        </div>
+                        <div class="create-dd-item" onclick="selectCreateOption('custom')">
+                            <i class="fa-regular fa-file create-dd-icon"></i>
+                            <span>Custom</span>
+                        </div>
+                        <div class="create-dd-divider"></div>
+                        <div class="create-dd-item" onclick="selectCreateOption('colour')">
+                            <i class="fa-solid fa-circle-half-stroke create-dd-icon"></i>
+                            <span>Colour</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="project-breadcrumb">
+                <span class="material-symbols-outlined pbc-icon">deployed_code</span>
+                <span class="pbc-name" id="breadcrumb-name">Loading…</span>
+            </div>
+
+            <div class="project-grid" id="project-grid">
+                <div class="project-grid-empty">Loading…</div>
+            </div>
+
+        </div>
+    </main>
+
+</div>
+
+<!-- ========================================== -->
+<!-- EDITOR: OVERLAY & MINIMIZED TAB    -->
+<!-- ========================================== -->
+
+<div id="editor-minimized-tab" class="editor-minimized-tab" style="display: none;" onclick="window.EDITOR_APP.maximizeEditor()">
+    <i class="fa-regular fa-file"></i>
+    <span id="open-file-count">0</span>
+</div>
+
+<div id="editor-overlay" class="editor-overlay" style="display: none;">
+    <div class="editor-window">
+        
+        <div class="editor-header">
+            <div class="editor-tabs-container" id="editor-tabs">
+                <!-- Tabs injected via JS -->
+            </div>
+            <div class="editor-window-controls">
+                <button class="win-btn minimize-btn" onclick="window.EDITOR_APP.minimizeEditor()" title="Minimize">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                <button class="win-btn close-all-btn" onclick="window.EDITOR_APP.closeAllFiles()" title="Close All">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="editor-toolbar">
+    <div class="toolbar-row">
+            <button class="tool-btn" id="theme-toggle-btn" title="Toggle Theme" onclick="window.EDITOR_APP.toggleTheme()">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+            <button class="tool-btn" title="Focus Mode" onclick="scribbleFocusMode(true)">
+                <i class="fa-solid fa-eye"></i>
+            </button>
+            <button class="tool-btn" title="Side Notes" onclick="window.EDITOR_APP.toggleSideNotes()">
+                <i class="fa-solid fa-note-sticky"></i>
+            </button>
+            <button class="tool-btn" id="line-numbers-btn" title="Toggle Line Numbers" onclick="window.EDITOR_APP.toggleLineNumbers()">
+                <i class="fa-solid fa-list-ol"></i>
+            </button>
+            <button class="tool-btn json-mode-hide" title="Wrap Text" onclick="window.EDITOR_APP.toggleWrap()">
+                <i class="fa-solid fa-text-width"></i>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button class="tool-btn" title="Go to Line (Ctrl+G)" onclick="window.EDITOR_APP.openGotoLine()">
+                <i class="fa-solid fa-right-to-bracket"></i>
+            </button>
+            <button class="tool-btn" title="Find & Replace (Ctrl+F)" onclick="window.EDITOR_APP.openSearch()">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+            <button class="tool-btn" id="copy-all-btn" title="Copy All Text" onclick="window.EDITOR_APP.copyAll()">
+                <i class="fa-regular fa-copy"></i>
+            </button>
+            <button class="tool-btn" id="copy-file-link-btn" title="Copy Link to This File" onclick="window.EDITOR_APP.copyFileLink()">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button class="tool-btn" id="force-save-btn" title="Save Version" onclick="window.EDITOR_APP.openSaveVersionModal()">
+                <i class="fa-regular fa-floppy-disk"></i>
+            </button>
+            <button class="tool-btn" title="Export File" onclick="window.EDITOR_APP.exportActiveFile()">
+                <i class="fa-solid fa-file-export"></i>
+            </button>
+            <button class="tool-btn" id="toolbar-minimize-btn" title="Minimize Toolbar" onclick="window.EDITOR_APP.toggleToolbar()">
+                <i class="fa-solid fa-chevron-up"></i>
+            </button> 
+    </div>
+    <div class="toolbar-row toolbar-row-format">
+        <div class="style-picker-wrap" id="style-picker-wrap">
+            <button class="tool-btn style-picker-btn" id="style-picker-btn" title="Text Style"
+                    onclick="window.EDITOR_APP.toggleStylePicker(event)">
+                <span id="style-picker-label">Body</span>
+                <i class="fa-solid fa-chevron-down" style="font-size:9px;"></i>
+            </button>
+            <div class="style-picker-dropdown" id="style-picker-dropdown" style="display:none;">
+                <div class="style-picker-item" data-tag="h1" onclick="window.EDITOR_APP.applyTextStyle('h1')"><span class="spi-title">Title</span></div>
+                <div class="style-picker-item" data-tag="h2" onclick="window.EDITOR_APP.applyTextStyle('h2')"><span class="spi-subtitle">Subtitle</span></div>
+                <div class="style-picker-item" data-tag="h3" onclick="window.EDITOR_APP.applyTextStyle('h3')"><span class="spi-heading">Heading</span></div>
+                <div class="style-picker-item" data-tag="h4" onclick="window.EDITOR_APP.applyTextStyle('h4')"><span class="spi-subheading">Subheading</span></div>
+                <div class="style-picker-item" data-tag="h5" onclick="window.EDITOR_APP.applyTextStyle('h5')"><span class="spi-section">Section</span></div>
+                <div class="style-picker-item" data-tag="h6" onclick="window.EDITOR_APP.applyTextStyle('h6')"><span class="spi-subsection">Subsection</span></div>
+                <div class="style-picker-item" data-tag="blockquote" onclick="window.EDITOR_APP.applyTextStyle('blockquote')"><span class="spi-quote">"Quote"</span></div>
+                <div class="style-picker-item active" data-tag="p" onclick="window.EDITOR_APP.applyTextStyle('p')"><span class="spi-body">Body</span></div>
+            </div>
+        </div>
+        <button class="tool-btn fmt-btn" title="Increase Indent" onclick="window.EDITOR_APP.format('indent')"><i class="fa-solid fa-indent"></i></button>
+        <button class="tool-btn fmt-btn" title="Decrease Indent" onclick="window.EDITOR_APP.format('outdent')"><i class="fa-solid fa-outdent"></i></button>
+        <button class="tool-btn fmt-btn" title="Bullet List" onclick="window.EDITOR_APP.insertBulletList()"><i class="fa-solid fa-list-ul"></i></button>
+        <button class="tool-btn fmt-btn" title="Numbered List" onclick="window.EDITOR_APP.insertNumberedList()"><i class="fa-solid fa-list-ol"></i></button>
+        <button class="tool-btn fmt-btn" title="Task List" onclick="window.EDITOR_APP.insertTaskList()"><i class="fa-regular fa-square-check"></i></button>
+        <button class="tool-btn fmt-btn" title="Quote" onclick="window.EDITOR_APP.applyTextStyle('blockquote')"><i class="fa-solid fa-quote-left"></i></button>
+        <div class="symbol-picker-wrap" id="symbol-picker-wrap">
+            <button class="tool-btn fmt-btn" title="Symbol Bullet" onclick="window.EDITOR_APP.toggleSymbolPicker(event)">
+                <i class="fa-solid fa-star"></i>
+            </button>
+            <div class="symbol-picker-grid" id="symbol-picker-grid" style="display:none;"></div>
+        </div>
+        <div class="toolbar-divider"></div>
+        <select class="tool-font-picker" id="font-picker" onchange="window.EDITOR_APP.applyFont(this.value)" title="Font">
+            <option value="Courier New" selected>Courier New</option>
+            <option value="Garamond">Garamond</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Cambria">Cambria</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Palatino">Palatino</option>
+            <option value="Helvetica">Helvetica</option>
+            <option value="Calibri">Calibri</option>
+            <option value="Roboto Condensed" selected>Roboto</option>
+            <option value="Open Sans">Open Sans</option>
+            <option value="Lato">Lato</option>
+        </select>
+        <select class="tool-font-picker" id="size-picker" onchange="window.EDITOR_APP.applyFontSize(this.value)" title="Font Size" style="width:58px">
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12" selected>12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="16">16</option>
+            <option value="18">18</option>
+            <option value="20">20</option>
+        </select>
+        <button class="tool-btn fmt-btn" title="Bold" onclick="window.EDITOR_APP.format('bold')"><b>B</b></button>
+        <button class="tool-btn fmt-btn" title="Italic" onclick="window.EDITOR_APP.format('italic')"><i>I</i></button>
+        <button class="tool-btn fmt-btn" title="Underline" onclick="window.EDITOR_APP.format('underline')"><u>U</u></button>
+        <button class="tool-btn fmt-btn" title="Strikethrough" onclick="window.EDITOR_APP.format('strikeThrough')"><s>S</s></button>
+        <div class="highlight-picker-wrap" id="highlight-picker-wrap">
+            <button class="tool-btn fmt-btn" title="Highlight" onclick="window.EDITOR_APP.toggleHighlightPicker(event)">
+                <i class="fa-solid fa-highlighter" id="highlight-icon" style="color:#FFF176; -webkit-text-stroke: 1px #ccc;"></i>
+            </button>
+            <div class="highlight-picker-grid" id="highlight-picker-grid" style="display:none;">
+                <div class="highlight-swatch" style="background:#FFF176;" onclick="window.EDITOR_APP.applyHighlight('#FFF176')" title="Yellow"></div>
+                <div class="highlight-swatch" style="background:#FFCDD2;" onclick="window.EDITOR_APP.applyHighlight('#FFCDD2')" title="Pink"></div>
+                <div class="highlight-swatch" style="background:#C8E6C9;" onclick="window.EDITOR_APP.applyHighlight('#C8E6C9')" title="Green"></div>
+                <div class="highlight-swatch" style="background:#BBDEFB;" onclick="window.EDITOR_APP.applyHighlight('#BBDEFB')" title="Blue"></div>
+                <div class="highlight-swatch" style="background:#E1BEE7;" onclick="window.EDITOR_APP.applyHighlight('#E1BEE7')" title="Purple"></div>
+                <div class="highlight-swatch" style="background:#FFE0B2;" onclick="window.EDITOR_APP.applyHighlight('#FFE0B2')" title="Orange"></div>
+                <div class="highlight-swatch" style="background:#F5F5F5;" onclick="window.EDITOR_APP.applyHighlight('#F5F5F5')" title="Grey"></div>
+                <div class="highlight-swatch highlight-swatch-clear" onclick="window.EDITOR_APP.applyHighlight('transparent')" title="Clear">
+                    <i class="fa-solid fa-xmark" style="font-size:9px; color:#B0AEAB;"></i>
+                </div>
+            </div>
+        </div>
+        <button class="tool-btn fmt-btn" title="Clear Formatting" onclick="window.EDITOR_APP.smartClearFormat()"><i class="fa-solid fa-eraser"></i></button>
+        <button class="tool-btn" title="Inline Code" onclick="window.EDITOR_APP.toggleInlineCode()">
+        <i class="fa-solid fa-code"></i></button>
+        <button class="tool-btn" title="Code Block" onclick="window.EDITOR_APP.insertCodeBlock()">
+        <i class="fa-solid fa-file-code"></i></button>
+        <button class="tool-btn fmt-btn" title="Attach Link" onclick="window.EDITOR_APP.showLinkInsertMenu(event, null)"><i class="fa-solid fa-link"></i></button>
+        <div class="toolbar-divider"></div>
+        <button class="tool-btn fmt-btn" title="Align Left" onclick="window.EDITOR_APP.format('justifyLeft')"><i class="fa-solid fa-align-left"></i></button>
+        <button class="tool-btn fmt-btn" title="Align Center" onclick="window.EDITOR_APP.format('justifyCenter')"><i class="fa-solid fa-align-center"></i></button>
+        <button class="tool-btn fmt-btn" title="Align Right" onclick="window.EDITOR_APP.format('justifyRight')"><i class="fa-solid fa-align-right"></i></button>
+        <button class="tool-btn fmt-btn" title="Justify" onclick="window.EDITOR_APP.format('justifyFull')"><i class="fa-solid fa-align-justify"></i></button>
+        <div class="toolbar-divider"></div>
+        <button class="tool-btn fmt-btn" title="Foldable Section" onclick="window.EDITOR_APP.insertFoldable()">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+        <button class="tool-btn fmt-btn" id="fold-toggle-btn" title="Collapse All Folds" onclick="window.EDITOR_APP.toggleAllFolds()">
+            <i class="fa-solid fa-angles-up"></i>
+        </button>
+        <div class="col-picker-wrap" id="col-picker-wrap">
+            <button class="tool-btn fmt-btn" title="Insert Columns" onclick="window.EDITOR_APP.toggleColPicker(event)">
+                <i class="fa-solid fa-table-columns"></i>
+            </button>
+            <div class="col-picker-grid" id="col-picker-grid" style="display:none;">
+                <div class="col-picker-option" onclick="window.EDITOR_APP.insertColumns(2)">
+                    <div class="col-picker-preview">
+                        <span></span><span></span>
+                    </div>
+                    <span class="col-picker-label">2 Col</span>
+                </div>
+                <div class="col-picker-option" onclick="window.EDITOR_APP.insertColumns(3)">
+                    <div class="col-picker-preview">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <span class="col-picker-label">3 Col</span>
+                </div>
+            </div>
+        </div>
+        <div class="table-picker-wrap" id="table-picker-wrap">
+            <button class="tool-btn fmt-btn" title="Insert Table" onclick="window.EDITOR_APP.toggleTablePicker(event)">
+                <i class="fa-solid fa-table"></i>
+            </button>
+            <div class="table-picker-grid" id="table-picker-grid" style="display:none;">
+                <div class="table-picker-title">Insert Table</div>
+                <div class="table-picker-cells" id="table-picker-cells"></div>
+                <div class="table-picker-hint" id="table-picker-hint">Insert Table</div>
+            </div>
+        </div>
+        <div class="toolbar-divider"></div>
+        <button class="tool-btn json-mode-hide" title="Auto-Format Code" onclick="window.EDITOR_APP.formatCode()">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </button>
+        <button class="tool-btn json-mode-hide" id="spell-check-btn" title="Spell Check" onclick="window.EDITOR_APP.toggleSpellCheck()">
+            <i class="fa-solid fa-spell-check"></i>
+        </button>
+        <button class="tool-btn json-mode-hide" id="grammar-check-btn" title="Grammar Check" onclick="window.EDITOR_APP.checkGrammar()">
+            <i class="fa-solid fa-book-open-reader"></i>
+        </button>
+    </div>
+</div>
+
+        <div id="lint-panel" class="lint-panel" style="display:none;"></div>
+        <div id="gotoline-panel" class="gotoline-panel" style="display:none;">
+            <i class="fa-solid fa-right-to-bracket gotoline-icon"></i>
+            <span class="gotoline-label">Go to Line</span>
+            <input type="number" id="gotoline-input" class="gotoline-input" placeholder="Line number…" min="1"
+                   oninput="window.EDITOR_APP.previewGotoLine(this.value)"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();window.EDITOR_APP.commitGotoLine();}
+                              if(event.key==='Escape'){event.preventDefault();window.EDITOR_APP.closeGotoLine();}">
+            <span id="gotoline-hint" class="gotoline-hint"></span>
+            <button class="search-nav-btn" title="Jump (Enter)" onclick="window.EDITOR_APP.commitGotoLine()">
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <button class="search-nav-btn" title="Close (Esc)" onclick="window.EDITOR_APP.closeGotoLine()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div id="search-panel" class="search-panel" style="display:none;">
+            <div class="search-row">
+                <div class="search-input-wrap">
+                    <i class="fa-solid fa-magnifying-glass search-input-icon"></i>
+                    <textarea id="search-input" class="search-input" placeholder="Find" rows="1"
+                           oninput="window.EDITOR_APP.runSearch(); this.style.height='auto'; this.style.height=this.scrollHeight+'px';"
+                           onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault(); event.shiftKey?window.EDITOR_APP.searchPrev():window.EDITOR_APP.searchNext();} else if(event.key==='Escape'){event.preventDefault();window.EDITOR_APP.closeSearch();}"></textarea>
+                </div>
+                <button class="search-opt-btn" id="search-case-btn" title="Match Case" onclick="window.EDITOR_APP.toggleSearchOption('search-case-btn')">Aa</button>
+                <button class="search-opt-btn" id="search-word-btn" title="Whole Word" onclick="window.EDITOR_APP.toggleSearchOption('search-word-btn')">ab</button>
+                <button class="search-opt-btn" id="search-regex-btn" title="Use Regex" onclick="window.EDITOR_APP.toggleSearchOption('search-regex-btn')">.*</button>
+                <span id="search-result" class="search-result"></span>
+                <button class="search-nav-btn" id="search-prev-btn" title="Prev (Ctrl+Shift+Enter)" onclick="window.EDITOR_APP.searchPrev()" disabled><i class="fa-solid fa-chevron-up"></i></button>
+                <button class="search-nav-btn" id="search-next-btn" title="Next (Ctrl+Enter)" onclick="window.EDITOR_APP.searchNext()" disabled><i class="fa-solid fa-chevron-down"></i></button>
+                <button class="search-nav-btn" id="search-expand-btn" title="Toggle Replace" onclick="window.EDITOR_APP.toggleSearchReplace()"><i class="fa-solid fa-bars"></i></button>
+                <button class="search-nav-btn" title="Close (Esc)" onclick="window.EDITOR_APP.closeSearch()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="search-row" id="search-replace-row" style="display:none;">
+                <div class="search-input-wrap">
+                    <i class="fa-solid fa-right-left search-input-icon"></i>
+                    <textarea id="replace-input" class="search-input" placeholder="Replace" rows="1"
+                           onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();window.EDITOR_APP.replaceOne();} else if(event.key==='Escape'){event.preventDefault();window.EDITOR_APP.closeSearch();}"></textarea>
+                </div>
+                <button class="search-nav-btn" title="Replace (Enter)" onclick="window.EDITOR_APP.replaceOne()"><i class="fa-solid fa-right-long"></i></button>
+                <button class="search-nav-btn" title="Replace All" onclick="window.EDITOR_APP.replaceAll()"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </div>
+        <div class="editor-content-wrap">
+        <div class="editor-body" id="editor-body">
+    <div class="line-numbers" id="line-numbers">1</div>
+    <div id="editor-textarea" class="editor-textarea" contenteditable="true" spellcheck="false" oninput="window.EDITOR_APP.handleInput()"></div>
+    
+</div>
+        </div>
+
+        <div class="side-notes-panel" id="side-notes-panel" style="display:none; top:80px; right:20px;">
+            <div class="side-notes-header">
+                <i class="fa-solid fa-note-sticky"></i>
+                <span>Side Notes</span>
+                <button class="side-notes-close" onclick="window.EDITOR_APP.toggleSideNotes()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="side-notes-input-row">
+                <input type="text" id="side-notes-input" class="side-notes-input"
+                    placeholder="Add a note or reminder…"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();window.EDITOR_APP.addSideNote();}">
+                <button class="side-notes-add" onclick="window.EDITOR_APP.addSideNote()">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div class="side-notes-list" id="side-notes-list">
+                <div class="side-notes-empty">No notes yet — add one above</div>
+            </div>
+        </div>
+
+    <div class="code-problems-panel" id="code-problems-panel" style="display:none;"></div>
+    <div class="code-problems-bar" id="code-problems-bar" style="display:none;">
+
+        <span class="jp-counts" onclick="window.EDITOR_APP.toggleCodeProblemsPanel()">
+
+            <span class="jp-count jp-error"><i class="fa-solid fa-circle-exclamation"></i><span id="code-error-count">0</span></span>
+
+            <span class="jp-count jp-warning"><i class="fa-solid fa-triangle-exclamation"></i><span id="code-warning-count">0</span></span>
+
+            <span class="jp-chevron" id="code-problems-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+
+        </span>
+
+    </div>
+    <div class="editor-statusbar">
+            <span class="statusbar-item">
+                <i class="fa-solid fa-list-ol"></i>
+                <span id="editor-line-count">1 line</span>
+            </span>
+            <span class="statusbar-divider"></span>
+            <span class="statusbar-item">
+                <i class="fa-solid fa-align-left"></i>
+                <span id="editor-word-count">0 words</span>
+            </span>
+            <span class="statusbar-divider"></span>
+            <span class="statusbar-item">
+                <i class="fa-solid fa-i-cursor"></i>
+                <span id="editor-char-count">0 chars</span>
+            </span>
+            <span class="statusbar-divider"></span>
+            <span class="statusbar-item">
+                <i class="fa-solid fa-weight-hanging"></i>
+
+                <span id="editor-file-size">0 B</span>
+
+            </span>
+
+            <span class="statusbar-divider"></span>
+
+            <span class="statusbar-item" id="editor-version-status" title="">
+
+                <i class="fa-regular fa-bookmark"></i>
+
+                <span id="editor-version-label">—</span>
+
+            </span>
+
+            <span class="statusbar-item save-fail-indicator" id="editor-save-status" style="display:none;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Save failed — check your connection</span>
+            </span>
+            <span class="statusbar-divider"></span>
+            <span class="statusbar-item zoom-controls">
+                <button class="zoom-btn" title="Zoom Out" onclick="scribbleZoomOut()"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                <span id="editor-zoom-label" title="Reset Zoom" onclick="scribbleZoomReset()">100%</span>
+                <button class="zoom-btn" title="Zoom In" onclick="scribbleZoomIn()"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            </span>
+        </div>
+
+        <script>
+        (function() {
+            var ZOOM_MIN = 50, ZOOM_MAX = 200, ZOOM_STEP = 10;
+            var _zoom = 100;
+
+            function _applyZoom() {
+                var body = document.getElementById('editor-body');
+                if (body) body.style.zoom = (_zoom / 100);
+                var label = document.getElementById('editor-zoom-label');
+                if (label) label.textContent = _zoom + '%';
+            }
+
+            window.scribbleZoomIn = function() {
+                _zoom = Math.min(ZOOM_MAX, _zoom + ZOOM_STEP);
+                _applyZoom();
+            };
+            window.scribbleZoomOut = function() {
+                _zoom = Math.max(ZOOM_MIN, _zoom - ZOOM_STEP);
+                _applyZoom();
+            };
+            window.scribbleZoomReset = function() {
+                _zoom = 100;
+                _applyZoom();
+            };
+        })();
+        </script>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- EDITOR: CLOSING CONFIRMATION MODAL     -->
+<!-- ═══════════════════════════════════════ -->
+<div id="editor-confirm-backdrop" class="editor-confirm-backdrop" style="display:none;">
+    <div class="editor-confirm-modal">
+        <div class="editor-confirm-title" id="editor-confirm-title">Close file?</div>
+        <div class="editor-confirm-message" id="editor-confirm-message">
+            Any unsaved changes will be lost.
+        </div>
+        <div class="editor-confirm-actions">
+            <button class="editor-confirm-cancel" onclick="window.EDITOR_APP.cancelConfirm()">Cancel</button>
+            <button class="editor-confirm-close" id="editor-confirm-action-btn" onclick="window.EDITOR_APP.acceptConfirm()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SAVE VERSION MODAL                     -->
+<!-- ═══════════════════════════════════════ -->
+<div id="version-save-backdrop" class="editor-confirm-backdrop" style="display:none;">
+    <div class="editor-confirm-modal version-save-modal">
+        <div class="editor-confirm-icon"><i class="fa-regular fa-floppy-disk"></i></div>
+        <div class="editor-confirm-title">Save Version</div>
+        <div class="editor-confirm-message">Add an optional label to help you remember what changed.</div>
+        <input class="version-label-input" id="version-label-input" type="text"
+               placeholder="e.g. Before refactor, Draft 2…" maxlength="80"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();window.EDITOR_APP.confirmSaveVersion();}
+                          if(event.key==='Escape'){event.preventDefault();window.EDITOR_APP.closeSaveVersionModal();}">
+        <div class="editor-confirm-actions">
+            <button class="editor-confirm-cancel" onclick="window.EDITOR_APP.closeSaveVersionModal()">Cancel</button>
+            <button class="version-save-btn" onclick="window.EDITOR_APP.confirmSaveVersion()">
+                <i class="fa-regular fa-floppy-disk"></i> Save Version
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- VERSION HISTORY MODAL                  -->
+<!-- ═══════════════════════════════════════ -->
+<div id="version-history-backdrop" class="editor-confirm-backdrop" style="display:none;"
+     onclick="if(event.target===this)closeVersionHistory()">
+    <div class="version-history-modal">
+        <div class="version-history-header">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span id="version-history-title">Version History</span>
+            <button class="version-history-close" onclick="closeVersionHistory()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="version-history-list" id="version-history-list">
+            <div class="version-history-loading">Loading…</div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- VERSION VIEW ONLY MODAL                -->
+<!-- ═══════════════════════════════════════ -->
+<div id="version-view-backdrop" class="editor-confirm-backdrop" style="display:none;"
+     onclick="if(event.target===this)closeVersionView()">
+    <div class="version-view-modal">
+        <div class="version-history-header">
+            <i class="fa-solid fa-eye"></i>
+            <span id="version-view-title">View Only</span>
+            <button class="version-history-close" id="version-view-copy-btn" title="Copy All" onclick="copyVersionViewContent()">
+                <i class="fa-regular fa-copy"></i>
+            </button>
+            <button class="version-history-close" onclick="closeVersionView()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="version-view-content" id="version-view-content"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- FILE DETAILS MODAL                     -->
+<!-- ═══════════════════════════════════════ -->
+<div id="details-backdrop" class="det-backdrop" style="display:none;"
+     onclick="if(event.target===this)closeDetailsModal()">
+    <div class="det-modal" id="details-modal-box"></div>
+</div>
+
+<div id="focus-mode-exit" class="focus-mode-exit" style="display:none;" onclick="scribbleFocusMode(false)">
+    <i class="fa-solid fa-compress"></i> Exit Focus Mode
+</div>
+
+<script>
+(function() {
+    function _setFocus(on) {
+        var winEl = document.querySelector('.editor-window');
+        var exitBtn = document.getElementById('focus-mode-exit');
+        if (winEl) winEl.classList.toggle('focus-mode', on);
+        if (exitBtn) exitBtn.style.display = on ? 'flex' : 'none';
+    }
+    window.scribbleFocusMode = _setFocus;
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var winEl = document.querySelector('.editor-window');
+            if (winEl && winEl.classList.contains('focus-mode')) _setFocus(false);
+        }
+    });
+})();
+</script>
+
+<script>
+(function() {
+    // ── Drag to move ──────────────────────────────────
+    var _dragPanel = null, _dragStartX, _dragStartY, _panelStartL, _panelStartT;
+
+    document.addEventListener('mousedown', function(e) {
+        var header = e.target.closest('.side-notes-header');
+        if (!header) return;
+        var panel = document.getElementById('side-notes-panel');
+        if (!panel) return;
+        _dragPanel = panel;
+        _dragStartX = e.clientX;
+        _dragStartY = e.clientY;
+        _panelStartL = parseInt(panel.style.left || panel.getBoundingClientRect().left, 10);
+        _panelStartT = parseInt(panel.style.top  || panel.getBoundingClientRect().top,  10);
+        panel.style.right = 'auto'; // unpin from right so left takes over
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!_dragPanel) return;
+        var dx = e.clientX - _dragStartX;
+        var dy = e.clientY - _dragStartY;
+        var newL = Math.max(0, Math.min(window.innerWidth  - _dragPanel.offsetWidth,  _panelStartL + dx));
+        var newT = Math.max(0, Math.min(window.innerHeight - _dragPanel.offsetHeight, _panelStartT + dy));
+        _dragPanel.style.left = newL + 'px';
+        _dragPanel.style.top  = newT + 'px';
+    });
+
+    document.addEventListener('mouseup', function() { _dragPanel = null; });
+
+    // ── Delete confirmation ───────────────────────────
+    window.sideNoteDeleteConfirm = function(id) {
+        var existing = document.getElementById('note-del-confirm');
+        if (existing) existing.remove();
+
+        var box = document.createElement('div');
+        box.id = 'note-del-confirm';
+        box.className = 'note-del-confirm';
+        box.innerHTML =
+            '<div class="note-del-msg"><i class="fa-solid fa-triangle-exclamation"></i> Delete this note?</div>' +
+            '<div class="note-del-actions">' +
+                '<button class="note-del-btn cancel" onclick="document.getElementById(\'note-del-confirm\').remove()">Cancel</button>' +
+                '<button class="note-del-btn confirm" onclick="window.EDITOR_APP.deleteNote(\'' + id + '\');document.getElementById(\'note-del-confirm\').remove()">Delete</button>' +
+            '</div>';
+
+        var panel = document.getElementById('side-notes-panel');
+        if (panel) panel.appendChild(box);
+    };
+})();
+</script>
+
+<!-- New Editor Scripts -->
+<script src="js/scribble-sw-register.js"></script>
+<!-- Shared "that name is taken" dialog; must load before the app -->
+<script src="js/scribble-name-clash.js"></script>
+<!-- Must load BEFORE the editor: renderTabs() writes through it -->
+<script src="js/scribble-session-tabs.js"></script>
+<script src="js/scribble-export.js"></script>
+<script src="js/scribble-editor-app.js"></script>
+<script type="module" src="js/scribble-editor-firebase.js"></script>
+<script>window.SCRIBBLE_ACTOR = { id: "local", name: "You", surface: "project-page" };</script>
+<script src="js/scribble-project-app.js"></script>
+<script type="module" src="js/scribble-project-firebase.js"></script>
+<!-- Sidebar "Recent" — shared by every page with a #recent-list -->
+<script type="module" src="js/scribble-recent.js"></script>
+<script type="module" src="js/scribble-archive-firebase.js"></script>
+<!-- Defines window.openAccessLog and the backup for the header menu -->
+<script type="module" src="js/scribble-access-log.js"></script>
+<!-- Registers this device and defines window.openScribbleDevices -->
+<script type="module" src="js/scribble-devices.js"></script>
+<!-- PASSAGE, added 2026-09-17 — on every signed-in page, because a
+     session can sit restored for weeks without you passing the gate
+     again, and the copy has to exist wherever you actually are.
+     See js/scribble-passage.js. -->
+<script type="module" src="js/scribble-passage.js"></script>
+<script type="module" src="js/scribble-backup.js"></script>
+<script src="js/scribble-menu.js"></script>
+<!-- POPPY, added 2026-09-17 — this is the page you actually work on and
+     it was the one Poppy was deafest to: she could not tell a project
+     was open, so everything inside one was out of reach by voice.
+
+     Tagged rather than mapped. Scribble.html, the Archive and the bin
+     are all listed in the PAGES map inside LifeHub-surface.js, but this
+     page is not — and there are now two copies of that file (this one
+     and JS/poppy/LifeHub-surface.js) which have drifted apart. Editing
+     the map would mean editing both and hoping. data-app/data-surface
+     is the escape hatch the file documents for exactly this, and it
+     wins over the map, so it cannot be undone by the copies diverging
+     further.
+
+     Without the tag the filename guess gives "Scribble / unknown
+     section", which is not wrong but is not something Poppy can say
+     back to you.
+
+     Gives the green dot, the surface report, and close/confirm. It does
+     NOT yet tell Poppy WHICH project is open — that needs one
+     LIFEHUB_SURFACE.detail() call from the project page's own code, and
+     comes with the file-level commands later. -->
+<script src="js/LifeHub-surface.js"
+        data-app="Scribble" data-surface="Project"></script>
+<!-- POPPY, added 2026-09-17 — the item-tier commands: modules, sections
+     and document files. Must come after BOTH the surface (it registers
+     handlers on it) and scribble-project-app.js (it calls that page's
+     own functions rather than reimplementing any of them).
+     Read js/scribble-project-poppy-commands.js for the three rules it
+     is built on; remove this one tag to switch it all off. -->
+<script src="js/scribble-project-poppy-commands.js"></script>
+
+</body>
+</html>

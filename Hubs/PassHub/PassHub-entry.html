@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>PassHub | Entries</title>
+    
+
+    <link rel="icon" type="image/png" href="css/files/PassHub.png">
+    <link rel="stylesheet" href="css/passhub-entry.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+
+</head>
+<body>
+
+    <header>
+        <div onclick="goHome()" class="nav-link">← PassHub / ENTRY</div>
+    </header>
+
+    <div id="view-dashboard">
+        <div class="action-row">
+            <div class="big-btn" onclick="openEditor()">
+                <span class="material-symbols-outlined big-icon">post_add</span>
+                <span class="big-label">+ New Entry</span>
+            </div>
+            <div class="big-btn" onclick="openEntriesList()">
+                <span class="material-symbols-outlined big-icon">inventory_2</span>
+                <span class="big-label">Entries</span>
+            </div>
+        </div>
+        <div class="focus-section">
+            <div class="focus-header">
+                <h2 class="focus-title">Focus Areas</h2>
+                <div class="focus-manage-btn" onclick="openManager()">Manage</div>
+            </div>
+            <div id="focus-grid" class="focus-grid"></div>
+        </div>
+    </div>
+
+    <div id="view-editor" class="hidden-view">
+        <div class="editor-container">
+            <div class="editor-header-row">
+                <div style="flex-grow: 1;">
+                    <input type="text" id="entry-title" class="editor-input title-input" placeholder="Title your thought...">
+                    <input type="text" id="entry-subtitle" class="editor-input subtitle-input" placeholder="Add a subtitle..." style="display:block; border:none; outline:none; font-size:14px; color:#999; font-weight:400; width:100%; margin-top:2px; margin-bottom:8px; background:none;">
+                    <select id="entry-focus" style="background:none; border:none; color:#888; font-size:11px; text-transform:uppercase; cursor: pointer;"></select>
+                </div>
+                <span id="btn-lock-toggle" class="material-symbols-outlined lock-trigger" onclick="toggleLockSettings()">lock_open</span>
+            </div>
+
+            <textarea id="entry-body" class="editor-input body-input" placeholder="Start writing..."></textarea>
+            
+            <div class="editor-footer-row">
+                <span id="btn-mood-trigger" class="material-symbols-outlined mood-trigger" onclick="openMoodPicker()">add_reaction</span>
+
+                <div style="display: flex; gap: 20px;">
+                    <button onclick="showDashboard()" style="background:none; border:none; cursor:pointer; color:#999;">Cancel</button>
+                    <button onclick="saveEntry()" style="background:var(--accent); color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">Save Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-list" class="hidden-view">
+        <h2 style="text-align:center; color:var(--accent); font-weight:300; margin-bottom:30px;">WELCOME BACK, JEN ❀</h2>
+        <div id="entries-wrapper" class="list-container"></div>
+    </div>
+
+    <div id="view-detail" class="hidden-view">
+        <div style="max-width: 700px; margin: 0 auto; height: 100%; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <button onclick="openEntriesList()" style="background:none; border:none; cursor:pointer; color:#999; font-size:11px; text-transform:uppercase; letter-spacing:1px;">← Back to Desk</button>
+                <div style="display: flex; gap: 15px;">
+                    <button onclick="editCurrentEntry()" style="background:none; border:none; cursor:pointer; color:var(--accent); font-size:12px; text-transform:uppercase;">Edit</button>
+                    <button onclick="deleteCurrentEntry()" style="background:none; border:none; cursor:pointer; color:var(--danger); font-size:12px; text-transform:uppercase;">Delete</button>
+                </div>
+            </div>
+            <div style="background: white; padding: 50px; border-radius: 2px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); flex-grow: 1; overflow-y: auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #F5F5F5; padding-bottom: 15px; margin-bottom: 30px;">
+                    <div id="detail-meta" style="font-size: 10px; color: #BBB; text-transform: uppercase; letter-spacing: 2px;"></div>
+                    <div id="detail-mood" style="color:var(--text-main);"></div>
+                </div>
+                
+                <div id="detail-title" style="font-size: 24px; font-weight: 600; color: var(--text-main); margin-bottom: 6px; line-height: 1.3;"></div>
+                <div id="detail-subtitle" style="font-size: 14px; font-weight: 400; color: #999; margin-bottom: 30px; line-height: 1.4;"></div>
+                <div id="detail-body" style="font-size: 14px; line-height: 1.8; color: var(--text-main); white-space: pre-wrap;"></div>
+
+                <div id="detail-update" style="font-size: 9px; color: #ccc; font-style: italic; margin-top: 50px; text-align: right;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-manager" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="font-size:14px; text-transform:uppercase; color:var(--accent); margin-bottom:20px;">Edit Focus Areas</h2>
+            <div id="manage-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;"></div>
+            <div style="border-top: 1px solid #eee; padding-top: 20px;">
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="new-focus-name" class="manage-input" placeholder="Name" style="flex:2;">
+                    <input type="text" id="new-focus-icon" class="manage-input" placeholder="Icon Code" style="flex:1;">
+                    <button onclick="addNewFocus()" style="background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; padding:0 15px;">+</button>
+                </div>
+            </div>
+            <button onclick="closeModal('modal-manager')" style="width:100%; margin-top:20px; padding:10px; background:transparent; border:1px solid #ddd; color:#888; border-radius:6px; cursor:pointer;">Done</button>
+        </div>
+    </div>
+
+    <div id="modal-mood" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="font-size:14px; color:var(--text-sub); margin-bottom:15px;">How are you?</h2>
+            <div id="mood-grid-container" class="mood-grid">
+                </div>
+            <button onclick="closeModal('modal-mood')" style="margin-top:20px; border:none; background:none; color:#ccc; cursor:pointer;">Close</button>
+        </div>
+    </div>
+
+    <div id="modal-lock-setup" class="modal-overlay">
+        <div class="modal-card">
+            <span class="material-symbols-outlined" style="font-size:30px; color:var(--accent); margin-bottom:15px;">lock</span>
+            <div style="margin-bottom:20px; font-size:12px; color:#888;">Secure this entry. If you forget the password, content is lost.</div>
+            
+            <input type="text" id="setup-clue" class="lock-input" placeholder="Type your clue">
+            <input type="password" id="setup-pass" class="lock-input" placeholder="*********">
+            
+            <button onclick="confirmLockSetup()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:6px; cursor:pointer; margin-top:10px;">Enable Lock</button>
+            <button onclick="disableLock()" style="width:100%; padding:12px; background:transparent; color:var(--text-sub); border:none; cursor:pointer; margin-top:5px;">Remove Lock</button>
+        </div>
+    </div>
+
+    <div id="modal-unlock" class="modal-overlay">
+        <div class="modal-card" id="unlock-card">
+            <div id="unlock-clue" style="font-size:14px; font-style:italic; color:var(--accent); margin-bottom:20px;"></div>
+            <input type="password" id="unlock-pass" class="lock-input" placeholder="Password">
+            <button onclick="attemptUnlock()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:6px; cursor:pointer; margin-top:10px;">Unlock</button>
+            <button onclick="closeModal('modal-unlock')" style="margin-top:10px; border:none; background:none; color:#ccc; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-database-compat.js"></script>
+    <script src="js/passhub-firebase.js"></script>
+    <script src="js/passhub-store.js"></script>
+
+    <script>
+        // --- CONFIG ---
+        const MOOD_ICONS = [
+            "sentiment_satisfied", "mood", "sentiment_very_satisfied", "sentiment_excited", "sentiment_calm", "sentiment_content", "sentiment_neutral",
+            "sentiment_dissatisfied", "mood_bad", "sentiment_very_dissatisfied", "sentiment_frustrated", "sentiment_stressed", "sentiment_extremely_dissatisfied", "sentiment_sad",
+            "folded_hands", "favorite", "heart_broken", "cruelty_free", "eyeglasses_2", "sick", "filter_drama"
+        ];
+
+        // Firebase
+        // Firebase lives in js/passhub-firebase.js — one config for all pages.
+        const db = window.PH_DB;
+        const journalRef = PH_STORE.ref('journal_entries');
+        const focusRef = PH_STORE.ref('journal_focus_areas');
+
+        // State Tracking
+        let currentEditingId = null;
+        let activeFocusAreas = {};
+        
+        // Temp State for Editor
+        let tempMood = null;
+        let tempLock = { enabled: false, clue: "", pass: "" };
+
+        // Temp State for Unlocking
+        let targetUnlockItem = null; // Stores the item trying to be opened
+
+        // --- 1. INITIALIZATION ---
+        
+        // Load Focus Areas
+        focusRef.on('value', snap => {
+            const data = snap.val();
+            if (data) {
+                activeFocusAreas = data;
+                renderFocusGrid();
+            } else {
+                // Initial Default Creation
+                const defaults = [
+                    { name: "Hobbies", icon: "palette", order: 0 },
+                    { name: "Career", icon: "work", order: 1 },
+                    { name: "Wellness", icon: "spa", order: 2 },
+                    { name: "Faith", icon: "church", order: 3 },
+                    { name: "Home", icon: "home", order: 4 },
+                    { name: "Ideas", icon: "lightbulb", order: 5 }
+                ];
+                defaults.forEach(f => focusRef.push(f));
+            }
+        });
+
+        // Setup Mood Grid
+        const moodContainer = document.getElementById('mood-grid-container');
+        MOOD_ICONS.forEach(icon => {
+            const btn = document.createElement('span');
+            btn.className = "material-symbols-outlined mood-btn";
+            btn.textContent = icon;
+            btn.onclick = () => selectMood(icon);
+            moodContainer.appendChild(btn);
+        });
+
+        // --- 2. CORE UI RENDERING ---
+
+        function renderFocusGrid() {
+            const focusGrid = document.getElementById('focus-grid');
+            const focusSelect = document.getElementById('entry-focus');
+            focusGrid.innerHTML = '';
+            focusSelect.innerHTML = '';
+
+            const sorted = Object.entries(activeFocusAreas).sort((a,b) => (a[1].order||0) - (b[1].order||0));
+
+            sorted.forEach(([key, area]) => {
+                // Dashboard
+                const card = document.createElement('div');
+                card.className = 'focus-card';
+                card.innerHTML = `<span class="material-symbols-outlined focus-icon">${area.icon || 'circle'}</span><span class="focus-name">${area.name}</span>`;
+                card.onclick = () => filterByFocus(area.name);
+                focusGrid.appendChild(card);
+                // Select
+                const opt = document.createElement('option');
+                opt.value = area.name; opt.textContent = area.name;
+                focusSelect.appendChild(opt);
+            });
+        }
+
+        // --- 3. EDITOR LOGIC (MOOD & LOCK) ---
+
+        function openEditor(isEditMode = false) {
+            hideAll();
+            document.getElementById('view-editor').style.display = 'block';
+            
+            // Reset Temp State
+            tempMood = null;
+            tempLock = { enabled: false, clue: "", pass: "" };
+            updateMoodIconUI();
+            updateLockIconUI();
+
+            if (!isEditMode) {
+                currentEditingId = null;
+                document.getElementById('entry-title').value = '';
+                document.getElementById('entry-subtitle').value = '';
+                document.getElementById('entry-body').value = '';
+            }
+        }
+
+        // MOOD
+        function openMoodPicker() { document.getElementById('modal-mood').style.display = 'flex'; }
+        function selectMood(icon) {
+            tempMood = icon;
+            updateMoodIconUI();
+            closeModal('modal-mood');
+        }
+        function updateMoodIconUI() {
+            const btn = document.getElementById('btn-mood-trigger');
+            if(tempMood) {
+                btn.textContent = tempMood;
+                btn.classList.add('has-mood');
+            } else {
+                btn.textContent = "add_reaction";
+                btn.classList.remove('has-mood');
+            }
+        }
+
+        // LOCK
+        function toggleLockSettings() {
+            // Pre-fill if already locked
+            document.getElementById('setup-clue').value = tempLock.clue || "";
+            document.getElementById('setup-pass').value = tempLock.pass || "";
+            document.getElementById('modal-lock-setup').style.display = 'flex';
+        }
+        function confirmLockSetup() {
+            const clue = document.getElementById('setup-clue').value;
+            const pass = document.getElementById('setup-pass').value;
+            
+            if(!pass) return alert("Password is required to lock.");
+            
+            tempLock = { enabled: true, clue: clue, pass: pass };
+            updateLockIconUI();
+            closeModal('modal-lock-setup');
+        }
+        function disableLock() {
+            tempLock = { enabled: false, clue: "", pass: "" };
+            updateLockIconUI();
+            closeModal('modal-lock-setup');
+        }
+        function updateLockIconUI() {
+            const btn = document.getElementById('btn-lock-toggle');
+            if(tempLock.enabled) {
+                btn.textContent = "lock";
+                btn.classList.add('active');
+            } else {
+                btn.textContent = "lock_open";
+                btn.classList.remove('active');
+            }
+        }
+
+
+        // --- 4. SAVING & LOADING ---
+
+        function saveEntry() {
+            const title = document.getElementById('entry-title').value;
+            const subtitle = document.getElementById('entry-subtitle').value;
+            const body = document.getElementById('entry-body').value;
+            const focus = document.getElementById('entry-focus').value;
+
+            if(!title && !body) return alert("Ghost entry? Write something.");
+
+            const entryData = {
+                title: title,
+                subtitle: subtitle,
+                body: body,
+                focus: focus,
+                mood: tempMood ?? null,
+                isLocked: tempLock.enabled,
+                lockClue: tempLock.clue,
+                lockPass: tempLock.pass, // In a real app, hash this. For Jen's local vault, raw is okay.
+                timestamp: (currentEditingId && targetUnlockItem && targetUnlockItem.timestamp) ? targetUnlockItem.timestamp : Date.now(),
+                lastEdited: Date.now()
+            };
+
+            // Safety net: Firebase throws if any field is undefined (vs null).
+            // This guards against future fields that might come back undefined after a read.
+            Object.keys(entryData).forEach(key => {
+                if (entryData[key] === undefined) entryData[key] = null;
+            });
+
+            if (currentEditingId) {
+                journalRef.child(currentEditingId).update(entryData);
+                // Important: Update the 'targetUnlockItem' so if we go back to detail view, it has new data
+                targetUnlockItem = { ...entryData }; 
+                openDetailView(targetUnlockItem); // Show updated detail
+            } else {
+                journalRef.push(entryData);
+                openEntriesList();
+            }
+        }
+
+        function loadEntries(filter = null) {
+            const wrapper = document.getElementById('entries-wrapper');
+            wrapper.innerHTML = '<div style="width:100%; text-align:center; color:#ccc; margin-top:50px; font-size:12px;">GATHERING PAPERS...</div>';
+
+            journalRef.once('value', snap => {
+                wrapper.innerHTML = '';
+                const data = snap.val() || {};
+                const entries = Object.entries(data).sort((a, b) => b[1].timestamp - a[1].timestamp);
+
+                if(entries.length === 0) {
+                    wrapper.innerHTML = '<div style="width:100%; text-align:center; color:#ccc; margin-top:50px;">The pages are blank.</div>';
+                    return;
+                }
+
+                entries.forEach(([key, item]) => {
+                    if(filter && item.focus !== filter) return;
+                    
+                    const dateStr = formatTime(item.timestamp, true); // Short date
+                    
+                    const card = document.createElement('div');
+                    card.className = 'paper-card';
+                    
+                    let bodyContent = item.body;
+                    let moodIcon = item.mood ? `<span class="material-symbols-outlined" style="font-size:16px;">${item.mood}</span>` : '';
+                    
+                    if(item.isLocked) {
+                        bodyContent = '<div class="locked-icon"><span class="material-symbols-outlined">lock</span></div>';
+                    }
+
+                    card.innerHTML = `
+                        <div class="paper-meta-row">
+                            <span class="paper-date">${dateStr}</span>
+                            <span class="paper-mood">${moodIcon}</span>
+                        </div>
+                        <div class="paper-title">${item.title}</div>
+                        ${(item.subtitle && !item.isLocked) ? `<div class="paper-subtitle" style="font-size:12px; color:#aaa; margin-top:-6px; margin-bottom:8px;">${item.subtitle}</div>` : ''}
+                        <div class="paper-body">${bodyContent}</div>
+                        <div class="paper-tag">#${item.focus}</div>
+                    `;
+                    card.onclick = () => tryOpenEntry(key, item); 
+                    wrapper.appendChild(card);
+                });
+            });
+        }
+
+        // --- 5. UNLOCKING & VIEWING ---
+
+        function tryOpenEntry(key, item) {
+            if(item.isLocked) {
+                // Trigger Unlock Flow
+                targetUnlockItem = { ...item, key: key }; // Store item reference
+                document.getElementById('unlock-clue').textContent = item.lockClue || "No clue provided.";
+                document.getElementById('unlock-pass').value = "";
+                document.getElementById('modal-unlock').style.display = 'flex';
+            } else {
+                // Open Directly
+                currentEditingId = key;
+                targetUnlockItem = item; // Needed for edit mode mapping
+                openDetailView(item);
+            }
+        }
+
+        function attemptUnlock() {
+            const input = document.getElementById('unlock-pass').value;
+            if (input === targetUnlockItem.lockPass) {
+                closeModal('modal-unlock');
+                currentEditingId = targetUnlockItem.key;
+                openDetailView(targetUnlockItem);
+            } else {
+                const card = document.getElementById('unlock-card');
+                card.classList.add('shake');
+                setTimeout(() => card.classList.remove('shake'), 400);
+                document.getElementById('unlock-pass').value = '';
+            }
+        }
+
+        function openDetailView(item) {
+            hideAll();
+            document.getElementById('view-detail').style.display = 'block';
+            
+            const dateStr = formatTime(item.timestamp, false); // Long date
+            const moodHtml = item.mood ? `<span class="material-symbols-outlined" style="vertical-align:middle; margin-left:10px;">${item.mood}</span>` : '';
+
+            document.getElementById('detail-meta').textContent = `${dateStr} • ${item.focus}`;
+            document.getElementById('detail-mood').innerHTML = moodHtml;
+            document.getElementById('detail-title').textContent = item.title;
+            const subtitleEl = document.getElementById('detail-subtitle');
+            if (item.subtitle) {
+                subtitleEl.textContent = item.subtitle;
+                subtitleEl.style.display = 'block';
+            } else {
+                subtitleEl.textContent = '';
+                subtitleEl.style.display = 'none';
+            }
+            document.getElementById('detail-body').textContent = item.body;
+
+            // Last Update Logic
+            const updateDiv = document.getElementById('detail-update');
+            if (item.lastEdited && (item.lastEdited - item.timestamp > 120000)) { // Only show if edited > 1 min later
+                const editStr = formatTime(item.lastEdited, false);
+                updateDiv.textContent = `Last Update: ${editStr}`;
+                updateDiv.style.display = 'block';
+            } else {
+                updateDiv.style.display = 'none';
+            }
+        }
+
+        function editCurrentEntry() {
+            openEditor(true);
+            // Populate Fields
+            document.getElementById('entry-title').value = targetUnlockItem.title;
+            document.getElementById('entry-subtitle').value = targetUnlockItem.subtitle || '';
+            document.getElementById('entry-body').value = targetUnlockItem.body;
+            document.getElementById('entry-focus').value = targetUnlockItem.focus;
+            
+            // Populate Temp State
+            tempMood = targetUnlockItem.mood || null;
+            tempLock = {
+                enabled: targetUnlockItem.isLocked || false,
+                clue: targetUnlockItem.lockClue || "",
+                pass: targetUnlockItem.lockPass || ""
+            };
+            
+            updateMoodIconUI();
+            updateLockIconUI();
+        }
+
+        function deleteCurrentEntry() {
+            if(!currentEditingId) return;
+            if(confirm("Tear this page out forever?")) {
+                journalRef.child(currentEditingId).remove();
+                openEntriesList();
+            }
+        }
+
+        // --- 6. UTILS ---
+
+        function formatTime(timestamp, short) {
+            const date = new Date(timestamp);
+            const timePart = date.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+            const datePart = date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+            
+            if(short) return `${timePart}, ${datePart}`;
+            return `${timePart}, ${datePart}`; // Can customize long format if needed
+        }
+
+        function hideAll() {
+            ['view-dashboard','view-editor','view-list','view-detail'].forEach(id => 
+                document.getElementById(id).style.display = 'none'
+            );
+        }
+        function showDashboard() { hideAll(); document.getElementById('view-dashboard').style.display = 'flex'; }
+        function openEntriesList() { hideAll(); document.getElementById('view-list').style.display = 'block'; loadEntries(); }
+        
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function filterByFocus(area) { hideAll(); document.getElementById('view-list').style.display = 'block'; loadEntries(area); }
+        function openManager() { document.getElementById('modal-manager').style.display = 'flex'; renderManagerList(); }
+
+        // Manager Logic (Focus Areas)
+        function renderManagerList() {
+            const list = document.getElementById('manage-list');
+            list.innerHTML = '';
+            const sorted = Object.entries(activeFocusAreas).sort((a,b) => (a[1].order||0) - (b[1].order||0));
+            
+            sorted.forEach(([key, area]) => {
+                const row = document.createElement('div');
+                row.className = 'manage-row';
+                row.innerHTML = `
+                    <div style="display:flex; flex-direction:column; justify-content:center; margin-right:10px; gap:2px;">
+                        <span onclick="moveFocus('${key}', 'up')" style="font-size:10px; cursor:pointer; color:#ccc;">▲</span>
+                        <span onclick="moveFocus('${key}', 'down')" style="font-size:10px; cursor:pointer; color:#ccc;">▼</span>
+                    </div>
+                    <span class="material-symbols-outlined icon-preview">${area.icon}</span>
+                    <input type="text" value="${area.name}" class="manage-input" onchange="updateFocus('${key}', 'name', this.value)" style="flex:2;">
+                    <input type="text" value="${area.icon}" class="manage-input" onchange="updateFocus('${key}', 'icon', this.value)" style="flex:1;">
+                    <button onclick="deleteFocus('${key}')" style="background:none; border:none; color:#B05C5C; cursor:pointer;">×</button>
+                `;
+                list.appendChild(row);
+            });
+        }
+        
+        window.addNewFocus = () => {
+            const name = document.getElementById('new-focus-name').value;
+            const icon = document.getElementById('new-focus-icon').value || 'circle';
+            if(name) {
+                focusRef.push({ name: name, icon: icon, order: 99 });
+                document.getElementById('new-focus-name').value = '';
+                renderManagerList();
+            }
+        };
+        window.updateFocus = (k, f, v) => focusRef.child(k).child(f).set(v);
+        window.deleteFocus = (k) => confirm("Remove area?") && focusRef.child(k).remove() && renderManagerList();
+        
+        window.moveFocus = (key, dir) => {
+            let items = Object.entries(activeFocusAreas).map(([k,v]) => ({key:k, ...v}));
+            items.sort((a,b) => (a.order||0) - (b.order||0));
+            const idx = items.findIndex(i => i.key === key);
+            if(idx === -1) return;
+            if(dir === 'up' && idx > 0) [items[idx], items[idx-1]] = [items[idx-1], items[idx]];
+            else if(dir === 'down' && idx < items.length-1) [items[idx], items[idx+1]] = [items[idx+1], items[idx]];
+            items.forEach((item, i) => focusRef.child(item.key).child('order').set(i));
+        };
+
+        function goHome() {
+            const dashboard = document.getElementById('view-dashboard');
+            if(dashboard.style.display === 'none') showDashboard();
+            else window.location.href = "PassHub-landing_page.html";
+        }
+    </script>
+
+    <script>
+        // --- PASSHUB SECURITY SENSOR ---
+        if (!sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+            window.location.href = "PassHub-landing_page.html";
+        }
+    </script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

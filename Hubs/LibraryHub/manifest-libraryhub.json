@@ -1,0 +1,51 @@
+{
+  "_note": "2026-09-17 — filled out for install + deploy: id/scope added so the hub installs as its own app under any sub-path, display_override and shortcuts added, icon kept as the existing 1000x1000 PNG. JSON allows no comments, hence this field; browsers ignore it.",
+
+  "name": "LifeHub | LibraryHub",
+  "short_name": "LibraryHub",
+  "description": "Reading tracker, ebook reader and word bank",
+  "lang": "en",
+
+  "id": "./",
+  "start_url": "./LibraryHub.html",
+  "scope": "./",
+
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+
+  "background_color": "#050505",
+  "theme_color": "#050505",
+
+  "categories": ["books", "education", "productivity"],
+
+  "icons": [
+    {
+      "src": "./css/files/LibraryHub.png",
+      "sizes": "1000x1000",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "The Collection",
+      "short_name": "Collection",
+      "url": "./LibraryHub-Collections.html",
+      "icons": [{ "src": "./css/files/LibraryHub.png", "sizes": "1000x1000" }]
+    },
+    {
+      "name": "To Be Read",
+      "short_name": "TBR",
+      "url": "./LibraryHub-Collections.html?filter=tbr",
+      "icons": [{ "src": "./css/files/LibraryHub.png", "sizes": "1000x1000" }]
+    },
+    {
+      "name": "Reading Room",
+      "short_name": "Read",
+      "url": "./Reading_Room.html",
+      "icons": [{ "src": "./css/files/LibraryHub.png", "sizes": "1000x1000" }]
+    }
+  ]
+}

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — Food entries</title>
+<style>
+    body { background:#f2e8e2; font-family:'Century Gothic',sans-serif; margin:0; padding:32px; color:#333; }
+    .box { max-width:720px; margin:0 auto; background:#fdf8f4; border:1px solid #e3cfb8; border-radius:12px; padding:26px 30px; }
+    h1 { font-size:17px; color:#9c6b4f; letter-spacing:2px; margin:0 0 4px; }
+    .sub { font-size:11px; color:#b08a6c; text-transform:uppercase; letter-spacing:1px; }
+    p { font-size:13px; line-height:1.65; color:#6b5a4d; }
+    .warn { background:#fdf1e4; border:1px solid #e8d3b8; border-radius:8px; padding:12px 15px; font-size:12.5px; line-height:1.6; color:#8a5a3f; }
+    button { padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-family:inherit; font-size:13px; background:#b8866f; color:#fff; margin-top:16px; }
+    button:hover { background:#a0705a; }
+    button:disabled { background:#d6c4b8; cursor:default; }
+    #log { margin-top:18px; font-family:Consolas,monospace; font-size:12px; line-height:1.8; color:#6b5a4d; white-space:pre-wrap; }
+    .ok { color:#4c7a4c; } .new { color:#9c6b4f; font-weight:bold; } .err { color:#c0392b; }
+    code { background:#f3e6d8; padding:1px 5px; border-radius:3px; font-size:12px; }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>🍽️ SEED FOOD ENTRIES</h1>
+    <div class="sub">PoppyEngine · one-time setup</div>
+
+    <p>
+        Three entries: logging a meal (adding it to the food list first if it
+        isn't there), stocking the list, and answering questions about the day.
+        Writes into the editor's Firebase, not into <code>PoppyEngine-core.js</code>.
+    </p>
+
+    <div class="warn">
+        Matched <strong>by name</strong>, so a second run updates the three rather
+        than creating six. Your other entries are never read or changed.
+    </div>
+
+    <button id="go">Write the three entries</button>
+    <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, update }
+    from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+const cfg = {
+    apiKey:            "AIzaSyBDsZywWSQ6kAkUnr90nB6POGF0CosQobU",
+    authDomain:        "lifehub---light.firebaseapp.com",
+    databaseURL:       "https://lifehub---light-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lifehub---light",
+    storageBucket:     "lifehub---light.firebasestorage.app",
+    messagingSenderId: "150442329718",
+    appId:             "1:150442329718:web:2cf7853eed9a1a2e2c4157"
+};
+
+const db = getDatabase(initializeApp(cfg));
+const CATEGORY = "Food";
+
+/* What makes a message about food. Deliberately broad on the eating
+   verbs, because "I had" carries most of them. */
+const ABOUT_FOOD = [
+    "ate", "eat", "eating", "eaten", "had", "having", "food", "meal",
+    "breakfast", "lunch", "dinner", "brunch", "snack", "snacks", "dessert",
+    "calories", "calorie", "macros", "macro", "protein", "carbs", "carb",
+    "fat", "fats", "sugar", "nutrition", "hungry", "cooked", "ordered",
+    "takeout", "leftovers", "plate", "serving", "servings", "portion",
+    "foodhub", "food list", "grams", "kcal",
+
+    /* DRINKS WITH CALORIES. Not decoration — without these, "I'm
+       drinking a glass of bear brand milk" contains no food word at
+       all, this entry never fires, and Poppy never even sees the food
+       list. That is exactly what happened: the milk was logged as
+       fluid and its 150 calories went nowhere.
+
+       Only the caloric ones. Water, black coffee and plain tea are
+       deliberately absent, so an ordinary glass of water doesn't drag
+       the whole food catalogue into the prompt. */
+    "milk", "juice", "oj", "soda", "coke", "cola", "pepsi", "sprite",
+    "softdrink", "soft drink", "smoothie", "milkshake", "shake",
+    "frappe", "frappuccino", "energy drink", "sports drink", "gatorade",
+    "beer", "wine", "cocktail", "cider", "alcohol", "whisky", "vodka",
+    "gin", "rum", "soju", "sake",
+
+    /* Asking about the DAY rather than naming a food. "How much left
+       for today" contains no food word at all, so without these the
+       review entry never fires on a cold ask — it only worked when a
+       meal happened to still be in the window.
+
+       Phrases, not bare words: "left" and "today" on their own are far
+       too common and would drag the food list into every prompt. */
+    "left to eat", "more to eat", "eat today", "eaten today",
+    "calories left", "how much more", "goal met", "met my goal",
+    "hit my goal", "on track", "under my goal", "over my goal",
+    "much left", "left for today", "left today", "left for the day"
+];
+
+const RULE = "═══════════════════════════════════════════════════════════════";
+const HEAD = (title, action) =>
+    RULE + "\n🍽️ " + title + (action ? " ; " + action : "") + "\n" + RULE + "\n";
+const FOOT = RULE;
+
+const ENTRIES = [
+
+/* ── 1. LOGGING A MEAL ────────────────────────────────────────────── */
+{
+    name: "Food: Log a meal",
+    intent: "FOOD_LOG",
+    priority: 5,
+    window: 4,
+    keywords: ["ate", "eat", "eaten", "had", "having", "log", "add", "record",
+               "track", "finished", "just", "cooked", "ordered", "bought",
+               "breakfast", "lunch", "dinner", "brunch", "snack", "dessert",
+               "plate", "bowl", "serving", "servings", "piece", "slice",
+               /* Drinking is eating when the drink has calories. The
+                  gate above already restricts these to caloric drinks,
+                  so "drank a glass of water" still can't reach here. */
+               "drinking", "drank", "drink", "glass", "bottle", "can",
+               "milk", "juice", "soda", "coke", "smoothie", "milkshake",
+               "shake", "beer", "wine", "cocktail"],
+    requireAny: ABOUT_FOOD,
+    requireNone: ["undo", "remove", "delete", "mistake", "didn't", "did not"],
+    fetchTargets: ["food/catalogue", "food/today"],
+    writeFields: ["action", "item", "servings", "serving", "cal", "prot", "carb",
+                  "fat", "sugar", "satfat", "sodium", "fiber", "cholesterol",
+                  "category", "kind", "date"],
+    guidelines:
+HEAD("Jen ate something", "food_log") +
+`This is the thing FoodHub was missing. Jen stopped tracking because logging a snack meant opening the list, inventing a serving size and finding five numbers first. You already know roughly what is in a donut. That is the whole job.
+
+FIVE RULES. These outrank anything below.
+
+1. CHECK THE LIST FIRST. LIVE DATA carries her whole Food list with the macros for one serving of each. If what she ate is there, send ONLY item, servings and date. Do not re-send the nutrition — it is already on record, and a second set of numbers for the same food is how the list rots.
+2. Never invent a serving SIZE she has to live with silently. If you are adding a new food, say what serving your numbers are for — "per cup", "per piece" — as part of reading it back.
+3. READ IT BACK BEFORE ADDING. For a food that is NOT on the list, say the numbers first and wait: "Chicken adobo, about 350 cal a cup — 25g protein, 22g fat, 3g sugar. Log it?" Send the action on her yes. Anything already on the list logs straight away with no ceremony.
+4. Macros for ONE serving, and servings for how many she had. Two cups of adobo is servings:2 against a "1 cup" item — not one item with doubled numbers.
+5. Micronutrients: satfat, sodium, fiber and cholesterol ONLY, and only when you are reasonably sure. Never guess vitamins or minerals. A made-up Vitamin B2 is noise dressed as data, and it lands in her charts.
+
+ESTIMATING WELL.
+Ordinary portions, ordinary preparation, unless she says otherwise. A restaurant version is bigger and oilier than a homemade one; say which you assumed if it matters.
+Round honestly — 350, not 347. False precision on a guess is a lie about how much you know.
+Brand-name items you know ("7/11 donut", "Jollibee Chickenjoy") can be estimated tighter. Homemade dishes vary enormously; if she says she cooked it, an ingredient or two changes the answer a lot, so ask if it's ambiguous.
+If you genuinely do not know a dish, say so and ask what was in it. Guessing wildly is worse than asking once.
+
+WHAT TO SAY AFTER. The receipt gives the day's running totals. One line. Worth flagging only when it happens:
+  · the day crossing 60g of sugar, which HALVES that day's food prestige
+  · protein being close to the 130g bonus
+Don't recite her whole day after a biscuit.
+
+DRINKS WITH CALORIES BELONG HERE TOO. Milk, juice, soda, smoothies, milkshakes, energy and sports drinks and alcohol go in BOTH trackers — hydration_log for the fluid, food_log for the calories, both actions in the same reply. Water, black coffee and plain tea are fluid only and do not belong in FoodHub. Category for a drink is kind:"drink" with HOT DRINKS, COLD DRINKS or ICED DRINKS.
+
+Never comment on what she chose to eat. Log it, say the number, move on. A tracker that editorialises is a tracker she stops telling the truth to — that is exactly how the last attempt died.
+` + FOOT
+},
+
+/* ── 2. STOCKING THE LIST ─────────────────────────────────────────── */
+{
+    name: "Food: Add to the food list",
+    intent: "FOOD_ADD",
+    priority: 4,
+    window: 3,
+    keywords: ["add", "put", "save", "remember", "stock", "list", "catalogue",
+               "catalog", "new food", "new item", "register"],
+    requireAny: ABOUT_FOOD.concat(["list", "catalogue", "catalog"]),
+    requireNone: ["ate", "eaten", "just had", "undo", "remove", "delete"],
+    fetchTargets: ["food/catalogue"],
+    writeFields: ["action", "item", "serving", "cal", "prot", "carb", "fat",
+                  "sugar", "satfat", "sodium", "fiber", "cholesterol",
+                  "category", "kind"],
+    guidelines:
+HEAD("Jen wants something on her food list, without eating it now", "food_add") +
+`Same estimating rules as logging — read the numbers back, name the serving, four micros at most.
+
+THE DIFFERENCE: this only stocks the list. If she has just EATEN the thing, use food_log instead, which adds it as part of logging. Adding and then logging separately writes it twice.
+
+Refused if a food of that name is already there; the receipt says what is on record so you can offer that instead.
+
+Use for "add adobo to my foods", "save this for next time", "put my usual breakfast on the list".
+` + FOOT
+},
+
+/* ── 3. ASKING ───────────────────────────────────────────────────── */
+{
+    name: "Food: How am I doing today",
+    intent: "FOOD_REVIEW",
+    priority: 4,
+    window: 3,
+    keywords: ["how", "what", "much", "many", "left", "still", "today", "so far",
+               "total", "totals", "enough", "over", "under", "hit", "on track",
+               "calories", "protein", "sugar", "macros"],
+    requireAny: ABOUT_FOOD,
+    fetchTargets: ["food/today"],
+    writeFields: [],
+    guidelines:
+HEAD("Jen is asking about today's food") +
+`A question. Send no action.
+
+═══ SHE IS TRYING TO GAIN WEIGHT. ═══
+This is the single most important thing about answering her here, and it inverts almost every instinct you have about food advice.
+
+Eating MORE is the goal. Eating a lot is a good day. There is no such thing as "too many calories" in this system — her rubric pays 1,000 at 2,200 kcal, 3,000 at 2,700, and nothing above that is penalised. The failure mode is UNDER-eating, and it is sanctioned 1,000 prestige.
+
+So:
+  · Never suggest cutting back, eating lighter, or "balancing out" a big meal.
+  · Never call a total high, heavy, or a lot. If she is at 2,900, that is a GOOD day — say so.
+  · Never praise a low number. "Only 1,200 today" is not restraint, it is a missed target and a sanction coming.
+  · No comment, ever, on what she chose. Not the donut, not the burger, not the second one.
+If you would not say it to someone deliberately building themselves back up, do not say it.
+
+LIVE DATA gives you today's items and the gaps already worked out — how far from green, from gold, from the protein bonus, and how much sugar headroom is left. Use the gaps; don't make her do the arithmetic.
+
+  calories  2,200 GREEN · 2,700 GOLD · under 2,200 is a sanction
+  protein   130g earns +500
+  sugar     60g LIMIT — over it halves that day's food prestige
+
+FOUR RULES.
+
+1. Answer what she asked, in a line or two. "What have I eaten" wants the list. "How much left" wants the gap. Don't deliver the whole dashboard to either.
+2. Only what's in LIVE DATA. Never estimate a total or invent a meal.
+3. Use the clock. 1,400 kcal at 2pm is fine and on track; 1,400 at 9pm needs a real suggestion tonight. The Manila hour is in LIVE DATA and it is what turns a number into advice.
+4. Sugar is the only thing to warn about, because it is the only one with teeth. Say it once, with the number, while there is still headroom to protect. Once she is already over, the prestige is spent — mention it that once and then stop; repeating it is nagging about a thing she can no longer change.
+
+GIVING ADVICE. One concrete, appetising suggestion — not a lecture and not a list.
+Prefer calorie-dense and easy over "healthy": peanut butter on toast, full-fat milk, rice with the meal, cheese, eggs, nuts, a smoothie. Those are the things that close a 700-calorie gap without needing another whole meal.
+If protein is the gap rather than calories, say which — they want different food.
+If she is well over gold with the protein bonus earned and sugar under the limit, that is a complete day. Tell her plainly and stop there; a finished day does not need a suggestion attached.
+` + FOOT
+}
+
+];
+
+const logEl = document.getElementById('log');
+const say = (msg, cls) => {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+};
+
+document.getElementById('go').onclick = async () => {
+    const btn = document.getElementById('go');
+    btn.disabled = true;
+    logEl.textContent = '';
+
+    try {
+        const catSnap = await get(ref(db, 'poppyEngine/categories'));
+        const cats = catSnap.val() || {};
+        if (!Object.values(cats).includes(CATEGORY)) {
+            await push(ref(db, 'poppyEngine/categories'), CATEGORY);
+            say('+ category "' + CATEGORY + '"', 'new');
+        } else {
+            say('- category "' + CATEGORY + '" already there', 'ok');
+        }
+
+        const intentPatch = {};
+        ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
+        await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
+        say('- ' + ENTRIES.length + ' intents registered', 'ok');
+
+        const entSnap = await get(ref(db, 'poppyEngine/entries'));
+        const existing = entSnap.val() || {};
+        const byName = {};
+        Object.entries(existing).forEach(([id, e]) => { if (e && e.name) byName[e.name] = id; });
+
+        let n = Object.keys(existing).length;
+
+        for (const src of ENTRIES) {
+            const id = byName[src.name];
+            const was = id ? existing[id] : null;
+
+            const entry = {
+                name: src.name, category: CATEGORY, intent: src.intent,
+                keywords: src.keywords || [], priority: src.priority || 4,
+                order: was && was.order != null ? was.order : n++,
+                hidden: false,
+                window: src.window != null ? src.window : null,
+                cooldown: src.cooldown || 0,
+                blockType: src.blockType || "instruction",
+                guidelines: src.guidelines,
+                Shifts: [],
+                fetchTargets: src.fetchTargets || [],
+                writeFields: src.writeFields || [],
+                requireAny: src.requireAny || [], requireAll: src.requireAll || [],
+                requireNone: src.requireNone || [], notAll: src.notAll || [],
+                updatedAt: Date.now()
+            };
+
+            if (id) {
+                entry.createdAt = was.createdAt || Date.now();
+                await set(ref(db, 'poppyEngine/entries/' + id), entry);
+                say('~ updated  ' + src.name, 'ok');
+            } else {
+                entry.createdAt = Date.now();
+                await push(ref(db, 'poppyEngine/entries'), entry);
+                say('+ created  ' + src.name, 'new');
+            }
+        }
+
+        say('');
+        say('Done. Open the editor, then Export PoppyEngine.js and paste it', 'new');
+        say('over JS/poppy/PoppyEngine-core.js.', 'new');
+
+    } catch (err) {
+        say('');
+        say('Failed: ' + err.message, 'err');
+        say('Entries are matched by name, so just run it again.', 'err');
+        btn.disabled = false;
+    }
+};
+</script>
+
+</body>
+</html>

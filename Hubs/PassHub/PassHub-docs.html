@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>PassHub | Documents</title>
+    
+    <link rel="icon" type="image/png" href="css/files/PassHub.png">
+    <link rel="stylesheet" href="css/passhub-docs.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+</head>
+<body>
+
+    <header>
+        <button id="back-btn" class="nav-btn">← PassHub</button>
+        <h1>Documents</h1>
+        <button id="new-btn" class="nav-btn primary">+ New</button>
+    </header>
+
+    <main>
+        <div id="category-dashboard" class="category-grid">
+            </div>
+
+        <div id="entry-list-view" class="list-container">
+            <div class="list-header">
+                <span id="active-cat-title" class="current-cat-title">Category</span>
+                <span id="active-cat-count" style="font-size:11px; color:#999;">0 Items</span>
+            </div>
+            <div id="entries-wrapper">
+                </div>
+        </div>
+    </main>
+
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="font-size:14px; text-transform:uppercase; color:var(--accent); margin-bottom:20px; text-align:center;">File Document</h2>
+            <form id="doc-form">
+                
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="inp-category" class="form-select" required></select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Organization</label>
+                    <input type="text" id="inp-org" class="form-input" placeholder="e.g. DEPed, PhilHealth" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Document Type</label>
+                    <input type="text" id="inp-doctype" class="form-input" placeholder="e.g. Diploma, ID Card" required>
+                </div>
+
+                <div class="dual-input-row" style="margin-bottom:15px;">
+                    <div class="form-group">
+                        <label class="form-label">Label</label>
+                        <input type="text" id="inp-custom-label" class="form-input" placeholder="e.g. ID No.">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Value / Number</label>
+                        <input type="text" id="inp-custom-val" class="form-input" placeholder="e.g. 123-456">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Date Issued</label>
+                    <input type="date" id="inp-date-issue" class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Validity (From - To)</label>
+                    <div class="dual-input-row">
+                        <input type="date" id="inp-date-valid-start" class="form-input">
+                        <input type="date" id="inp-date-valid-end" class="form-input">
+                    </div>
+                    <div style="font-size:9px; color:#999; margin-top:3px;">Leave 'To' blank if no expiration.</div>
+                </div>
+
+                <div class="toggle-options" onclick="toggleOptionals()">+ Show Additional Fields</div>
+                
+                <div id="optional-fields" class="hidden-fields">
+                    <div class="form-group"><label class="form-label">Status</label><input type="text" id="inp-status" class="form-input" placeholder="Active, Pending..."></div>
+                    <div class="form-group"><label class="form-label">Address</label><input type="text" id="inp-address" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Email</label><input type="email" id="inp-email" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Link (Read Only)</label><input type="text" id="inp-link" class="form-input"></div>
+                    <div class="form-group">
+    <label class="form-label">Notes</label>
+    <textarea id="inp-notes" class="form-input" rows="6" style="resize: vertical; min-height: 100px;"></textarea>
+</div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn-sec" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-main">Save File</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="detail-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <div style="text-align:center; margin-bottom:20px;">
+                <span class="material-symbols-outlined" style="font-size:40px; color:var(--accent); margin-bottom:10px;">description</span>
+                <h2 id="detail-doctype" style="font-size:16px; margin:0; color:var(--text-main);">Type</h2>
+                <div id="detail-org" style="font-size:11px; text-transform:uppercase; color:var(--text-sub); margin-top:5px; font-weight:bold; letter-spacing:1px;">Org</div>
+                <div id="detail-validity-tag"></div> </div>
+
+            <div id="detail-content"></div>
+
+            <div class="btn-group">
+                <button id="btn-delete" class="btn-sec btn-danger">Delete</button>
+                <button id="btn-edit" class="btn-sec">Edit</button>
+                <button onclick="closeDetail()" class="btn-main">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-database-compat.js"></script>
+    <script src="js/passhub-firebase.js"></script>
+    <script src="js/passhub-store.js"></script>
+    
+    <script>
+        // --- 1. CONFIG ---
+        
+        const CATEGORIES = [
+            "Document Forms", 
+            "Certificates", 
+            "Residency", 
+            "Cards", 
+            "IDs"
+        ];
+
+        const ICONS = {
+            "Document Forms": "article_person",
+            "Certificates": "badge",
+            "Residency": "location_home",
+            "Cards": "credit_card",
+            "IDs": "id_card"
+        };
+
+        // Firebase lives in js/passhub-firebase.js — one config for all pages.
+        const db = window.PH_DB;
+        const docsRef = PH_STORE.ref('doc_entries'); // NEW DATABASE NODE
+
+        let allDocs = {};
+        let currentMode = 'dashboard';
+        let currentCategory = null;
+        let currentEditingId = null;
+
+        // --- 2. LOGIC ---
+
+        docsRef.on('value', (snapshot) => {
+            allDocs = snapshot.val() || {};
+            renderDashboard();
+            if(currentMode === 'list' && currentCategory) {
+                renderList(currentCategory);
+            }
+        });
+
+        function renderDashboard() {
+            const grid = document.getElementById('category-dashboard');
+            grid.innerHTML = '';
+
+            CATEGORIES.forEach(cat => {
+                let count = 0;
+                Object.values(allDocs).forEach(item => {
+                    if (item.category === cat) count++;
+                });
+
+                const iconName = ICONS[cat] || "folder";
+
+                const card = document.createElement('div');
+                card.className = 'cat-card';
+                card.innerHTML = `
+                    <span class="material-symbols-outlined cat-icon-symbol">${iconName}</span>
+                    <div class="cat-title">${cat}</div>
+                    <div class="cat-count">${count} Files</div>
+                `;
+                card.onclick = () => openCategory(cat);
+                grid.appendChild(card);
+            });
+        }
+
+        function openCategory(cat) {
+            currentMode = 'list';
+            currentCategory = cat;
+            
+            document.getElementById('category-dashboard').classList.add('hidden');
+            document.getElementById('entry-list-view').style.display = 'block'; 
+            document.getElementById('back-btn').textContent = "← Back to Grid";
+            document.getElementById('active-cat-title').textContent = cat;
+            
+            renderList(cat);
+        }
+
+        function renderList(cat) {
+            const listWrapper = document.getElementById('entries-wrapper');
+            listWrapper.innerHTML = '';
+            
+            // Sort Alphabetically by Document Type
+            const filtered = Object.entries(allDocs).filter(([key, item]) => item.category === cat);
+            filtered.sort((a, b) => a[1].docType.localeCompare(b[1].docType));
+
+            document.getElementById('active-cat-count').textContent = `${filtered.length} Items`;
+
+            if (filtered.length === 0) {
+                listWrapper.innerHTML = '<div style="text-align:center; color:#ccc; margin-top:40px;">No documents filed.</div>';
+                return;
+            }
+
+            filtered.forEach(([key, item]) => {
+                // Get initials for the circle
+                const initial = item.docType.charAt(0);
+
+                const row = document.createElement('div');
+                row.className = 'entry-row';
+                row.innerHTML = `
+                    <div class="doc-initial">${initial}</div>
+                    <div class="entry-info">
+                        <div class="entry-plat">${item.docType}</div>
+                        <div class="entry-sub">${item.org}</div>
+                    </div>
+                    <span class="arrow-icon">➔</span>
+                `;
+                row.onclick = () => openDetail(key, item);
+                listWrapper.appendChild(row);
+            });
+        }
+
+        document.getElementById('back-btn').onclick = () => {
+            if(currentMode === 'list') {
+                currentMode = 'dashboard';
+                currentCategory = null;
+                document.getElementById('category-dashboard').classList.remove('hidden');
+                document.getElementById('entry-list-view').style.display = 'none';
+                document.getElementById('back-btn').textContent = "← PassHub";
+            } else {
+                window.location.href = "PassHub.html"; // Or PassHub-landing_page.html
+            }
+        };
+
+        // --- 3. MODAL & FORM ---
+
+        const modalOverlay = document.getElementById('modal-overlay');
+        const detailOverlay = document.getElementById('detail-overlay');
+        const form = document.getElementById('doc-form');
+        const catSelect = document.getElementById('inp-category');
+
+        CATEGORIES.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            catSelect.appendChild(opt);
+        });
+
+        document.getElementById('new-btn').onclick = () => {
+            currentEditingId = null;
+            form.reset();
+            if(currentCategory) catSelect.value = currentCategory;
+            modalOverlay.style.display = 'flex';
+        };
+
+        window.closeModal = () => { modalOverlay.style.display = 'none'; };
+        window.closeDetail = () => { detailOverlay.style.display = 'none'; };
+        
+        window.toggleOptionals = () => {
+            const el = document.getElementById('optional-fields');
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        };
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const data = {
+                category: document.getElementById('inp-category').value,
+                org: document.getElementById('inp-org').value,
+                docType: document.getElementById('inp-doctype').value,
+                customLabel: document.getElementById('inp-custom-label').value,
+                customVal: document.getElementById('inp-custom-val').value,
+                dateIssue: document.getElementById('inp-date-issue').value,
+                dateValidStart: document.getElementById('inp-date-valid-start').value,
+                dateValidEnd: document.getElementById('inp-date-valid-end').value,
+                
+                status: document.getElementById('inp-status').value,
+                address: document.getElementById('inp-address').value,
+                email: document.getElementById('inp-email').value,
+                link: document.getElementById('inp-link').value,
+                notes: document.getElementById('inp-notes').value,
+                timestamp: Date.now()
+            };
+
+            if (currentEditingId) {
+                docsRef.child(currentEditingId).update(data);
+            } else {
+                docsRef.push(data);
+            }
+            closeModal();
+        });
+
+        // --- 4. DETAILS & VALIDITY LOGIC ---
+
+        function calculateValidity(toDate) {
+            if (!toDate) return { text: "No Expiration", class: "tag-active" };
+            
+            const end = new Date(toDate);
+            const now = new Date();
+            
+            // Clear time for fair comparison
+            end.setHours(0,0,0,0);
+            now.setHours(0,0,0,0);
+
+            if (end < now) {
+                return { text: "EXPIRED", class: "tag-expired" };
+            } else {
+                // Calculate difference
+                const diffTime = Math.abs(end - now);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                
+                let timeStr = "";
+                if(diffDays > 365) {
+                    const yrs = (diffDays / 365).toFixed(1);
+                    timeStr = `${yrs} Years remaining`;
+                } else if (diffDays > 30) {
+                    const months = Math.ceil(diffDays / 30);
+                    timeStr = `${months} Months remaining`;
+                } else {
+                    timeStr = `${diffDays} Days remaining`;
+                }
+                
+                return { text: timeStr, class: "tag-active" };
+            }
+        }
+
+        window.openDetail = (key, item) => {
+            document.getElementById('detail-doctype').textContent = item.docType;
+            document.getElementById('detail-org').textContent = item.org;
+            
+            // Validity Check
+            const validStatus = calculateValidity(item.dateValidEnd);
+            const validTag = document.getElementById('detail-validity-tag');
+            validTag.textContent = validStatus.text;
+            validTag.className = `validity-tag ${validStatus.class}`;
+
+            const content = document.getElementById('detail-content');
+            
+            // Helper for empty fields
+            const displayDate = (d) => d ? new Date(d).toLocaleDateString() : '-';
+
+            content.innerHTML = `
+                ${makeRow('Category', item.category)}
+                ${makeRow(item.customLabel || 'ID/Ref', item.customVal, true)}
+                ${makeRow('Issued', displayDate(item.dateIssue))}
+                ${makeRow('Valid From', displayDate(item.dateValidStart))}
+                ${makeRow('Valid Until', displayDate(item.dateValidEnd))}
+                <div style="height:10px;"></div>
+                ${makeRow('Status', item.status)}
+                ${makeRow('Address', item.address)}
+                ${makeRow('Email', item.email)}
+                ${makeRow('Link', item.link)}
+                
+                <div style="margin-top:15px; font-size:12px; color:#555; background:#f9f9f9; padding:10px; border-radius:4px; white-space: pre-wrap; line-height: 1.5;">
+    <strong>Notes:</strong><br>${item.notes || '-'}
+</div>
+            `;
+
+            document.getElementById('btn-delete').onclick = () => deleteEntry(key);
+            document.getElementById('btn-edit').onclick = () => editEntry(key, item);
+            detailOverlay.style.display = 'flex';
+        };
+
+        function makeRow(label, val, copyable=false) {
+            if(!val || val === '-') return '';
+            return `
+                <div class="detail-row">
+                    <span class="detail-label">${label}</span>
+                    <span class="detail-val">
+                        ${val} 
+                        </span>
+                </div>
+            `;
+        }
+
+        window.deleteEntry = (key) => {
+            if(confirm("Permanently delete this document record?")) {
+                docsRef.child(key).remove();
+                closeDetail();
+            }
+        };
+
+        window.editEntry = (key, item) => {
+            currentEditingId = key;
+            closeDetail();
+            
+            document.getElementById('inp-category').value = item.category;
+            document.getElementById('inp-org').value = item.org;
+            document.getElementById('inp-doctype').value = item.docType;
+            document.getElementById('inp-custom-label').value = item.customLabel || '';
+            document.getElementById('inp-custom-val').value = item.customVal || '';
+            
+            document.getElementById('inp-date-issue').value = item.dateIssue || '';
+            document.getElementById('inp-date-valid-start').value = item.dateValidStart || '';
+            document.getElementById('inp-date-valid-end').value = item.dateValidEnd || '';
+            
+            document.getElementById('inp-status').value = item.status || '';
+            document.getElementById('inp-address').value = item.address || '';
+            document.getElementById('inp-email').value = item.email || '';
+            document.getElementById('inp-link').value = item.link || '';
+            document.getElementById('inp-notes').value = item.notes || '';
+            
+            // Show optionals if populated
+            if(item.status || item.address || item.email || item.link || item.notes) {
+                document.getElementById('optional-fields').style.display = 'block';
+            }
+
+            modalOverlay.style.display = 'flex';
+        };
+    </script>
+
+<script>
+    // --- PASSHUB SECURITY SENSOR ---
+    // If no wristband is found, kick them back to the Gate
+    if (!sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+        window.location.href = "PassHub.html";
+    }
+</script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+</body>
+</html>

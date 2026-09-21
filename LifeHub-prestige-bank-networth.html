@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="JS/lifehub-tv-frame.js"></script>
+    <title>Prestige | Net Worth</title>
+    
+
+    <link rel="icon" type="image/png" href="CSS/files/LifeHub-logo.png">
+    <link rel="stylesheet" href="CSS/lifehub-prestige-bank-networth.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Red+Hat+Display:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+<!-- ONE Firebase SDK, once. See the note in LifeHub-prestige-bank.html:
+     a second firebase-app-compat.js replaces the global `firebase` and
+     pulls the namespace out from under lifehub-navigation-core.js. -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="JS/lifehub-navigation-core.js"></script>
+
+<!-- The tiers and the what-counts-toward-rank rule. Must come BEFORE
+     lifehub-core-prestige-system.js, which now reads them from here
+     instead of keeping its own copy. -->
+<script src="JS/lifehub-prestige-ledger.js"></script>
+<script src="JS/lifehub-core-prestige-system.js"></script>
+
+</head>
+<body>
+
+    <div class="sidebar-container">
+    <img src="CSS/files/LifeHub-logo.png" alt="LifeHub Logo" class="logo">
+
+        <nav class="nav-menu">
+            <a href="LifeHub.html" class="nav-item"> Home <span class="arrow">→</span></a>
+            <!-- is-unbuilt: dimmed and unclickable until the page exists. -->
+            <a href="#" class="nav-item is-unbuilt" aria-disabled="true"> Dashboard <span class="arrow">→</span></a>
+            <a href="LifeHub-prestige-bank.html" class="nav-item active"> Prestige Bank <span class="arrow">→</span></a>
+            <a href="#" class="nav-item is-unbuilt" aria-disabled="true"> Tools <span class="arrow">→</span></a>
+            <a href="LifeHub-trackers.html" class="nav-item"> Trackers <span class="arrow">→</span></a>
+            <a href="#" class="nav-item is-unbuilt" aria-disabled="true"> Logs <span class="arrow">→</span></a>
+        </nav>
+
+        <div class="add-btn">+</div>
+    </div>
+
+
+    <div class="main-stage">
+
+        <div class="panel-container">
+            <div class="status-card">
+                <div class="status-header">Prestige</div>
+                
+                <div class="networth-value">0.00</div>
+
+                <!-- How far the next tier is. Filled by
+                     JS/lifehub-core-prestige-system.js from the module's
+                     tierFor(); hidden entirely at the top tier, where
+                     there is nothing left to climb toward. -->
+                <div class="tier-progress" id="tier-progress">
+                    <div class="tier-progress-bar">
+                        <div class="tier-progress-fill" id="tier-progress-fill"></div>
+                    </div>
+                    <div class="tier-progress-label" id="tier-progress-label"></div>
+                </div>
+
+                <div class="divider"></div>
+                <div class="owner-name">Jen Benjamin</div>
+            </div>
+
+            <div class="tier-list">
+                
+                <div class="tier-item active-tier" id="tier-foundation">
+                    <span class="material-icons-round">local_police</span> <span class="tier-name">The Foundation Class</span>
+                </div>
+
+                <div class="tier-item" id="tier-sterling">
+                    <span class="material-icons-round">local_police</span>
+                    <span class="tier-name">The Sterling Class</span>
+                </div>
+
+                <div class="tier-item" id="tier-elite">
+                    <span class="material-icons-round">local_police</span>
+                    <span class="tier-name">The Elite Class</span>
+                </div>
+
+                <div class="tier-item" id="tier-executive">
+                    <span class="material-icons-round">local_police</span>
+                    <span class="tier-name">The Executive Class</span>
+                </div>
+
+                <div class="tier-item" id="tier-tycoon">
+                    <span class="material-icons-round">local_police</span>
+                    <span class="tier-name">The Tycoon's Circle</span>
+                </div>
+
+                 <div class="tier-item" id="tier-sovereign">
+                    <span class="material-icons-round">local_police</span>
+                    <span class="tier-name">The Sovereign Class</span>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

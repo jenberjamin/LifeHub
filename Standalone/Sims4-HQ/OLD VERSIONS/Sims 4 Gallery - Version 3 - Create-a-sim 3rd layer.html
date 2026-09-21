@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sims 4 Menu</title>
+    <!-- Import Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Import Century Gothic font */
+        @import url('https://fonts.cdnfonts.com/css/century-gothic');
+
+        body, html {
+            font-family: 'Century Gothic', sans-serif;
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling on the main body */
+        }
+
+        /* --- Gallery (Home) View Styles --- */
+        #gallery-view {
+            background-image: url('https://i.imgur.com/SyuVLuZ.jpeg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 255, 255, 0.7);
+        }
+
+        .button-glow {
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.7), 0 0 12px rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .button-glow:hover {
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 16px rgba(255, 255, 255, 0.8);
+            transform: scale(1.02);
+        }
+        
+        /* --- Create-a-Sim (CAS) View Styles --- */
+        #cas-view, #sub-category-view {
+            background-image: url('https://i.imgur.com/nr7YA7b.jpeg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+        }
+
+        /* Style for the dark category buttons in CAS */
+        .cas-button {
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .cas-button:hover {
+            background-color: #444;
+            border-color: #777;
+            transform: scale(1.02);
+        }
+        
+        .cas-button.active {
+             background-color: #555;
+             border-color: #999;
+             box-shadow: 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.2);
+             transform: scale(1.03);
+        }
+
+        /* Helper to make sure views take full height */
+        .view {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* --- Delete Confirmation Modal --- */
+        #delete-modal {
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body class="bg-black">
+
+    <!-- 
+      VIEW 1: GALLERY (Original Page)
+    -->
+    <div id="gallery-view" class="view">
+        <!-- Top Navigation Bar -->
+        <nav class="bg-black text-white h-16 flex justify-between items-center px-6 md:px-10 flex-shrink-0">
+            <!-- Left-side links -->
+            <div class="flex items-baseline space-x-6">
+                <a href="#" class="text-xl font-bold tracking-wide hover:opacity-80 transition-opacity">HOME</a>
+                <a href="#" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">GAMEPLAY</a>
+                <a href="#" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">MODS</a>
+                <a href="#" class="text-sm font-medium tracking-wider hover:opacity-80 transition-opacity">CUSTOM CONTENTS</a>
+            </div>
+            
+            <!-- Right-side "Create-a-Sim" button -->
+            <div>
+                <button id="goto-cas-btn" class="text-2xl font-bold text-glow tracking-wider cursor-pointer hover:opacity-80 transition-opacity">
+                    Create-a-Sim
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow relative">
+            <!-- Sims 4 Logo -->
+            <img src="https://i.imgur.com/QdFZp1V.png" 
+                 alt="The Sims 4 Logo" 
+                 class="absolute top-2 left-6 md:left-10 w-36 md:w-48"
+                 onerror="this.style.display='none'"> 
+
+            <!-- Button Grid -->
+            <div class="absolute top-8 right-8 md:right-16 lg:right-24">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Lot Trait</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">CAS Traits</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Traditions</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Aspirations</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Events</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Animations</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Bug Fix</button>
+                    <button class="bg-white text-black px-5 py-1.5 rounded-full text-sm font-extrabold button-glow">Interactions</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 
+      VIEW 2: CREATE-A-SIM (Category Page)
+    -->
+    <div id="cas-view" class="view hidden">
+        <!-- CAS Navigation Bar -->
+        <nav class="bg-black text-white h-16 flex justify-between items-center px-6 md:px-10 flex-shrink-0">
+            <!-- Left-side: Home, Title -->
+            <div class="flex items-center space-x-6">
+                <button id="goto-gallery-btn" class="text-white hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                </button>
+                <span class="text-2xl font-bold tracking-wider">CREATE-A-SIM</span>
+            </div>
+        </nav>
+
+        <!-- CAS Main Content -->
+        <main class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6 p-6 md:p-10">
+            <!-- Left Side: Sim Placeholder -->
+            <div class="md:col-span-2 h-[calc(100vh-150px)] relative">
+                <img src="https://i.imgur.com/yJqfSdj.png" 
+                     alt="Sims 4 Logo" 
+                     class="h-14 absolute top-0 left-0" 
+                     onerror="this.style.display='none'">
+            </div>
+
+            <!-- Right Side: Categories -->
+            <div class="flex flex-col space-y-4 pt-4">
+                <!-- Search Bar (Restored) -->
+                <div class="relative">
+                    <input type="text" id="category-search" class="bg-black bg-opacity-70 border border-gray-600 text-white rounded-full h-12 w-full pl-6 pr-4" placeholder="Search...">
+                </div>
+
+                <!-- Category Buttons -->
+                <div id="category-buttons" class="flex flex-wrap gap-4">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <!-- Add New Button -->
+                <button id="add-new-category-btn" class="cas-button px-6 py-3 rounded-full font-bold text-lg w-fit">
+                    + Add New
+                </button>
+                
+                <!-- Input for new category (hidden by default) -->
+                <div id="new-category-input-container" class="hidden flex gap-2">
+                    <input type="text" id="new-category-name" class="bg-white text-black px-4 py-2 rounded-full flex-grow" placeholder="Category Name...">
+                    <button id="save-category-btn" class="bg-green-500 text-white px-4 py-2 rounded-full font-bold">Save</button>
+                    <button id="cancel-category-btn" class="bg-gray-500 text-white px-4 py-2 rounded-full font-bold">Cancel</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 
+      VIEW 3: SUB-CATEGORY (New Page)
+    -->
+    <div id="sub-category-view" class="view hidden">
+        <!-- Sub-Category Navigation Bar -->
+        <nav class="bg-black text-white h-16 flex justify-between items-center px-6 md:px-10 flex-shrink-0">
+            <!-- Left-side: Back Button -->
+            <div class="flex items-center space-x-4">
+                <button id="goto-cas-view-btn" class="text-white hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Center: Title Bar -->
+            <div class="flex-grow flex justify-center items-center">
+                <div class="bg-black bg-opacity-70 border border-gray-600 rounded-full h-12 flex items-center px-6">
+                    <span id="sub-category-title" class="text-white text-xl font-bold tracking-wider">CATEGORY TITLE</span>
+                </div>
+            </div>
+
+            <!-- Right-side: Delete Button -->
+            <div class="flex items-center">
+                 <button id="delete-category-btn" class="text-white hover:text-red-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Sub-Category Main Content -->
+        <main class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6 p-6 md:p-10">
+            <!-- Left Side: Sim Placeholder -->
+            <div class="md:col-span-2 h-[calc(100vh-150px)] relative">
+                 <img src="https://i.imgur.com/yJqfSdj.png" 
+                     alt="Sims 4 Logo" 
+                     class="h-14 absolute top-0 left-0" 
+                     onerror="this.style.display='none'">
+            </div>
+
+            <!-- Right Side: Sub-Categories -->
+            <div class="flex flex-col space-y-4 pt-4">
+                <!-- Sub-Category Buttons -->
+                <div id="sub-category-buttons" class="flex flex-wrap gap-4">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <!-- Add New Sub-Category Button -->
+                <button id="add-new-sub-category-btn" class="cas-button px-6 py-3 rounded-full font-bold text-lg w-fit">
+                    + Add New
+                </button>
+                
+                <!-- Input for new sub-category (hidden by default) -->
+                <div id="new-sub-category-input-container" class="hidden flex gap-2">
+                    <input type="text" id="new-sub-category-name" class="bg-white text-black px-4 py-2 rounded-full flex-grow" placeholder="Sub-Category Name...">
+                    <button id="save-sub-category-btn" class="bg-green-500 text-white px-4 py-2 rounded-full font-bold">Save</button>
+                    <button id="cancel-sub-category-btn" class="bg-gray-500 text-white px-4 py-2 rounded-full font-bold">Cancel</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 
+      MODAL: Delete Confirmation
+    -->
+    <div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Are you sure?</h2>
+            <p class="text-gray-700 mb-6">Are you sure you want to delete the category "<span id="delete-category-name" class="font-bold"></span>"? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-4">
+                <button id="modal-cancel-btn" class="bg-gray-300 text-gray-800 px-6 py-2 rounded-full font-bold hover:bg-gray-400 transition-colors">
+                    Cancel
+                </button>
+                <button id="modal-confirm-btn" class="bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 transition-colors">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Application State ---
+        let currentView = 'gallery-view';
+        let currentCategory = null; // e.g., "Facial Contents"
+        let categoryToDelete = null;
+
+        // --- Database (Source of Truth) ---
+        let database = {
+            "Facial Contents": {
+                subCategories: ["Hairstyles", "Facial Hair", "Eyebrows", "Eyelashes"]
+            },
+            "Wardrobe": {
+                subCategories: ["Tops", "Bottoms", "Outfits", "Accessories"]
+            }
+        };
+
+        // --- Get All DOM Elements ---
+        const galleryView = document.getElementById('gallery-view');
+        const casView = document.getElementById('cas-view');
+        const subCategoryView = document.getElementById('sub-category-view');
+        
+        // View 1 (Gallery)
+        const gotoCasBtn = document.getElementById('goto-cas-btn');
+
+        // View 2 (CAS)
+        const gotoGalleryBtn = document.getElementById('goto-gallery-btn');
+        const categorySearch = document.getElementById('category-search');
+        const categoryButtonsContainer = document.getElementById('category-buttons');
+        const addNewCategoryBtn = document.getElementById('add-new-category-btn');
+        const newCategoryInputContainer = document.getElementById('new-category-input-container');
+        const newCategoryNameInput = document.getElementById('new-category-name');
+        const saveCategoryBtn = document.getElementById('save-category-btn');
+        const cancelCategoryBtn = document.getElementById('cancel-category-btn');
+
+        // View 3 (Sub-Category)
+        const gotoCasViewBtn = document.getElementById('goto-cas-view-btn');
+        const subCategoryTitle = document.getElementById('sub-category-title');
+        const deleteCategoryBtn = document.getElementById('delete-category-btn');
+        const subCategoryButtonsContainer = document.getElementById('sub-category-buttons');
+        const addNewSubCategoryBtn = document.getElementById('add-new-sub-category-btn');
+        const newSubCategoryInputContainer = document.getElementById('new-sub-category-input-container');
+        const newSubCategoryNameInput = document.getElementById('new-sub-category-name');
+        const saveSubCategoryBtn = document.getElementById('save-sub-category-btn');
+        const cancelSubCategoryBtn = document.getElementById('cancel-sub-category-btn');
+        
+        // Delete Modal
+        const deleteModal = document.getElementById('delete-modal');
+        const deleteCategoryNameSpan = document.getElementById('delete-category-name');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+
+        // --- View Switching Logic ---
+        function showView(viewId) {
+            currentView = viewId;
+            galleryView.classList.add('hidden');
+            casView.classList.add('hidden');
+            subCategoryView.classList.add('hidden');
+
+            if (viewId === 'gallery-view') {
+                galleryView.classList.remove('hidden');
+            } else if (viewId === 'cas-view') {
+                casView.classList.remove('hidden');
+                currentCategory = null; // Reset when going back to CAS
+            } else if (viewId === 'sub-category-view') {
+                subCategoryView.classList.remove('hidden');
+            }
+        }
+
+        // --- Render Functions ---
+        
+        // Re-builds the main category buttons from the database
+        function renderCategoryButtons() {
+            categoryButtonsContainer.innerHTML = ''; // Clear existing buttons
+            const filter = categorySearch.value.toLowerCase();
+            
+            Object.keys(database).forEach(categoryName => {
+                if (!categoryName.toLowerCase().includes(filter)) {
+                    return; // Skip if it doesn't match search
+                }
+                
+                const button = document.createElement('button');
+                button.className = 'cas-button px-6 py-3 rounded-full font-bold text-lg';
+                button.textContent = categoryName;
+                
+                button.addEventListener('click', () => {
+                    currentCategory = categoryName;
+                    subCategoryTitle.textContent = categoryName.toUpperCase();
+                    renderSubCategoryButtons();
+                    showView('sub-category-view');
+                });
+                categoryButtonsContainer.appendChild(button);
+            });
+        }
+        
+        // Re-builds the sub-category buttons for the current category
+        function renderSubCategoryButtons() {
+            subCategoryButtonsContainer.innerHTML = ''; // Clear
+            if (!currentCategory || !database[currentCategory]) {
+                return; // Safety check
+            }
+            
+            database[currentCategory].subCategories.forEach(subCategoryName => {
+                const button = document.createElement('button');
+                button.className = 'cas-button px-6 py-3 rounded-full font-bold text-lg';
+                button.textContent = subCategoryName;
+                // TODO: Add click listener for what happens when you click a sub-category
+                button.addEventListener('click', () => {
+                    console.log(`Clicked on sub-category: ${subCategoryName}`);
+                });
+                subCategoryButtonsContainer.appendChild(button);
+            });
+        }
+
+        // --- Event Listeners ---
+        
+        // View 1 -> View 2
+        gotoCasBtn.addEventListener('click', () => showView('cas-view'));
+        
+        // View 2 -> View 1
+        gotoGalleryBtn.addEventListener('click', () => showView('gallery-view'));
+        
+        // View 3 -> View 2
+        gotoCasViewBtn.addEventListener('click', () => showView('cas-view'));
+
+        // --- View 2 (CAS) Logic ---
+        categorySearch.addEventListener('input', renderCategoryButtons);
+
+        addNewCategoryBtn.addEventListener('click', () => {
+            newCategoryInputContainer.classList.remove('hidden');
+            addNewCategoryBtn.classList.add('hidden');
+            newCategoryNameInput.focus();
+        });
+        
+        cancelCategoryBtn.addEventListener('click', () => {
+             newCategoryInputContainer.classList.add('hidden');
+             addNewCategoryBtn.classList.remove('hidden');
+             newCategoryNameInput.value = '';
+        });
+
+        saveCategoryBtn.addEventListener('click', () => {
+            const categoryName = newCategoryNameInput.value.trim();
+            if (categoryName && !database[categoryName]) {
+                database[categoryName] = { subCategories: [] }; // Add new category
+                renderCategoryButtons(); // Re-render
+                
+                // Reset form
+                newCategoryNameInput.value = '';
+                newCategoryInputContainer.classList.add('hidden');
+                addNewCategoryBtn.classList.remove('hidden');
+            } else if (database[categoryName]) {
+                console.warn("Category already exists");
+            } else {
+                console.warn("Please enter a category name");
+            }
+        });
+
+        // --- View 3 (Sub-Category) Logic ---
+        addNewSubCategoryBtn.addEventListener('click', () => {
+            newSubCategoryInputContainer.classList.remove('hidden');
+            addNewSubCategoryBtn.classList.add('hidden');
+            newSubCategoryNameInput.focus();
+        });
+        
+        cancelSubCategoryBtn.addEventListener('click', () => {
+             newSubCategoryInputContainer.classList.add('hidden');
+             addNewSubCategoryBtn.classList.remove('hidden');
+             newSubCategoryNameInput.value = '';
+        });
+        
+        saveSubCategoryBtn.addEventListener('click', () => {
+            const subCategoryName = newSubCategoryNameInput.value.trim();
+            if (subCategoryName && currentCategory) {
+                // Add new sub-category to the database
+                database[currentCategory].subCategories.push(subCategoryName);
+                renderSubCategoryButtons(); // Re-render
+                
+                // Reset form
+                newSubCategoryNameInput.value = '';
+                newSubCategoryInputContainer.classList.add('hidden');
+                addNewSubCategoryBtn.classList.remove('hidden');
+            }
+        });
+        
+        // Delete Category Button (Opens Modal)
+        deleteCategoryBtn.addEventListener('click', () => {
+            if (currentCategory) {
+                categoryToDelete = currentCategory;
+                deleteCategoryNameSpan.textContent = categoryToDelete;
+                deleteModal.classList.remove('hidden');
+            }
+        });
+        
+        // --- Modal Logic ---
+        modalCancelBtn.addEventListener('click', () => {
+            deleteModal.classList.add('hidden');
+            categoryToDelete = null;
+        });
+        
+        modalConfirmBtn.addEventListener('click', () => {
+            if (categoryToDelete) {
+                delete database[categoryToDelete]; // Remove from database
+                renderCategoryButtons(); // Re-render CAS view
+                showView('cas-view'); // Go back to CAS view
+                
+                // Hide modal and reset
+                deleteModal.classList.add('hidden');
+                categoryToDelete = null;
+            }
+        });
+
+        // --- Initial Load ---
+        showView('gallery-view');
+        renderCategoryButtons(); // Populate CAS view on initial load
+        
+    </script>
+</body>
+</html>

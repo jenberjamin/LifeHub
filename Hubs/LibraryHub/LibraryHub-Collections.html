@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../JS/lifehub-tv-frame.js"></script>
+    <title>Library Vault | The Collection</title>
+
+    <link rel="icon" type="image/png" href="css/files/LibraryHub.png">
+    <link rel="stylesheet" href="css/libraryhub-collections.css">
+    <link rel="manifest" href="manifest-libraryhub.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;700&family=Cinzel:wght@400;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+    <meta name="theme-color" content="#050505">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+</head>
+<body>
+
+    <div class="top-nav">
+        <div class="nav-left" onclick="window.location.href='LibraryHub.html'">
+            <span class="material-symbols-outlined" style="font-size: 28px;">arrow_back</span>
+            <div class="brand-text">The Archives</div>
+        </div>
+        <div class="nav-right" id="vaultStats" style="color:var(--color-gold); opacity:0.8; font-size:11px; letter-spacing:2px; font-weight:700; text-transform:uppercase;">
+    LOADING...
+</div>
+    </div>
+
+   <div class="library-container">
+    
+    <div class="hero-section">
+   <div class="hero-card" id="heroCard">
+    
+    <div class="tag-badge" id="heroBadge">SELECT A BOOK</div>
+    
+    <div class="poster-frame" id="heroPoster" style="background-image: url('');">
+        <span id="heroPlaceholder" style="opacity:0.5;">No Selection</span>
+    </div>
+    
+    <div class="book-info">
+        <h1 id="heroTitle">--</h1>
+        
+        <div class="book-meta">
+            <span id="heroAuthor">--</span>
+            <span style="color:rgba(255,255,255,0.2); margin:0 10px;">|</span>
+            <span id="heroPublished">--</span>
+        </div>
+
+        <div id="heroGenre" class="hero-genre">--</div>
+    </div>
+
+    <div class="hero-progress" id="heroProgress">
+        <div class="progress-track">
+            <div class="progress-fill" id="heroProgressFill"></div>
+        </div>
+        <div class="progress-label" id="heroProgressText">0% COMPLETED</div>
+    </div>
+    <div id="heroUploadHint" class="upload-hint">Please upload a book file.</div>
+
+    <div class="hero-actions">
+        <button id="btnRead" class="hero-btn primary">READ NOW</button>
+        <button class="hero-btn secondary" onclick="openFullDetails()">BOOK DETAILS</button>
+    </div>
+
+    <div class="star-dock" id="starDock">
+        
+        <div class="fav-btn" id="heroFavBtn" onclick="toggleFavorite()">
+            <span class="material-symbols-outlined">favorite</span>
+        </div>
+
+        <div style="width:1px; height:15px; background:rgba(255,255,255,0.1); margin:0 15px;"></div>
+
+        <span class="material-symbols-outlined star-icon" onclick="rateBook(1)">star</span>
+        <span class="material-symbols-outlined star-icon" onclick="rateBook(2)">star</span>
+        <span class="material-symbols-outlined star-icon" onclick="rateBook(3)">star</span>
+        <span class="material-symbols-outlined star-icon" onclick="rateBook(4)">star</span>
+        <span class="material-symbols-outlined star-icon" onclick="rateBook(5)">star</span>
+    </div>
+</div>
+</div>
+
+<div class="list-section">
+        <div class="list-header">
+
+                <div class="header-right" style="display:flex; align-items:center; gap:10px;">
+                    <span class="material-symbols-outlined" style="font-size:16px; opacity:0.5;">search</span>
+                    <input type="text" id="librarySearch" placeholder="Search Title, Author..." oninput="filterLocalBooks(this.value)">
+                </div>
+
+<div style="width:1px; height:20px; background:rgba(255,255,255,0.2); margin: 0 15px;"></div>
+
+<div style="position:relative; display:flex; align-items:center; gap:5px;">
+    <span class="material-symbols-outlined" style="font-size:16px; color:rgba(255,255,255,0.5);">auto_stories</span>
+
+<div style="display:flex; gap:5px; margin-left:15px; background:rgba(255,255,255,0.05); padding:4px; border-radius:4px;">
+        <button id="viewGridBtn" class="view-btn active" onclick="switchView('grid')" title="Gallery View">
+            <span class="material-symbols-outlined">grid_view</span>
+        </button>
+        <button id="viewListBtn" class="view-btn" onclick="switchView('list')" title="List View">
+            <span class="material-symbols-outlined">view_list</span>
+        </button>
+  </div>
+    <div class="custom-dropdown" id="genreDropdownWidget">
+    <div class="dropdown-trigger" onclick="toggleGenreMenu()">
+        <span id="currentGenreLabel">ALL GENRES</span>
+        <span class="material-symbols-outlined">expand_more</span>
+    </div>
+    <div class="dropdown-menu" id="genreOptionsList">
+        </div>
+</div>
+</div>
+
+            </div>
+
+            <div class="book-grid" id="bookGrid">
+                </div>
+            
+            <div class="add-btn-float" onclick="openAddChoice()">
+    <span class="material-symbols-outlined">add</span> New Book
+</div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="librarianModal">
+        <div class="search-box">
+            <span class="material-symbols-outlined" onclick="closeLibrarian()" style="position:absolute; top:15px; right:15px; cursor:pointer; color:#666;">close</span>
+            <div class="search-title">The Librarian</div>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" class="c-input" id="apiSearchInput" placeholder="Title, Author, or ISBN...">
+                <button class="c-btn" onclick="searchGoogleBooks()">FETCH</button>
+            </div>
+            <div class="search-list" id="apiResultsList"></div>
+        </div>
+    </div>
+
+<div class="modal-overlay" id="addChoiceModal">
+    <div class="quote-box" style="width:500px; align-items:center; text-align:center; gap:20px; padding:40px;">
+        
+        <span class="material-symbols-outlined close-icon" onclick="closeAddChoice()" style="top:15px; right:15px;">close</span>
+        
+        <h2 style="font-family:var(--font-display); color:white; margin-bottom:10px;">ADD TO LIBRARY</h2>
+
+        <button class="action-btn-main" onclick="openLibrarianFromChoice()">
+            FIND BOOK WITH THE LIBRARIAN
+        </button>
+
+        <button class="action-btn-main" onclick="openManualAdd()">
+    MANUALLY ADD BOOK
+</button>
+
+    </div>
+</div>
+
+    <div class="modal-overlay" id="addConfirmModal">
+    <div class="quote-box" style="width:400px; align-items:center; text-align:center;">
+        
+        <div id="addPreviewPoster" style="width:80px; height:120px; background-size:cover; margin-bottom:10px; border: 1px solid rgba(255,255,255,0.2);"></div>
+        
+        <h2 id="addPreviewTitle" style="font-family:var(--font-display); color:white; font-size:18px; line-height:1.2;">Title</h2>
+        <p id="addPreviewAuthor" style="color:var(--color-gold); font-size:12px; text-transform:uppercase; margin-bottom:20px;">Author</p>
+
+
+        <div style="display:flex; gap:15px; width:100%; justify-content:center; margin-top:15px;">
+    
+    <button class="retail-btn" onclick="finalizeAddBook('tbr')" style="flex:1; border-color:rgba(255,255,255,0.3);">
+        TO READ
+    </button>
+    
+    <button class="retail-btn" onclick="finalizeAddBook('read')" style="flex:1; border-color:var(--color-gold); color:var(--color-gold);">
+        FINISHED
+    </button>
+
+</div>
+        
+        <div style="margin-top:10px; font-size:10px; color:#666; cursor:pointer; text-decoration:underline;" onclick="document.getElementById('addConfirmModal').classList.remove('active')">
+            Cancel
+        </div>
+
+    </div>
+</div>
+
+    <div style="display:flex; gap:10px; width:100%;">
+        <button class="retail-btn" onclick="finalizeAddBook('tbr')">ADD TO TBR</button>
+        <button class="retail-btn" onclick="finalizeAddBook('reading')">READING NOW</button>
+        <button class="retail-btn" onclick="finalizeAddBook('read')">FINISHED</button>
+    </div>
+</div>
+    </div>
+
+    <div class="modal-overlay" id="fullDetailsModal">
+    <div class="details-box">
+        <span class="material-symbols-outlined close-icon" onclick="closeFullDetails()">close</span>
+        
+        <div class="db-poster" id="fdPoster" style="position:relative;">
+    
+    <div class="cover-edit-overlay" id="coverEditor">
+        
+        <div class="cover-input-group">
+            <span class="cover-label">Image Link</span>
+            <input type="text" id="editCoverURL" class="cover-url-input" placeholder="Paste URL here..." oninput="previewCoverURL(this.value)">
+        </div>
+
+        <div style="font-size:10px; color:#444;">— OR —</div>
+
+        <label class="btn-upload-cover">
+            <span class="material-symbols-outlined">upload_file</span>
+            <span>Upload File</span>
+            <input type="file" id="editCoverFile" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleCoverUpload(this)">
+        </label>
+
+    </div>
+</div>
+        
+        <div class="db-info">
+            
+            <div style="margin-bottom: 25px; display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+        <h1 id="fdTitle">Book Title</h1>
+        <div id="fdGenre">Genre, Subject, Category</div>
+    </div>
+    
+    <button class="btn-icon-small" onclick="toggleEditMode()" title="Edit Details">
+        <span class="material-symbols-outlined" id="editIcon">edit</span>
+    </button>
+</div>
+
+            <div class="meta-stack">
+                <div class="meta-row">
+                    <label>Author</label>
+                    <span id="fdAuthor">--</span>
+                </div>
+                <div class="meta-row">
+                    <label>Awards</label>
+                    <span id="fdAwards">--</span>
+                </div>
+                <div class="meta-row">
+                    <label>ISBN</label>
+                    <span id="fdISBN" style="font-family:monospace; color:#888;">--</span>
+                </div>
+                <div class="meta-row">
+                    <label>Key Characters</label>
+                    <span id="fdCharacters" style="line-height:1.4;">--</span>
+                </div>
+                <div class="meta-row">
+                    <label>Summary</label>
+                    <p id="fdSummary">--</p>
+                </div>
+            </div>
+
+            <div class="services-section">
+    <label>Find Online</label>
+    <div class="service-grid">
+        <button class="svc-btn amazon" onclick="openRetail('amazon')">AMAZON</button>
+        <button class="svc-btn kindle" onclick="openRetail('kindle')">KINDLE</button>
+        <button class="svc-btn goodreads" onclick="openRetail('goodreads')">GOODREADS</button>
+
+    </div>
+</div>
+
+            <button class="btn-delete-plain" onclick="deleteBook()">
+                <span class="material-symbols-outlined">delete</span>
+                REMOVE FROM COLLECTION
+            </button>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin: 20px 0; padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1);">
+        
+        <div>
+            <label style="font-size:9px; color:#666; text-transform:uppercase; display:block;">Published</label>
+            <span id="fdYear" style="font-size:13px; color:#ddd;">--</span>
+        </div>
+        
+        <div>
+            <label style="font-size:9px; color:#666; text-transform:uppercase; display:block;">ISBN</label>
+            <span id="fdISBN" style="font-size:13px; color:#ddd; font-family:monospace;">--</span>
+        </div>
+
+        <div style="grid-column: span 2;">
+            <label style="font-size:9px; color:#666; text-transform:uppercase; display:block;">Key Characters</label>
+            <span id="fdCharacters" style="font-size:13px; color:#ddd; line-height:1.4;">--</span>
+        </div>
+        
+        <div>
+            <span id="fdGlobalRating" style="font-size:11px; color:var(--color-gold); border:1px solid var(--color-gold); padding:2px 6px; border-radius:4px;">--</span>
+        </div>
+
+    </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <button class="retail-btn" onclick="updateBookStatus('tbr')">TBR</button>
+                    <button class="retail-btn" onclick="updateBookStatus('reading')">READING</button>
+                    <button class="retail-btn" onclick="updateBookStatus('read')">FINISHED</button>
+                    <button class="retail-btn" style="border-color:#ff4444; color:#ff4444;" onclick="deleteBook()">DELETE</button>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:4px; margin-bottom:20px;">
+                    <label style="font-size:10px; color:#888; text-transform:uppercase;">Current Page / Total</label>
+                    <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
+                        <input type="number" id="fdCurrentPage" class="c-input" style="padding:5px; width:80px;" onchange="updateProgress()">
+                        <span style="color:#666;">/</span>
+                        <input type="number" id="fdTotalPages" class="c-input" style="padding:5px; width:80px;" readonly>
+                        <span id="fdPercent" style="color:var(--color-gold); font-weight:700; font-size:12px; margin-left:auto;">0%</span>
+                    </div>
+                </div>
+
+                <label style="font-size:10px; color:#888; text-transform:uppercase;">Favorite Quote / Notes</label>
+                <textarea id="fdNotes" class="quote-input" style="height:100px; margin-top:5px; font-size:14px;" placeholder="Capture a thought..."></textarea>
+                <button class="retail-btn" style="margin-top:10px;" onclick="saveBookDetails()">SAVE NOTES</button>
+
+                <div style="margin-top:auto; padding-top:20px; border-top:1px solid rgba(255,255,255,0.1);">
+                    <label style="font-size:10px; color:#888; text-transform:uppercase;">Find Online</label>
+                    <div class="streaming-grid">
+                        <button class="retail-btn" onclick="openRetail('kindle')">AMAZON</button>
+                        <button class="retail-btn" onclick="openRetail('apple')">APPLE BOOKS</button>
+                        <button class="retail-btn" onclick="openRetail('goodreads')">GOODREADS</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="reader-modal" id="readerModal">
+    <div class="reader-header">
+        <div class="reader-title" id="readerBookTitle">Untitled</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <span id="readerProgress" style="font-size:11px; color:#666; font-family:var(--font-tech);">0% READ</span>
+            
+            <span class="material-symbols-outlined" style="cursor:pointer; color:#888;" onclick="closeReader()">close</span>
+        </div>
+    </div>
+    
+    <div class="reader-content" id="readerScrollArea" onscroll="trackReaderProgress()">
+        <div class="reader-page" id="readerTextContainer">
+            </div>
+    </div>
+</div>
+
+<input type="file" id="bookFileInput" accept=".txt, .docx, .pdf" onchange="processBookFile(this)">
+
+    <script src="js/library-core.js"></script>
+
+<datalist id="genreOptions">
+    <option value="General Fiction">
+    <option value="General Non-Fiction">
+    <option value="Literary Fiction">
+    <option value="Science Fiction">
+    <option value="Historical Fiction">
+    <option value="Contemporary Fiction">
+    <option value="Adventure">
+    <option value="Fantasy">
+    <option value="Horror">
+    <option value="Romance">
+    <option value="Dystopian">
+    <option value="Magical Realism">
+    <option value="Thriller">
+    <option value="Mystery">
+    <option value="History">
+    <option value="Poetry">
+    <option value="Epic Fantasy">
+</datalist>
+
+<div class="modal-overlay" id="manualAddModal">
+    <div class="details-box">
+        <span class="material-symbols-outlined close-icon" onclick="closeManualAdd()">close</span>
+        
+        <div class="db-poster" id="manualCoverPreview" style="background-image: url(''); background-color: #111; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;">
+            <div style="width: 80%; display: flex; flex-direction: column; gap: 15px; z-index: 5;">
+                <div style="text-align: center; font-family: var(--font-display); color: var(--color-gold); font-size: 14px; letter-spacing: 2px;">COVER ART</div>
+                <input type="text" id="manualCoverURL" class="cover-url-input" placeholder="Paste Image Link..." oninput="previewManualCover(this.value)">
+                <div style="text-align: center; font-size: 10px; color: #666;">— OR —</div>
+                <label class="btn-upload-cover">
+                    <span class="material-symbols-outlined">upload_file</span>
+                    <span>Upload File</span>
+                    <input type="file" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleManualCoverUpload(this)">
+                </label>
+            </div>
+            <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index: 0;"></div>
+        </div>
+        
+        <div class="db-info">
+            <h2 style="font-family: var(--font-display); color: white; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                NEW ENTRY
+            </h2>
+
+            <div class="meta-stack" style="gap: 12px;">
+                <div class="meta-row">
+                    <label>Book Title *</label>
+                    <input type="text" id="manTitle" class="edit-input" placeholder="Enter Title">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="meta-row">
+                        <label>Author</label>
+                        <input type="text" id="manAuthor" class="edit-input" placeholder="Author Name">
+                    </div>
+                    <div class="meta-row">
+                        <label>Genre</label>
+                        <input type="text" id="manGenre" class="edit-input" placeholder="Select Genre" list="genreOptions">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+                    <div class="meta-row">
+                        <label>Key Characters</label>
+                        <input type="text" id="manCharacters" class="edit-input" placeholder="Names separated by comma...">
+                    </div>
+                    <div class="meta-row">
+                        <label>Year Published</label>
+                        <input type="text" id="manYear" class="edit-input" placeholder="YYYY">
+                    </div>
+                </div>
+
+                <div class="meta-row">
+                    <label>Reading Status</label>
+                    <div style="display: flex; gap: 10px; margin-top: 5px;">
+                        <input type="hidden" id="manStatusValue" value="tbr">
+                        
+                        <button id="ms-tbr" class="status-toggle active" onclick="setManualStatus('tbr')">
+                            TO READ
+                        </button>
+                        <button id="ms-read" class="status-toggle" onclick="setManualStatus('read')">
+                            FINISHED READING
+                        </button>
+                    </div>
+                </div>
+
+                <div class="meta-row">
+                    <label>Summary</label>
+                    <textarea id="manDesc" class="edit-input" style="height: 60px;" placeholder="Short description..."></textarea>
+                </div>
+
+                <div class="meta-row">
+                    <label>Book File (optional)</label>
+                    <div class="attach-row">
+                        <label class="btn-attach-file">
+                            <span class="material-symbols-outlined">attach_file</span>
+                            <span>Attach File</span>
+                            <input type="file" accept=".txt,.docx,.pdf" style="display:none;" onchange="handleManualBookFile(this)">
+                        </label>
+                        <span id="manFileLabel" class="file-name">No file attached</span>
+                    </div>
+                    <span class="file-hint">Accepts .txt, .docx or .pdf</span>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+    <button class="btn-cancel" onclick="closeManualAdd()">
+        CANCEL
+    </button>
+    
+    <button class="btn-confirm" onclick="saveManualBook()">
+        ADD TO COLLECTION
+    </button>
+</div>
+
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+    <script>
+        /* 2026-09-17 — was '/sw.js', which points at the domain root and
+           404s whenever the hub is served from a sub-folder (Live Server,
+           GitHub Pages, the whole repo on Vercel). './sw.js' resolves next
+           to this page, so it works everywhere. */
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('✅ LifeHub Librarian Registered'))
+                    .catch(err => console.log('❌ Worker Failed:', err));
+            });
+        }
+    </script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="js/library-sync.js"></script>
+<script src="../../JS/lifehub-navigation-core.js"></script>
+
+</body>
+</html>
