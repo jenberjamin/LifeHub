@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LifeHub</title>
+<!-- The front door: the site's plain address opens the HomeScreen, the
+     same as the local server does for "/". Anything after the address
+     (?tv=debug, ?sw=off) is passed along. -->
+<script>location.replace('LifeHub-HomeScreen.html' + location.search + location.hash);</script>
+<meta http-equiv="refresh" content="0; url=LifeHub-HomeScreen.html">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10121a">
+<link rel="icon" type="image/png" href="icons/lifehub-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+  html, body { margin: 0; height: 100%; background: #10121a; }
+  a { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.6); font: 18px/1.4 system-ui, sans-serif; text-decoration: none; }
+</style>
+</head>
+<body>
+<a href="LifeHub-HomeScreen.html">Opening LifeHub…</a>
+</body>
+</html>

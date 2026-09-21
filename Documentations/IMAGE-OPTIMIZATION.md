@@ -179,6 +179,27 @@ Listed in `.gitignore`:
 
 ---
 
+## Manifests, icons and offline support
+
+The site's front door is `index.html`, which opens the HomeScreen. `manifest.json`
+gives LifeHub its name and icon (`icons\`), and `sw.js` keeps the HomeScreen
+running on the TV when the Wi-Fi drops.
+
+- **Offline support only runs on the deployed https site.** On localhost and in
+  Lively it stays off, so you never see stale files while editing.
+- **To reset it on one device** (e.g. the TV acting strangely after an update),
+  open any page with `?sw=off` on the end of the address.
+- **To make every device drop its caches**, change `VERSION` at the top of `sw.js`.
+- Offline, the slideshow can only show photos it has already displayed once.
+  It skips the rest.
+- **Icons must be PNG.** When you make a manifest for another hub, point it at
+  `.png` files. The optimizer leaves anything it sees in a manifest or
+  `<link rel="icon">` alone, but only if that manifest exists when you commit.
+- **Use relative paths** (`./`, `icons/…`) in manifests, not ones starting with
+  `/`, so they work wherever the site is hosted.
+
+---
+
 ## If the slideshow breaks
 
 `JS\homescreen\LifeHub-homescreen-slides.js` is **generated, not written by hand**.
