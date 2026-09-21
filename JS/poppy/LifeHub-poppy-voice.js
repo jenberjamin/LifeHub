@@ -462,7 +462,16 @@
      with an AbortError when stop() cut her off — the caller ignores that
      one, since being told to be quiet isn't a failure. */
   async function say(text, options) {
-    const opts = Object.assign({}, DEFAULTS, options || {});
+    /* An option left blank means "the default", not "blank". Both pages
+       pass { model: VOICE.gmodel || undefined }, and Object.assign
+       copies an undefined over the default — which asked Google for
+       "models/undefined" on any browser where no voice model had ever
+       been picked (the deployed site, the phone). */
+    const given = {};
+    Object.keys(options || {}).forEach(k => {
+      if (options[k] !== undefined && options[k] !== null && options[k] !== "") given[k] = options[k];
+    });
+    const opts = Object.assign({}, DEFAULTS, given);
     stop();
 
     const clean = String(text || "").trim();
