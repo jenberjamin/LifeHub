@@ -24,6 +24,9 @@ Read these before deployment, image or TV work:
   `node "JS/homescreen/LifeHub-homescreen-server.js" --scan`; don't edit it by hand.
 - `sw.js` only registers on https (see `JS/lifehub-sw-register.js`). Bump
   `VERSION` in `sw.js` to force devices to drop old caches.
+- `LifeHub-remote.html` is the phone remote. It writes presses to
+  `lifehub_remote/<screen id>`; section 4 of `JS/lifehub-navigation-core.js`
+  acts on them, so only pages that load that file respond to it.
 - Poppy's chat calls `http://localhost:3000`, so it doesn't work from the
   deployed site yet.
 - The user isn't a Git expert. Explain in plain words and verify before

@@ -1,0 +1,16 @@
+{
+  "id": "./LifeHub-remote.html",
+  "name": "LifeHub Remote",
+  "short_name": "Remote",
+  "description": "Phone remote for LifeHub on the TV.",
+  "start_url": "./LifeHub-remote.html",
+  "scope": "./LifeHub-remote.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#16130f",
+  "theme_color": "#16130f",
+  "icons": [
+    { "src": "icons/lifehub-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/lifehub-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

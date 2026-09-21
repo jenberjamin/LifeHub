@@ -216,3 +216,233 @@ if (typeof firebase !== 'undefined') {
         }
     });
 }
+
+// ==========================================
+// 📱 4. THE PHONE REMOTE
+// ==========================================
+// Added 2026-09-21. LifeHub-remote.html on Jen's phone writes one press
+// at a time to lifehub_remote/<this screen's id>; this turns it into
+// something the page understands. Only the screen it's addressed to
+// hears it, the same way Poppy's jumps work above.
+//
+// A press is { key, n, at }:
+//   up / down / left / right   move the highlight to the nearest button
+//                              that way; nothing there → scroll instead
+//   ok                         click the highlighted thing
+//   back                       browser back
+//   escape                     "Esc" — closes most panels and pop-ups
+//   home                       straight to the Home Screen
+//   lifehub                    straight to the LifeHub dashboard
+//   pageup / pagedown          scroll a screenful
+//   reload                     reload the page
+//   text (+ text)              type into the highlighted box
+//   enter                      Enter in that box (sends a search, a chat)
+//
+// Every press is offered to the page first as a pretend key press. If
+// the page has its own arrow keys and says "mine" (preventDefault), the
+// remote stays out of the way.
+(function () {
+    if (typeof firebase === 'undefined' || !defaultApp) return;
+
+    const remoteDb = defaultApp.database();
+    const remoteRef = remoteDb.ref('lifehub_remote/' + LIFEHUB_SCREEN.id);
+
+    let offset = 0;
+    remoteDb.ref('.info/serverTimeOffset').on('value', s => { offset = s.val() || 0; });
+
+    // The highlight. Programmatic focus doesn't always draw a ring, and
+    // plenty of LifeHub buttons are divs with onclick that can't take
+    // focus at all, so the remote keeps its own "current" and draws its
+    // own ring.
+    const RING = 'lh-remote-focus';
+    let current = null;
+    function addRingStyle() {
+        if (document.getElementById('lh-remote-style')) return;
+        const st = document.createElement('style');
+        st.id = 'lh-remote-style';
+        st.textContent = '.' + RING + '{outline:4px solid #7cc4ff !important;outline-offset:3px !important;' +
+            'box-shadow:0 0 0 8px rgba(124,196,255,.35) !important;}';
+        (document.head || document.documentElement).appendChild(st);
+    }
+
+    const PICK = 'a[href],button,input:not([type=hidden]),select,textarea,summary,' +
+        '[tabindex]:not([tabindex="-1"]),[onclick],[role=button],[role=link],[role=tab],' +
+        '[role=menuitem],[role=option],[contenteditable=""],[contenteditable=true]';
+
+    function usable(el) {
+        if (el.disabled || el.closest('[inert],[aria-hidden="true"]')) return false;
+        const r = el.getBoundingClientRect();
+        if (r.width < 4 || r.height < 4) return false;
+        const cs = getComputedStyle(el);
+        if (cs.visibility === 'hidden' || cs.pointerEvents === 'none' || +cs.opacity === 0) return false;
+        // On screen: it must be the thing actually under its own centre,
+        // so buttons hidden behind an open panel can't be picked.
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        if (cx >= 0 && cy >= 0 && cx < innerWidth && cy < innerHeight) {
+            const hit = document.elementFromPoint(cx, cy);
+            return !!hit && (hit === el || el.contains(hit) || hit.contains(el));
+        }
+        return true;
+    }
+
+    function candidates() {
+        const all = Array.prototype.filter.call(document.querySelectorAll(PICK), usable);
+        // A button inside another clickable thing: keep the outer one only.
+        return all.filter(el => !all.some(o => o !== el && o.contains(el)));
+    }
+
+    function highlight(el) {
+        addRingStyle();
+        if (current) current.classList.remove(RING);
+        current = el;
+        el.classList.add(RING);
+        try { el.focus({ preventScroll: true }); } catch (e) {}
+        try { el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); }
+        catch (e) { el.scrollIntoView(false); }
+    }
+
+    function stillThere(el) {
+        return el && document.contains(el) && usable(el);
+    }
+
+    function centre(r) { return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+
+    function move(dir) {
+        const list = candidates();
+        if (!list.length) return scroll(dir);
+        if (!stillThere(current)) {
+            const a = document.activeElement;
+            current = (a && a !== document.body && list.indexOf(a) !== -1) ? a : null;
+        }
+        // Nothing highlighted yet: the first press just shows where you are.
+        if (!current) {
+            const onScreen = list.filter(el => {
+                const r = el.getBoundingClientRect();
+                return r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+            });
+            const pool = onScreen.length ? onScreen : list;
+            pool.sort((a, b) => {
+                const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+                return (ra.top + ra.left / 4) - (rb.top + rb.left / 4);
+            });
+            return highlight(pool[0]);
+        }
+
+        const from = current.getBoundingClientRect();
+        const c = centre(from);
+        let best = null, bestScore = Infinity;
+        list.forEach(el => {
+            if (el === current) return;
+            const r = el.getBoundingClientRect();
+            const p = centre(r);
+            let along, across;
+            if (dir === 'right')     { along = r.left - from.right;  across = p.y - c.y; if (p.x <= c.x) return; }
+            else if (dir === 'left') { along = from.left - r.right;  across = p.y - c.y; if (p.x >= c.x) return; }
+            else if (dir === 'down') { along = r.top - from.bottom;  across = p.x - c.x; if (p.y <= c.y) return; }
+            else                     { along = from.top - r.bottom;  across = p.x - c.x; if (p.y >= c.y) return; }
+            const score = Math.max(along, 0) + Math.abs(across) * 2;
+            if (score < bestScore) { bestScore = score; best = el; }
+        });
+        if (best) highlight(best);
+        else scroll(dir);
+    }
+
+    // The innermost thing that can scroll that way, starting from the
+    // highlight — a long list inside a panel, before the page itself.
+    function scroller(vertical) {
+        let el = current;
+        while (el && el !== document.body && el !== document.documentElement) {
+            const cs = getComputedStyle(el);
+            const ov = vertical ? cs.overflowY : cs.overflowX;
+            const room = vertical ? el.scrollHeight > el.clientHeight + 2 : el.scrollWidth > el.clientWidth + 2;
+            if (room && /auto|scroll/.test(ov)) return el;
+            el = el.parentElement;
+        }
+        return document.scrollingElement || document.documentElement;
+    }
+
+    function scroll(dir, amount) {
+        const vertical = dir === 'up' || dir === 'down';
+        const el = scroller(vertical);
+        const size = vertical ? (el.clientHeight || innerHeight) : (el.clientWidth || innerWidth);
+        const d = (dir === 'up' || dir === 'left' ? -1 : 1) * size * (amount || 0.4);
+        el.scrollBy({ top: vertical ? d : 0, left: vertical ? 0 : d, behavior: 'smooth' });
+    }
+
+    // Offer a pretend key press to the page. true = the page took it.
+    function offer(key) {
+        const target = (stillThere(current) && current) || document.activeElement || document.body;
+        const ev = new KeyboardEvent('keydown', { key: key, code: key, bubbles: true, cancelable: true });
+        target.dispatchEvent(ev);
+        target.dispatchEvent(new KeyboardEvent('keyup', { key: key, code: key, bubbles: true }));
+        return ev.defaultPrevented;
+    }
+
+    function typing(el) {
+        return el && (el.isContentEditable || el.tagName === 'TEXTAREA' ||
+            (el.tagName === 'INPUT' && !/^(button|submit|reset|checkbox|radio|range|color|file|image)$/i.test(el.type)));
+    }
+
+    function typeText(text) {
+        const el = typing(current) ? current : (typing(document.activeElement) ? document.activeElement : null);
+        if (!el) return;
+        el.focus();
+        if (el.isContentEditable) {
+            el.textContent = text;
+        } else {
+            // The native setter, so frameworks watching .value notice.
+            const proto = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+            Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, text);
+        }
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    const ARROWS = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+
+    function press(cmd) {
+        const key = cmd.key;
+        if (ARROWS[key]) {
+            if (!offer(ARROWS[key])) move(key);
+        } else if (key === 'ok') {
+            if (offer('Enter')) return;
+            if (!stillThere(current)) return move('down');
+            if (typing(current)) current.focus();
+            else current.click();
+        } else if (key === 'enter') {
+            const el = typing(current) ? current : document.activeElement;
+            if (offer('Enter')) return;
+            if (el && el.form && el.form.requestSubmit) el.form.requestSubmit();
+        } else if (key === 'escape') {
+            offer('Escape');
+        } else if (key === 'back') {
+            history.back();
+        } else if (key === 'home') {
+            window.location.href = new URL('LifeHub-HomeScreen.html', LIFEHUB_ROOT).href;
+        } else if (key === 'lifehub') {
+            window.location.href = new URL('LifeHub.html', LIFEHUB_ROOT).href;
+        } else if (key === 'pageup' || key === 'pagedown') {
+            scroll(key === 'pageup' ? 'up' : 'down', 0.85);
+        } else if (key === 'reload') {
+            window.location.reload();
+        } else if (key === 'text') {
+            typeText(String(cmd.text || ''));
+        }
+    }
+
+    // The first read is whatever was pressed last — probably the OK that
+    // opened this very page. Acting on it would press it again here.
+    let first = true, lastN = null;
+    remoteRef.on('value', snap => {
+        const cmd = snap.val();
+        if (first) { first = false; lastN = cmd && cmd.n; return; }
+        if (!cmd || !cmd.key || cmd.n === lastN) return;
+        lastN = cmd.n;
+        // A press from more than 10 seconds ago was meant for a screen
+        // that was asleep. Don't replay it.
+        if (typeof cmd.at === 'number' && (Date.now() + offset) - cmd.at > 10000) return;
+        try { press(cmd); } catch (e) { console.warn('📱 Remote press failed:', e); }
+    });
+
+    console.log('📱 Remote: listening as "' + LIFEHUB_SCREEN.name + '"');
+})();

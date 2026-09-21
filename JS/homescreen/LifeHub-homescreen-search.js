@@ -10,13 +10,28 @@
      1) THE REGISTRY  ← this is the only part you edit
      path : relative to LifeHub-HomeScreen.html (or a full file:/// path)
      tags : extra words you might type to find it
+     local: true = only on the PC. Left out of the deployed site (it's
+            gitignored — see .gitignore), so on the TV it would be a 404.
      ------------------------------------------------------------ */
+  /* The deployed site is https; the PC is file:// (Lively) or localhost. */
+  const ON_WEB = location.protocol === 'https:';
+
   const APPS = [
     { name: 'LifeHub',   group: 'Home Screen',    path: './LifeHub-HomeScreen.html',        tags: 'Wallpaper, Reception Area, AI Powered, Poppy' },
 
     { name: 'LifeHub',   group: 'Lobby',    path: './LifeHub.html',        tags: 'Home, Lobby, Lounge' },
 
     { name: 'LifeHub',   group: 'Portal',     path: './LifeHub-hubs.html',     tags: 'hubs, apps, launcher, index, trackers, softwares, tools' },
+
+    { name: 'LifeHub',   group: 'Trackers',   path: './LifeHub-trackers.html',   tags: 'Trackers, Logs, Daily logs, to log, Sleep, Hydration, FLO, Food, Workout, Upkeep, Break Habit' },
+
+    { name: 'LifeHub',   group: 'Remote',   path: './LifeHub-remote.html',   tags: 'Remote, Remote control, TV remote, Controller, Phone, Mobile, Clicker, D-pad, Keyboard, Type on TV' },
+
+    { name: 'Prestige Bank',   group: 'App',   path: './LifeHub-prestige-bank.html',   tags: 'Prestige, Bank, Wallet, Balance, Money, Wage, Earnings, Rewards, Penalties, Rank, Tier, Points, Finance, to check' },
+
+    { name: 'Prestige Bank',   group: 'Net Worth',   path: './LifeHub-prestige-bank-networth.html',   tags: 'Prestige, Bank, Net Worth, Balance, Money, Wealth, Savings, Charts, Graphs, Stats, Finance, to check' },
+
+    { name: 'Prestige Bank',   group: 'Transactions',   path: './LifeHub-prestige-bank-transactions.html',   tags: 'Prestige, Bank, Transactions, Ledger, History, Records, Statement, Receipts, Earnings, Penalties, Logs, Finance, to check' },
 
     { name: 'Scribble',         group: 'Workshop',   path: './Hubs/Scribble/Scribble.html',                  tags: 'Workshop, Annex, Vault, Records, Databases, Collections, Repository, Repositories, Depot, Project Manager, Dev Organizer, Code, Coding, Library, Warehouse, Files, Protected data, Documentation, Classified Files, Restricted Files, Safety Net, ' },
 
@@ -58,19 +73,19 @@
 
     { name: 'Fitness Centre',         group: 'Progress Tracker',   path: './Hubs/FitnessCentre/fitness-centre-progress_tracker.html',    tags: 'Workout Tracker, Trackers, Gym, Workout Progress, My Fitness, to check, Rank Board, My Stats, Fitness Profile, My Progress, Character Sheet, Stats, Statistics, Charts, Graphs, Analytics, Analysis, Breakdown' },
 
-    { name: 'See You Latte',         group: 'App',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte.html',    tags: 'Thomas Thompson, Tom, SYL, Cafe, Coffee, Interactive Chat, AI Powered, role-playing, RP, role playing, Interactive Storytelling, generative AI, standalone, Lobby, Reception Area, Roleplay, Companion, dopamine hit'},
+    { name: 'See You Latte',         group: 'App',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte.html', local: true,    tags: 'Thomas Thompson, Tom, SYL, Cafe, Coffee, Interactive Chat, AI Powered, role-playing, RP, role playing, Interactive Storytelling, generative AI, standalone, Lobby, Reception Area, Roleplay, Companion, dopamine hit'},
 
-    { name: 'See You Latte',         group: 'Rooms',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte-Rooms.html',    tags: 'Thomas Thompson, Tom, SYL, Cafe, Coffeehouses, Conversations, Room List, Chat Window' },
+    { name: 'See You Latte',         group: 'Rooms',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte-Rooms.html', local: true,    tags: 'Thomas Thompson, Tom, SYL, Cafe, Coffeehouses, Conversations, Room List, Chat Window' },
 
-    { name: 'See You Latte',         group: 'Chats',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte-Chats.html',    tags: 'Thomas Thompson, Tom, SYL, Conversations, chat environment' },
+    { name: 'See You Latte',         group: 'Chats',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte-Chats.html', local: true,    tags: 'Thomas Thompson, Tom, SYL, Conversations, chat environment' },
 
-    { name: 'See You Latte',         group: 'Worldbuilding',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte-World.html',    tags: 'Thomas Thompson, Tom, SYL' },
+    { name: 'See You Latte',         group: 'Worldbuilding',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte-World.html', local: true,    tags: 'Thomas Thompson, Tom, SYL' },
 
-    { name: 'See You Latte',         group: 'Studio',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte-Studio.html',    tags: 'Thomas Thompson, Tom, SYL, Cafe, Coffee, Coffeehouse, Casts, Assets, environment, history, Characters, worldbuilding, records, archives, characters vault' },
+    { name: 'See You Latte',         group: 'Studio',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte-Studio.html', local: true,    tags: 'Thomas Thompson, Tom, SYL, Cafe, Coffee, Coffeehouse, Casts, Assets, environment, history, Characters, worldbuilding, records, archives, characters vault' },
 
-    { name: 'See You Latte',         group: 'Library',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte-Library.html',    tags: 'Thomas Thompson, Tom, SYL, Cafe, Coffee, Coffeehouse, Safety Net, Reading Room, vault, add collection, logs, records, repositories, collections, stories, story archives, archive' },
+    { name: 'See You Latte',         group: 'Library',   path: './Standalone/SEE-YOU-LATTE/See-You-Latte-Library.html', local: true,    tags: 'Thomas Thompson, Tom, SYL, Cafe, Coffee, Coffeehouse, Safety Net, Reading Room, vault, add collection, logs, records, repositories, collections, stories, story archives, archive' },
 
-    { name: 'See You Latte',         group: 'Meta',   path: './Standalone/SEE-YOU-LATTE/migrate-rooms-meta.html',    tags: 'Thomas Thompson, Tom, SYL, Rooms' },
+    { name: 'See You Latte',         group: 'Meta',   path: './Standalone/SEE-YOU-LATTE/migrate-rooms-meta.html', local: true,    tags: 'Thomas Thompson, Tom, SYL, Rooms' },
 
     { name: 'LibraryHub',         group: 'App',   path: './Hubs/LibraryHub/LibraryHub.html',    tags: 'Books, Lobby, bookhouse, media center, add collection' },
 
@@ -112,7 +127,13 @@
 
     { name: 'Self Upkeep',         group: 'Mobile Version',   path: './Trackers/Self-upkeep/LifeHub-mobile-self-upkeep.html',        tags: ' ' },
 
-    { name: 'Sims 4 HQ',         group: 'App',   path: './Standalone/Sims4-HQ/OLD VERSIONS/Sims_4_Gallery -Version_14 - Gameplay Path.html',    tags: 'dopamine hit, games, tracker, database, vault, tracker, important, heavy, monolit' },
+    { name: 'Sims 4 HQ',         group: 'App',   path: './Standalone/Sims4_HQ/Sims4-HQ.html',    tags: 'Sims, The Sims, dopamine hit, games, gaming, lobby, mods, cc, custom content' },
+
+    { name: 'Sims 4 HQ',         group: 'Mods',   path: './Standalone/Sims4_HQ/Sims4-Mods.html',    tags: 'Sims, The Sims, games, gaming, mods, mod list, cc, custom content, database, vault' },
+
+    { name: 'Sims 4 HQ',         group: 'Mods Collections',   path: './Standalone/Sims4_HQ/Sims4-Mods-Collections.html',    tags: 'Sims, The Sims, games, gaming, mods, collections, add collection, cc, custom content, archive' },
+
+    { name: 'Sims 4 HQ',         group: 'Old Gallery',   path: './Standalone/Sims4-HQ/OLD VERSIONS/Sims_4_Gallery -Version_14 - Gameplay Path.html',    tags: 'Sims, dopamine hit, games, tracker, database, vault, tracker, important, heavy, monolit, old version, gallery' },
 
     { name: 'Gemini Entry Counter',         group: 'Tool',   path: './Tools/Gemini-entry-counter/gemini-entry-counter.html',        tags: ' ' },
 
@@ -122,11 +143,13 @@
 
     { name: 'Word Book',         group: 'Tool',   path: './Tools/WordBook/WordBook.html', tags: 'personal dictionary, vault, database, to check' },
 
+    { name: 'Icons & Fonts',         group: 'Tool',   path: './Tools/Icons&Fonts-tool/Icons&Fonts-tool.html', tags: 'icons, fonts, css helper, font awesome, typography, design' },
+
     { name: 'TagBook Editor',         group: 'Tool',   path: './Tools/WordBook/TagBook-editor.html' },
 
     { name: 'Fine Tuning Gemini Editor',         group: 'Tool',   path: './Tools/FineTuning-gemini-editor/gemini-json-builder.html' }
 
-  ];
+  ].filter(a => !(a.local && ON_WEB));
 
   /* ------------------------------------------------------------
      2) OPTIONS
@@ -201,10 +224,12 @@
     try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
     catch (e) { return {}; }
   }
-  function bump(name) {
+  /* Counted per page. It used to be per name, so every "LifeHub" and
+     every "PassHub" page shared one count and couldn't be told apart. */
+  function bump(path) {
     try {
       const f = freq();
-      f[name] = (f[name] || 0) + 1;
+      f[path] = (f[path] || 0) + 1;
       localStorage.setItem(STORE_KEY, JSON.stringify(f));
     } catch (e) {}
   }
@@ -219,6 +244,8 @@
     const tags  = ((app.tags || '') + ' ' + (app.group || ''))
                     .toLowerCase().split(/[,\s]+/).filter(Boolean);
 
+    const groupWords = (app.group || '').toLowerCase().split(/[\s\-_]+/).filter(Boolean);
+
     const words = q.split(/[,\s]+/).filter(Boolean);
     let total = 0;
 
@@ -231,6 +258,16 @@
       if (!best) {                                    // start of any word in the name
         for (let i = 0; i < parts.length; i++) {
           if (parts[i].startsWith(w)) { best = 900 - i * 80; break; }
+        }
+      }
+
+      // The page's own label ("Trackers", "Remote") before its tags, so
+      // "trackers" finds the Trackers page ahead of every page merely
+      // tagged with the word.
+      if (!best) {
+        for (const g of groupWords) {
+          if (g === w) { best = 700; break; }
+          if (g.startsWith(w)) best = Math.max(best, 600);
         }
       }
 
@@ -259,7 +296,7 @@
     results = APPS
       .map(a => ({ app: a, s: score(a, q) }))
       .filter(r => r.s > 0)
-      .sort((x, y) => (y.s - x.s) || ((f[y.app.name] || 0) - (f[x.app.name] || 0)) || x.app.name.localeCompare(y.app.name))
+      .sort((x, y) => (y.s - x.s) || ((f[y.app.path] || 0) - (f[x.app.path] || 0)) || x.app.name.localeCompare(y.app.name))
       .slice(0, MAX_RESULTS)
       .map(r => r.app);
 
@@ -297,7 +334,7 @@
      ------------------------------------------------------------ */
   function launch(app) {
     if (!app) return;
-    bump(app.name);
+    bump(app.path);
     close();
     if (OPEN_IN === 'new') window.open(app.path, '_blank');
     else window.location.href = app.path;

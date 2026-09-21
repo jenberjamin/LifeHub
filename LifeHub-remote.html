@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LifeHub Remote</title>
+<!-- The phone remote. Plain on purpose: big buttons for a thumb.
+     Each press is written to lifehub_remote/<screen id> in the Realtime
+     Database; lifehub-navigation-core.js on the TV acts on it (see
+     section 4 there). "Open a screen" uses alexa_updates, the same jump
+     Poppy and Alexa use.
+
+     Deliberately does NOT load lifehub-navigation-core.js: the phone is
+     the remote, not a screen, so it shouldn't show up in the list or
+     jump when Alexa says so. -->
+<link rel="manifest" href="remote-manifest.json">
+<meta name="theme-color" content="#16130f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Remote">
+<link rel="icon" type="image/png" href="icons/lifehub-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+  /* Same family as the rest of LifeHub: warm taupe text, frosted-glass
+     buttons and Playfair for the title. */
+  @font-face {
+    font-family: "Playfair Display";
+    src: url("CSS/fonts/PlayfairDisplay-VariableFont_wght.ttf") format("truetype-variations"),
+         url("CSS/fonts/PlayfairDisplay-Regular.ttf") format("truetype");
+    font-weight: 400 900;
+    font-display: swap;
+  }
+  :root {
+    --bg:#16130f;
+    --glass:rgba(255,248,236,.09);
+    --glass-hi:rgba(255,248,236,.16);
+    --glass-down:rgba(255,248,236,.26);
+    --edge:rgba(255,248,236,.14);
+    --text:#f6f1e9;
+    --dim:#c2baad;
+    --cream:#efe5d4;
+    --cream-down:#fffaf1;
+    --ink:#3e3831;
+    --on:#8fdca4;
+    --gold:#d2b48c;
+    --display:"Playfair Display", Georgia, "Times New Roman", serif;
+    --ui:"Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html { background:var(--bg); }
+  html, body { margin:0; color:var(--text); font:16px/1.4 var(--ui); }
+  body { padding:calc(18px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
+    max-width:440px; margin:0 auto; min-height:100vh; min-height:100dvh;
+    user-select:none; -webkit-user-select:none; }
+
+  /* LifeHub_BG.webp is a 16:9 desktop shot and crops badly on a tall
+     phone, so the remote gets soft warm glows drawn for portrait
+     instead. For a phone wallpaper later, add
+     url("CSS/files/<name>.webp") center / cover as the last layer.
+     Its own fixed layer because background-attachment:fixed is broken
+     on phones. */
+  body::before { content:""; position:fixed; inset:0; z-index:-1;
+    background:
+      radial-gradient(90% 45% at 50% 38%, rgba(194,186,173,.16), transparent 70%),
+      radial-gradient(70% 40% at 0% 0%, rgba(214,178,140,.20), transparent 70%),
+      radial-gradient(80% 45% at 100% 100%, rgba(150,120,95,.22), transparent 70%),
+      linear-gradient(180deg, #2a241e 0%, #1b1712 55%, #120f0c 100%); }
+
+  button { font:inherit; color:var(--text); background:var(--glass); border:1px solid var(--edge);
+    border-radius:16px; min-height:56px; touch-action:manipulation; cursor:pointer;
+    transition:background-color .12s, transform .12s; }
+  button:active, button.down { background:var(--glass-down); transform:scale(.96); }
+  button:focus-visible, input:focus-visible, summary:focus-visible {
+    outline:2px solid var(--cream); outline-offset:2px; }
+  @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+    button, .top, .type input, .ring {
+      -webkit-backdrop-filter:blur(14px) saturate(1.2); backdrop-filter:blur(14px) saturate(1.2); }
+    .pad button { -webkit-backdrop-filter:none; backdrop-filter:none; }
+  }
+
+  /* ── Title + which screen ── */
+  .brand { display:flex; align-items:baseline; justify-content:center; gap:10px; margin:4px 0 18px; }
+  .brand b { font:600 30px/1 var(--display); letter-spacing:.01em; }
+  .brand span { color:var(--dim); font-size:12px; font-weight:600; letter-spacing:.24em; text-transform:uppercase; }
+
+  .top { position:relative; display:flex; align-items:center; gap:12px; padding:0 14px 0 16px;
+    background:var(--glass); border:1px solid var(--edge); border-radius:18px; }
+  .top::after { content:""; position:absolute; right:18px; top:50%; width:8px; height:8px; margin-top:-6px;
+    border:solid var(--dim); border-width:0 2px 2px 0; transform:rotate(45deg); pointer-events:none; }
+  .top:focus-within { border-color:rgba(239,229,212,.5); }
+  .dot { width:10px; height:10px; border-radius:50%; background:#6b645b; flex:none; }
+  .dot.on { background:var(--on); box-shadow:0 0 0 4px rgba(143,220,164,.18); animation:pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow:0 0 0 7px rgba(143,220,164,0); } }
+  select, input { font:inherit; color:var(--text); background:transparent; border:0; border-radius:14px;
+    padding:12px; min-height:52px; width:100%; }
+  .top select { flex:1; min-width:0; appearance:none; -webkit-appearance:none; padding:12px 28px 12px 0;
+    font-weight:600; text-overflow:ellipsis; outline:0; }
+  option { background:#2a251f; color:var(--text); }
+  .status { color:var(--dim); font-size:14px; min-height:20px; margin:10px 4px 22px; text-align:center; }
+
+  /* ── D-pad: a round ring like a real remote, OK in the middle ── */
+  /* Physical keys: lit top edge, a solid "side" underneath (the 0 Npx 0
+     shadow), and pressing sinks the key onto its side. */
+  .ring { width:min(300px, 82vw); aspect-ratio:1; margin:0 auto 30px; padding:12px; border-radius:50%;
+    background:radial-gradient(circle at 50% 28%, #463c32, #2b251f 62%, #221d18);
+    border:1px solid rgba(255,248,236,.10);
+    box-shadow:inset 0 2px 0 rgba(255,248,236,.14), inset 0 -6px 14px rgba(0,0,0,.35),
+      0 7px 0 #0f0c0a, 0 20px 40px rgba(0,0,0,.5); }
+  .pad { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
+    width:100%; height:100%; gap:4px; }
+  .pad button { background:transparent; border:0; min-height:0; font-size:24px;
+    color:var(--cream); display:grid; place-items:center; transition:background-color .1s, box-shadow .1s; }
+  .pad button i { filter:drop-shadow(0 1px 0 rgba(0,0,0,.6)); }
+  .pad button:active, .pad button.down { color:var(--gold); transform:scale(.9);
+    background:radial-gradient(circle, rgba(0,0,0,.38), rgba(0,0,0,.18) 45%, transparent 70%); }
+  .pad [data-key=up]    { border-radius:50% 50% 18px 18px; }
+  .pad [data-key=down]  { border-radius:18px 18px 50% 50%; }
+  .pad [data-key=left]  { border-radius:50% 18px 18px 50%; }
+  .pad [data-key=right] { border-radius:18px 50% 50% 18px; }
+  .pad .ok { color:var(--ink); font:700 20px/1 var(--ui); letter-spacing:.08em; border-radius:50%; margin:10px;
+    background:radial-gradient(circle at 50% 30%, #fffaf1, #eadfcb 60%, #dccdb3);
+    box-shadow:0 0 0 7px rgba(0,0,0,.22), inset 0 2px 0 #fff, inset 0 -3px 6px rgba(120,100,70,.25),
+      0 5px 0 #a8977b, 0 12px 20px rgba(0,0,0,.45);
+    transition:transform .08s, box-shadow .08s; }
+  .pad .ok:active, .pad .ok.down { background:radial-gradient(circle at 50% 30%, #f6efe2, #e0d3bc 60%, #d3c3a7);
+    color:var(--ink); transform:translateY(4px);
+    box-shadow:0 0 0 7px rgba(0,0,0,.22), inset 0 2px 5px rgba(120,100,70,.35), 0 1px 0 #a8977b, 0 3px 6px rgba(0,0,0,.4); }
+  .pad .blank { visibility:hidden; }
+
+  /* ── Back / Home / Close, paging ── */
+  .row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+  .row button { font-size:15px; font-weight:600; letter-spacing:.02em; text-shadow:0 1px 0 rgba(0,0,0,.5);
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:linear-gradient(180deg, #3d352c, #2a241e); border:1px solid rgba(255,248,236,.09);
+    box-shadow:inset 0 1px 0 rgba(255,248,236,.16), inset 0 -2px 0 rgba(0,0,0,.2),
+      0 5px 0 #110e0b, 0 10px 18px rgba(0,0,0,.45);
+    transition:transform .08s, box-shadow .08s, background .08s; }
+  .row button:active, .row button.down { transform:translateY(4px); background:linear-gradient(180deg, #2c261f, #252019);
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.45), 0 1px 0 #110e0b, 0 3px 6px rgba(0,0,0,.35); }
+  .row button i { font-size:15px; flex:none; color:var(--gold); }
+  .row.two { grid-template-columns:1fr 1fr; }
+  /* The two "go home" keys are bronze, like the tracker icons. */
+  .row [data-key=home], .row [data-key=lifehub] { color:#fff8ec;
+    background:linear-gradient(180deg, #8c6f4f, #6a5239); border-color:rgba(255,230,190,.22);
+    box-shadow:inset 0 1px 0 rgba(255,236,205,.35), inset 0 -2px 0 rgba(0,0,0,.18),
+      0 5px 0 #3b2d1f, 0 10px 18px rgba(0,0,0,.45); }
+  .row [data-key=home] i, .row [data-key=lifehub] i { color:#fff1dc; }
+  .row [data-key=home]:active, .row [data-key=home].down,
+  .row [data-key=lifehub]:active, .row [data-key=lifehub].down {
+    background:linear-gradient(180deg, #735a40, #5f4933);
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.35), 0 1px 0 #3b2d1f, 0 3px 6px rgba(0,0,0,.35); }
+
+  /* ── Type on the TV ── */
+  .type { display:flex; gap:10px; margin:22px 0 10px; }
+  .type input { background:rgba(0,0,0,.25); border:1px solid var(--edge); padding:12px 16px; min-width:0;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.4); user-select:text; -webkit-user-select:text; }
+  .type input::placeholder { color:var(--dim); opacity:.8; }
+  .type input:focus { border-color:rgba(239,229,212,.5); outline:0; }
+  .type button { padding:0 20px; flex:none; color:var(--ink); border-color:transparent; font-weight:700;
+    background:linear-gradient(180deg, #fffaf1, #e4d7c0);
+    box-shadow:inset 0 1px 0 #fff, 0 5px 0 #a8977b, 0 10px 18px rgba(0,0,0,.4);
+    transition:transform .08s, box-shadow .08s; }
+  .type button:active { transform:translateY(4px); background:linear-gradient(180deg, #f1e8d9, #dccdb3);
+    box-shadow:inset 0 2px 5px rgba(120,100,70,.35), 0 1px 0 #a8977b, 0 3px 6px rgba(0,0,0,.35); }
+
+  /* ── Open a screen ── */
+  details { margin-top:22px; border-top:1px solid var(--edge); }
+  summary { list-style:none; display:flex; align-items:center; justify-content:space-between;
+    color:var(--dim); padding:16px 4px; cursor:pointer; font-size:13px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase; border-radius:10px; }
+  summary::-webkit-details-marker { display:none; }
+  summary::after { content:""; width:8px; height:8px; margin-right:6px; border:solid currentColor;
+    border-width:0 2px 2px 0; transform:rotate(45deg); transition:transform .2s; }
+  details[open] summary::after { transform:rotate(-135deg); }
+  /* Tabs read like the LifeHub sidebar: spaced capitals, no boxes. */
+  .tabs { display:flex; justify-content:space-between; margin:0 4px 16px; }
+  .tabs button { min-height:40px; padding:0 2px; border:0; border-radius:0; background:none; color:var(--dim);
+    font-size:12px; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
+    -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:inset 0 -2px 0 transparent; }
+  .tabs button:active { background:none; }
+  .tabs button[aria-selected=true] { color:var(--text); box-shadow:inset 0 -2px 0 var(--gold); }
+
+  /* Places are pillars, like the Hubs lobby: index number, ❖, title. */
+  .dests { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding-bottom:8px; }
+  .card { position:relative; aspect-ratio:4/5; display:flex; flex-direction:column; justify-content:flex-end;
+    padding:16px; text-align:left; border-radius:22px; border-color:rgba(210,180,140,.22);
+    background:linear-gradient(160deg, rgba(210,180,140,.20), rgba(120,90,60,.10) 55%, rgba(255,248,236,.04)); }
+  .card:active { background:linear-gradient(160deg, rgba(210,180,140,.34), rgba(120,90,60,.18)); }
+  .card .idx { position:absolute; top:16px; right:18px; color:var(--dim); font-size:12px; letter-spacing:.12em;
+    font-variant-numeric:tabular-nums; opacity:.8; }
+  .card .mark { position:absolute; top:14px; left:14px; width:52px; height:52px; display:grid; place-items:center;
+    border-radius:16px; color:var(--gold); background:rgba(210,180,140,.12); border:1px solid rgba(210,180,140,.22); }
+  .card .mark i { font-size:22px; }
+  .card b { font:600 23px/1.1 var(--display); color:var(--text); }
+  .card small { margin-top:8px; color:var(--dim); font-size:11px; font-weight:600; letter-spacing:.16em;
+    text-transform:uppercase; }
+  .card.wide { grid-column:1/-1; aspect-ratio:auto; min-height:64px; flex-direction:row;
+    align-items:center; justify-content:space-between; padding:0 20px; border-radius:18px; }
+  .card.wide b { font-size:19px; }
+  .card.wide small { margin:0; }
+
+  /* A hub's sections slide up from the bottom. */
+  .veil { position:fixed; inset:0; z-index:5; background:rgba(8,6,4,.55); opacity:0; visibility:hidden;
+    transition:opacity .25s, visibility .25s; }
+  .sheet { position:fixed; left:0; right:0; bottom:0; z-index:6; max-width:440px; margin:0 auto;
+    max-height:80vh; overflow-y:auto; overscroll-behavior:contain;
+    padding:10px 20px calc(24px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg, #2e2720, #1c1813); border:1px solid rgba(210,180,140,.2); border-bottom:0;
+    border-radius:26px 26px 0 0; box-shadow:0 -20px 50px rgba(0,0,0,.5);
+    transform:translateY(105%); visibility:hidden; transition:transform .3s cubic-bezier(.2,.8,.2,1), visibility .3s; }
+  .veil.open { opacity:1; visibility:visible; }
+  .sheet.open { transform:none; visibility:visible; }
+  .sheet .grip { width:40px; height:4px; margin:0 auto 18px; border-radius:2px; background:rgba(255,248,236,.25); }
+  .sheet header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:18px; }
+  .sheet header small { display:block; color:var(--gold); font-size:12px; letter-spacing:.14em; margin-bottom:4px; }
+  .sheet h2 { margin:0; font:600 30px/1.1 var(--display); }
+  .sheet .shut { width:44px; min-height:44px; border-radius:50%; font-size:18px; color:var(--dim); flex:none; }
+  .sheet .main { width:100%; background:var(--cream); color:var(--ink); border:0; font-weight:700;
+    letter-spacing:.04em; margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:10px; }
+  .sheet .main i { font-size:17px; }
+  .sheet .main:active { background:var(--cream-down); }
+  .sheet .sec { width:100%; display:flex; justify-content:space-between; align-items:center; min-height:54px;
+    padding:0 4px; border:0; border-radius:0; background:none; border-bottom:1px solid var(--edge);
+    font:500 17px/1.2 var(--display); text-align:left; -webkit-backdrop-filter:none; backdrop-filter:none; }
+  .sheet .sec:last-child { border-bottom:0; }
+  .sheet .sec i { color:var(--gold); font-size:14px; }
+  .sheet .sec:active { background:var(--glass); transform:none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::after { animation:none !important; transition:none !important; }
+    button:active, button.down { transform:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand"><b>LifeHub</b><span>Remote</span></div>
+
+<div class="top">
+  <span class="dot" id="dot"></span>
+  <select id="screen" aria-label="Which screen to control">
+    <option value="">Looking for screens…</option>
+  </select>
+</div>
+<p class="status" id="status"></p>
+
+<div class="ring"><div class="pad">
+  <span class="blank"></span>
+  <button data-key="up" aria-label="Up"><i class="fa-solid fa-chevron-up"></i></button>
+  <span class="blank"></span>
+  <button data-key="left" aria-label="Left"><i class="fa-solid fa-chevron-left"></i></button>
+  <button data-key="ok" class="ok">OK</button>
+  <button data-key="right" aria-label="Right"><i class="fa-solid fa-chevron-right"></i></button>
+  <span class="blank"></span>
+  <button data-key="down" aria-label="Down"><i class="fa-solid fa-chevron-down"></i></button>
+  <span class="blank"></span>
+</div></div>
+
+<div class="row two">
+  <button data-key="home">HomeScreen</button>
+  <button data-key="lifehub">LifeHub</button>
+</div>
+<div class="row">
+  <button data-key="back">Back</button>
+  <button data-key="escape">Close</button>
+  <button data-key="reload">Reload</button>
+</div>
+<div class="row two">
+  <button data-key="pageup">Page up</button>
+  <button data-key="pagedown">Page down</button>
+</div>
+
+<form class="type" id="type-form" autocomplete="off">
+  <input id="type-text" placeholder="Type on the TV…" enterkeyhint="send">
+  <button type="submit">Send</button>
+</form>
+
+<details>
+  <summary>Open a screen</summary>
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div class="dests" id="dests"></div>
+</details>
+
+<div class="veil" id="veil"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="grip"></div>
+  <header>
+    <div><small id="sheet-idx"></small><h2 id="sheet-title"></h2></div>
+    <button type="button" class="shut" id="sheet-shut" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  </header>
+  <button type="button" class="main" id="sheet-main"></button>
+  <div id="sheet-list"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="JS/lifehub-destinations.js"></script>
+<script>
+(function () {
+  /* Same project as lifehub-navigation-core.js, under its own name so
+     it can never fight another script over the default app. */
+  const app = firebase.initializeApp({
+    apiKey: "AIzaSyABhqON4h0GHjFbZaDT1ysSprmpdczyC6I",
+    authDomain: "lifehub-cae1d.firebaseapp.com",
+    databaseURL: "https://lifehub-cae1d-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "lifehub-cae1d"
+  }, "remote");
+  const db = app.database();
+  const TS = firebase.database.ServerValue.TIMESTAMP;
+
+  const $ = id => document.getElementById(id);
+  const PICK_KEY = 'lifehub.remote.screen';
+  const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const put = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+  let screens = {};
+  let chosen = get(PICK_KEY) || '';
+
+  /* ── Which screen ─────────────────────────────────────────────────
+     lifehub_screens is written by every page that loads the navigation
+     core. Online ones first, the TV at the top. A screen that's been
+     offline for more than a day is just an old browser — hidden. */
+  db.ref('lifehub_screens').on('value', snap => {
+    screens = snap.val() || {};
+    const DAY = 86400000;
+    const ids = Object.keys(screens)
+      .filter(id => screens[id].online || Date.now() - (screens[id].at || 0) < DAY)
+      .sort((a, b) => {
+        const A = screens[a], B = screens[b];
+        return (B.online - A.online) || (B.tv - A.tv) || ((B.at || 0) - (A.at || 0));
+      });
+
+    if (!chosen || !screens[chosen] || (!screens[chosen].online && ids.some(id => screens[id].online))) {
+      const tv = ids.find(id => screens[id].online && screens[id].tv) || ids.find(id => screens[id].online) || ids[0];
+      chosen = tv || '';
+    }
+
+    const sel = $('screen');
+    sel.innerHTML = '';
+    if (!ids.length) {
+      sel.innerHTML = '<option value="">No screens found. Open LifeHub on the TV.</option>';
+    }
+    ids.forEach(id => {
+      const s = screens[id];
+      const o = document.createElement('option');
+      o.value = id;
+      o.textContent = s.name + (s.online ? '' : ' (off)');
+      if (id === chosen) o.selected = true;
+      sel.appendChild(o);
+    });
+    showStatus();
+  });
+
+  $('screen').addEventListener('change', e => {
+    chosen = e.target.value;
+    put(PICK_KEY, chosen);
+    showStatus();
+  });
+
+  function showStatus() {
+    const s = screens[chosen];
+    $('dot').classList.toggle('on', !!(s && s.online));
+    $('status').textContent = !s ? '' :
+      s.online ? 'Showing: ' + (s.title || s.page || '…') : 'This screen is off or asleep.';
+  }
+
+  /* ── Pressing ────────────────────────────────────────────────────
+     n is a fresh random tag per press, so pressing the same button
+     twice still counts as two presses. */
+  function send(key, extra) {
+    if (!chosen) { $('status').textContent = 'Pick a screen first.'; return; }
+    if (navigator.vibrate) navigator.vibrate(12);
+    const cmd = Object.assign({ key: key, n: Math.random().toString(36).slice(2), at: TS }, extra || {});
+    db.ref('lifehub_remote/' + chosen).set(cmd)
+      .catch(() => { $('status').textContent = "Couldn't reach the database. Check the phone's internet."; });
+  }
+
+  /* Hold an arrow to keep moving, like a real remote. */
+  document.querySelectorAll('button[data-key]').forEach(btn => {
+    const key = btn.dataset.key;
+    const repeats = /^(up|down|left|right)$/.test(key);
+    let timer = null;
+    const stop = () => { clearTimeout(timer); clearInterval(timer); timer = null; btn.classList.remove('down'); };
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      btn.classList.add('down');
+      send(key);
+      if (repeats) timer = setTimeout(() => { timer = setInterval(() => send(key), 180); }, 450);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => btn.addEventListener(t, stop));
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+  });
+
+  /* Typing: fills whatever box is highlighted on the TV, then presses
+     Enter there, which is what sends a search or a chat. */
+  $('type-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const text = $('type-text').value;
+    if (!text) return send('enter');
+    send('text', { text: text });
+    setTimeout(() => send('enter'), 250);
+    $('type-text').value = '';
+  });
+
+  /* ── Open a screen ───────────────────────────────────────────────
+     The same jump Poppy makes: only the chosen screen moves. See You
+     Latte isn't on the deployed site, so it's left out.
+
+     One tab per part of LifeHub, one row per place. A hub's inner pages
+     (PassHub Logins, Food history…) share its folder and sit behind the
+     arrow on its row, so the list shows only the main places. The bank
+     keeps its pages at the root, so it's matched by name. The first
+     page of a family in lifehub-destinations.js is its main page. */
+  const TAB_KEY = 'lifehub.remote.tab';
+  const TABS = ['LifeHub', 'Trackers', 'Hubs', 'Tools'];
+  const LOBBY = { 'LifeHub-trackers.html': 'Trackers', 'LifeHub-hubs.html': 'Hubs' };
+  const tabOf = d => LOBBY[d.url] || (d.url.match(/^(Trackers|Hubs|Tools)\//) || [, 'LifeHub'])[1];
+  const familyOf = d => {
+    const m = d.url.match(/^(?:Trackers|Hubs|Tools)\/[^/]+\//);
+    return m ? m[0] : /^LifeHub-prestige-bank/.test(d.url) ? 'bank' : d.url;
+  };
+  const tidy = s => s.replace(/^the\s+/i, '').replace(/^./, c => c.toUpperCase());
+  /* "PassHub Logins" under PassHub reads as just "Logins". */
+  const subName = (d, main) => {
+    const s = tidy(d.name), first = s.split(' ')[0].toLowerCase();
+    const trimmed = main.name.replace(/^the\s+/i, '').replace(/\s+/g, '').toLowerCase().startsWith(first)
+      ? s.slice(first.length).trim() : '';
+    return trimmed ? tidy(trimmed) : s;
+  };
+
+  const list = (window.LIFEHUB_DESTINATIONS ? LIFEHUB_DESTINATIONS.list : [])
+    .filter(d => !/^Standalone\//.test(d.url));
+  const families = {};
+  list.forEach(d => { (families[familyOf(d)] = families[familyOf(d)] || []).push(d); });
+
+  const button = (text, cls, onClick) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    if (cls) b.className = cls;
+    b.textContent = text;
+    b.addEventListener('click', onClick);
+    return b;
+  };
+
+  /* Font Awesome 6 (solid, free), the same copy Scribble loads. Keyed
+     by destination id, or by data-key for the control buttons. */
+  const ICONS = {
+    MAIN: 'house', HOMESCREEN: 'tv', BANK: 'building-columns',
+    TRACKERS: 'chart-line', HUBS: 'table-cells-large',
+    SLEEP: 'moon', HYDRATION: 'droplet', FLO: 'heart', SELF: 'spa', 'HOME-UPKEEP': 'broom',
+    FITNESS: 'dumbbell', PASSHUB: 'lock', LIBRARYHUB: 'book-open', CINEMAHUB: 'film',
+    INSPOHUB: 'lightbulb', FOODHUB: 'utensils', SCRIBBLE: 'pen-nib', WORDBOOK: 'spell-check',
+    home: 'tv', lifehub: 'house', back: 'arrow-left', escape: 'xmark', reload: 'rotate-right',
+    pageup: 'angles-up', pagedown: 'angles-down'
+  };
+  const icon = key => '<i class="fa-solid fa-' + (ICONS[key] || 'diamond') + '" aria-hidden="true"></i>';
+  document.querySelectorAll('.row button[data-key]').forEach(b => {
+    if (ICONS[b.dataset.key]) b.insertAdjacentHTML('afterbegin', icon(b.dataset.key));
+  });
+
+  /* ── The sheet a hub's sections slide up in ── */
+  function openSheet(main, subs, idx) {
+    $('sheet-idx').textContent = idx;
+    $('sheet-title').textContent = tidy(main.name);
+    $('sheet-main').innerHTML = icon(main.id) + 'Open ' + tidy(main.name);
+    $('sheet-main').onclick = () => { closeSheet(); openScreen(main); };
+    const list = $('sheet-list');
+    list.innerHTML = '';
+    subs.forEach(d => {
+      const b = list.appendChild(button(subName(d, main), 'sec', () => { closeSheet(); openScreen(d); }));
+      b.insertAdjacentHTML('beforeend', '<i class="fa-solid fa-arrow-right" aria-hidden="true"></i>');
+    });
+    $('veil').classList.add('open');
+    $('sheet').classList.add('open');
+    $('sheet').scrollTop = 0;
+  }
+  function closeSheet() {
+    $('veil').classList.remove('open');
+    $('sheet').classList.remove('open');
+  }
+  $('veil').addEventListener('click', closeSheet);
+  $('sheet-shut').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+  function showTab(tab) {
+    put(TAB_KEY, tab);
+    $('tabs').querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', b.textContent === tab));
+    const box = $('dests');
+    box.innerHTML = '';
+    let n = 0;
+    Object.keys(families).forEach(key => {
+      const [main, ...subs] = families[key];
+      if (tabOf(main) !== tab) return;
+      const card = document.createElement('button');
+      card.type = 'button';
+      if (LOBBY[main.url]) {
+        card.className = 'card wide';
+        card.innerHTML = '<b></b><small>Lobby →</small>';
+        card.querySelector('b').textContent = 'All ' + tab.toLowerCase();
+        card.addEventListener('click', () => openScreen(main));
+        box.appendChild(card);
+        return;
+      }
+      const idx = String(++n).padStart(2, '0');
+      card.className = 'card';
+      card.innerHTML = '<span class="idx">' + idx + '</span><span class="mark">' + icon(main.id) + '</span><b></b>' +
+        '<small>' + (subs.length ? (subs.length + 1) + ' rooms' : 'Open') + ' →</small>';
+      card.querySelector('b').textContent = tab === 'Trackers' ? tidy(main.name).replace(/\s+tracker$/i, '') : tidy(main.name);
+      card.addEventListener('click', () => subs.length ? openSheet(main, subs, idx) : openScreen(main));
+      box.appendChild(card);
+    });
+  }
+
+  TABS.forEach(t => {
+    const b = button(t, '', () => showTab(t));
+    b.setAttribute('role', 'tab');
+    $('tabs').appendChild(b);
+  });
+  showTab(TABS.indexOf(get(TAB_KEY)) >= 0 ? get(TAB_KEY) : 'Hubs');
+
+  function openScreen(d) {
+    if (!chosen) { $('status').textContent = 'Pick a screen first.'; return; }
+    if (navigator.vibrate) navigator.vibrate(12);
+    db.ref('alexa_updates').set({ action: 'navigate', url: d.url, device: chosen, at: TS, by: 'remote' })
+      .then(() => { $('status').textContent = 'Opening ' + d.name + '…'; })
+      .catch(() => { $('status').textContent = "Couldn't reach the database."; });
+  }
+})();
+</script>
+</body>
+</html>
