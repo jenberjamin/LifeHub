@@ -208,11 +208,70 @@
        "openrouter" → straight to OpenRouter with a key, no server */
     connection: "gemini",
     serverUrl: "http://localhost:3000/api/chat",
-    apiKey: "",          // blank = let the server use its own
-    model: "gemini-2.5-flash",
+    apiKey: "",          // legacy — read through activeKey(); kept only so old configs migrate
+    model: "gemini-3.5-flash",
+
+    /* One key per provider, not per panel. The Gemini key serves the
+       chat (Gemini and Server routes) AND Poppy's voice, so it's typed
+       once, in Engine configuration. */
+    keys: { gemini: "", openrouter: "" },
+
+    /* The drawer: keys saved with a name, per provider, so switching is
+       a pick from a list instead of a paste. keys{} above is the one in
+       use; these are the ones on the shelf. [{ name, key }] */
+    keyring: { gemini: [], openrouter: [] },
+
+    /* Each connection remembers its own model, so flipping to OpenRouter
+       doesn't carry a Gemini name across (or the other way back). */
+    models: { server: "gemini-3.5-flash", gemini: "gemini-3.5-flash", openrouter: "" },
+
     tokenLimit: 30000,   // context budget the server slices history against
-    maxTokens: 8000      // cap on reply length
+    maxTokens: 8000,     // cap on reply length
+    thinking: "quick"    // "quick" | "balanced" | "default" — see thinkingConfigFor()
   };
+
+  /* ── How long she thinks before answering ──────────────────────
+     Added 2026-09-21. Gemini thinks before it writes a word, and until
+     now Poppy never said how much — so every message got the model's
+     default, which for 2.5 Pro is "always, as long as it likes" and for
+     3.x Flash is "medium". That silent stretch was most of the wait.
+
+     Poppy's hard reasoning is already done for her: the engine picks the
+     rules, the fetch layer brings the numbers, the action spec lists the
+     ids. What's left is mostly phrasing, which doesn't need deep thought.
+
+       quick     the least the model allows
+       balanced  a little — for when quick starts fumbling action blocks
+       default   send nothing; the model decides (the old behaviour)
+
+     Each family spells it differently, per Google's thinking guide:
+       3.x       thinkingLevel. "minimal" only on 3 Flash, 3.5/3.6 Flash
+                 and Flash-Lite; 3.7/3.8 Flash and 3.1 Pro stop at "low".
+       2.5       thinkingBudget in tokens. Flash and Flash-Lite can go to
+                 0 (off); Pro can't go below 128.
+     Sending one family the other's field is what Google warns against,
+     so anything unrecognised gets nothing rather than a guess. */
+  function thinkingConfigFor(model, level){
+    if (!level || level === "default") return null;
+    const name = String(model || "").toLowerCase().replace(/^[a-z]+:/, "").split("/").pop();
+    const m = name.match(/gemini-(\d+(?:\.\d+)?)-(pro|flash-lite|flash)/);
+    if (!m) return null;
+    const version = parseFloat(m[1]), kind = m[2];
+
+    if (version >= 3){
+      const hasMinimal = kind === "flash-lite" ||
+        (kind === "flash" && (version === 3 || version === 3.5 || version === 3.6));
+      /* Capitals: the enum's own spelling, as in Google's REST example
+         ("HIGH") and the SDK (ThinkingLevel.MINIMAL). */
+      if (level === "quick") return { thinkingLevel: hasMinimal ? "MINIMAL" : "LOW" };
+      return { thinkingLevel: hasMinimal ? "LOW" : "MEDIUM" };
+    }
+    if (version === 2.5){
+      if (kind === "pro") return { thinkingBudget: level === "quick" ? 128 : 1024 };
+      return { thinkingBudget: level === "quick" ? 0 : 1024 };
+    }
+    return null;
+  }
 
   let config = Object.assign({}, CONFIG_DEFAULTS);
 
@@ -236,17 +295,55 @@
     } catch (err){ /* storage unavailable — the default stands this session */ }
   }
 
+  /* 2026-09-21: from one apiKey + one model to keys{} and models{}.
+     The old single key is sorted by its shape — Google's start "AIza",
+     OpenRouter's "sk-or-" — so it lands on the right provider whichever
+     connection happened to be selected when it was typed. The old model
+     becomes the model of whichever connection was active. */
+  function migrateKeys(saved){
+    const keys = Object.assign({}, CONFIG_DEFAULTS.keys, saved.keys || {});
+    const models = Object.assign({}, CONFIG_DEFAULTS.models, saved.models || {});
+    const legacy = String(saved.apiKey || "").trim();
+    if (legacy){
+      if (/^sk-or-/i.test(legacy)) keys.openrouter = keys.openrouter || legacy;
+      else if (/^AIza/.test(legacy)) keys.gemini = keys.gemini || legacy;
+      else if (saved.connection === "openrouter") keys.openrouter = keys.openrouter || legacy;
+      else keys.gemini = keys.gemini || legacy;
+    }
+    if (!saved.models && saved.model && saved.connection) models[saved.connection] = saved.model;
+    return { keys, models };
+  }
+
   function loadConfig(){
     try{
       const raw = localStorage.getItem(CONFIG_KEY);
-      if (raw) config = Object.assign({}, CONFIG_DEFAULTS, JSON.parse(raw));
+      if (raw){
+        const saved = JSON.parse(raw);
+        config = Object.assign({}, CONFIG_DEFAULTS, saved, migrateKeys(saved));
+      }
     } catch (err){ /* unreadable — defaults stand */ }
     migrateConfig();
+    config.apiKey = activeKey();
     return config;
   }
 
+  /* The key the active connection should send. Server gets the Gemini
+     key: a "gemini:" model on the server uses it, and Vertex ignores it. */
+  function activeKey(){
+    const keys = config.keys || {};
+    if (config.connection === "openrouter") return keys.openrouter || "";
+    return keys.gemini || "";
+  }
+
   function saveConfig(next){
-    config = Object.assign({}, config, next || {});
+    next = next || {};
+    config = Object.assign({}, config, next, {
+      keys:    Object.assign({}, config.keys,    next.keys    || {}),
+      models:  Object.assign({}, config.models,  next.models  || {}),
+      keyring: Object.assign({}, CONFIG_DEFAULTS.keyring, config.keyring, next.keyring || {})
+    });
+    /* The legacy field follows the active key, for anything still reading it. */
+    config.apiKey = activeKey();
     try{
       localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
     } catch (err){ /* storage unavailable — config lasts this session only */ }
@@ -284,15 +381,15 @@
   }
 
   /* ── Direct: Google Generative Language API ─────────────────── */
-  async function sendViaGemini({ system, turns, temperature, signal }){
-    if (!config.apiKey) throw new Error("Direct Gemini needs an API key — add one in Engine configuration.");
+  async function sendViaGemini({ system, turns, temperature, signal, thinking }){
+    if (!activeKey()) throw new Error("Direct Gemini needs a Gemini key — add one in Engine configuration.");
 
     const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
                 encodeURIComponent(config.model) + ":generateContent";
 
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": config.apiKey },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": activeKey() },
       signal,
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
@@ -300,12 +397,12 @@
           role: m.role === "assistant" ? "model" : "user",
           parts: [{ text: m.content }]
         })),
-        generationConfig: {
+        generationConfig: Object.assign({
           temperature: temperature,
           maxOutputTokens: config.maxTokens,
           topP: 0.9,
           topK: 40
-        }
+        }, thinking ? { thinkingConfig: thinking } : {})
       })
     });
 
@@ -326,13 +423,13 @@
 
   /* ── Direct: OpenRouter ─────────────────────────────────────── */
   async function sendViaOpenRouter({ system, turns, temperature, signal }){
-    if (!config.apiKey) throw new Error("OpenRouter needs an API key — add one in Engine configuration.");
+    if (!activeKey()) throw new Error("OpenRouter needs an OpenRouter key — add one in Engine configuration.");
 
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + config.apiKey,
+        "Authorization": "Bearer " + activeKey(),
         "X-Title": "LifeHub Poppy"
       },
       signal,
@@ -357,7 +454,7 @@
   }
 
   /* ── Your Express server ────────────────────────────────────── */
-  async function sendViaServer({ system, turns, temperature, signal }){
+  async function sendViaServer({ system, turns, temperature, signal, thinking }){
     let res;
     try{
       res = await fetch(config.serverUrl, {
@@ -370,7 +467,8 @@
           tokenLimit: config.tokenLimit,
           maxTokens: config.maxTokens,
           temperature: temperature
-        }, config.apiKey ? { apiKey: config.apiKey } : {}))
+        }, activeKey() ? { apiKey: activeKey() } : {},
+           thinking ? { thinkingConfig: thinking } : {}))
       });
     } catch (err){
       if (err && err.name === "AbortError") throw err;
@@ -484,11 +582,13 @@
          evaluate() is deliberately still called for those modes. Skipping
          it would desync the turn counter that cooldowns count in, and
          she'd stop understanding what Jen was referring to at all. */
+      const t0 = performance.now();
       if (cfg.liveData !== false &&
           ev && ev.fetchTargets && ev.fetchTargets.length && window.POPPY_FETCH){
         const live = await window.POPPY_FETCH.run(ev.fetchTargets);
         if (live) system += "\n\n" + live;
       }
+      const t1 = performance.now();
 
       const asRole = (m) => (m.role === "poppy" || m.role === "assistant" || m.role === "model")
         ? "assistant" : "user";
@@ -503,14 +603,44 @@
         if (!turns.length) turns = [{ role: "user", content: text }];
       }
 
-      const payload = { system, turns, temperature, signal };
+      /* OpenRouter has its own reasoning controls and model names; this
+         only speaks Google's, so it's left alone there. */
+      const thinking = config.connection === "openrouter" ? null
+        : thinkingConfigFor(config.model, config.thinking);
 
-      if (config.connection === "gemini")     return sendViaGemini(payload);
-      if (config.connection === "openrouter") return sendViaOpenRouter(payload);
-      return sendViaServer(payload);
+      const payload = { system, turns, temperature, signal, thinking };
+
+      const route = config.connection === "gemini"     ? sendViaGemini
+                  : config.connection === "openrouter" ? sendViaOpenRouter
+                  : sendViaServer;
+      const reply = await route(payload);
+
+      /* Where the wait went, every message. Live data is the Firebase
+         reads before the model is asked; model is the whole round trip,
+         thinking included. The engine timing is what a thinking change
+         moves; the live-data timing is what it can't. */
+      const t2 = performance.now();
+      console.info("Poppy ⏱ live data " + Math.round(t1 - t0) + " ms · model " +
+        Math.round(t2 - t1) + " ms · " + config.model + " · thinking " +
+        (thinking ? JSON.stringify(thinking) : "model default") +
+        " · prompt ~" + Math.round(system.length / 4) + " tokens");
+
+      return reply;
     },
 
-    getConfig(){ return Object.assign({}, config); },
+    thinkingConfigFor,
+
+    getConfig(){
+      const ring = Object.assign({}, CONFIG_DEFAULTS.keyring, config.keyring);
+      return Object.assign({}, config, {
+        keys: Object.assign({}, config.keys),
+        models: Object.assign({}, config.models),
+        keyring: {
+          gemini:     (ring.gemini || []).map(k => Object.assign({}, k)),
+          openrouter: (ring.openrouter || []).map(k => Object.assign({}, k))
+        }
+      });
+    },
     setConfig(next){ return saveConfig(next); },
     configDefaults(){ return Object.assign({}, CONFIG_DEFAULTS); }
   };

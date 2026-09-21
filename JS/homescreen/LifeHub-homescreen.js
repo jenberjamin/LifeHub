@@ -377,7 +377,9 @@ function saveState(){
       base: SLIDES.base,
       color: PAINT.index,
       mode: CHAT.mode ? CHAT.mode.id : null,
-      voice: { on: VOICE.on, uri: VOICE.uri, rate: VOICE.rate, pitch: VOICE.pitch }
+      voice: { on: VOICE.on, uri: VOICE.uri, rate: VOICE.rate, pitch: VOICE.pitch,
+               engine: VOICE.engine, gvoice: VOICE.gvoice, gmodel: VOICE.gmodel,
+               gstyle: VOICE.gstyle, gkey: VOICE.gkey }
     }));
   } catch (err){ /* storage unavailable — preferences just won't persist */ }
 }
@@ -398,6 +400,9 @@ function loadState(){
       if (typeof s.voice.uri === "string") VOICE.uri = s.voice.uri;
       if (typeof s.voice.rate === "number") VOICE.rate = s.voice.rate;
       if (typeof s.voice.pitch === "number") VOICE.pitch = s.voice.pitch;
+      ["engine", "gvoice", "gmodel", "gstyle", "gkey"].forEach(k => {
+        if (typeof s.voice[k] === "string") VOICE[k] = s.voice[k];
+      });
     }
   } catch (err){ /* unreadable — fall back to defaults */ }
 }
@@ -524,6 +529,14 @@ function applyChatSkin(ink){
   root.setProperty("--chat-her",     light ? "rgba(255,255,255,.62)" : rgba(text, 0.09));
   root.setProperty("--chat-her-line", rgba(text, light ? 0.14 : 0.12));
   root.setProperty("--chat-scroll",  rgba(text, 0.28));
+
+  /* Errors. These used to be a fixed pale pink, which only reads on a
+     dark panel — on the light ones (White, Cream, Pastel Green) it was
+     pink on pink. Same rule as the rest: light panel, dark text.
+     Deep red on a faint red wash, or soft pink on a deeper one. */
+  root.setProperty("--chat-err-ink",  light ? "#8f1426" : "#ffc2c8");
+  root.setProperty("--chat-err-bg",   light ? "rgba(224,56,76,.10)" : "rgba(255,90,106,.16)");
+  root.setProperty("--chat-err-line", light ? "rgba(160,24,44,.38)" : "rgba(255,90,106,.40)");
 }
 
 function applyPaint(){
@@ -976,6 +989,9 @@ async function sendMessage(){
   autoGrow();
   stopDictation();
   stopSpeaking();
+  /* Open the line to Google's voice while Poppy thinks, so the reply's
+     audio request doesn't also pay for the connection. */
+  if (VOICE.on && VOICE.engine === "gemini" && window.POPPY_VOICE) window.POPPY_VOICE.warm();
   addMessage("user", text);
 
   $("emoji-tray").classList.remove("is-open");
@@ -1471,7 +1487,16 @@ const VOICE = {
   pitch: 1,
   voices: [],
   speaking: false,
-  keepAlive: null
+  keepAlive: null,
+
+  /* "gemini" → JS/poppy/LifeHub-poppy-voice.js, falling back to the
+     browser voice whenever it can't answer. "browser" → the voices
+     below only. */
+  engine: "gemini",
+  gvoice: "",       // blank = the voice file's default
+  gmodel: "",
+  gstyle: "",
+  gkey: ""          // blank = the Gemini key in Engine configuration
 };
 
 function voiceSupported(){
@@ -1572,7 +1597,8 @@ function chunk(text){
 }
 
 function stopSpeaking(){
-  if (!voiceSupported()) return;
+  if (window.POPPY_VOICE) window.POPPY_VOICE.stop();
+  if (!voiceSupported()){ VOICE.speaking = false; refreshVoiceButton(); return; }
   try{ window.speechSynthesis.cancel(); } catch (err){ /* nothing queued */ }
   clearInterval(VOICE.keepAlive);
   VOICE.keepAlive = null;
@@ -1580,10 +1606,73 @@ function stopSpeaking(){
   refreshVoiceButton();
 }
 
-function speak(text){
-  if (!voiceSupported()) return;
+/* Is the natural voice usable at all? The file loaded and a key exists. */
+function geminiVoiceReady(){
+  return VOICE.engine === "gemini" && !!window.POPPY_VOICE &&
+         window.POPPY_VOICE.hasKey(VOICE.gkey);
+}
+
+/* One toast per kind of failure per session. Running out of quota
+   shouldn't announce itself on every single reply. */
+const VOICE_WARNED = {};
+
+/* `report`, if given, is told what actually spoke — the Test button uses
+   it so a silent fallback can never pass for "all the voices sound the
+   same". Called with (engine, detail). */
+function speak(text, report){
   const clean = speakable(text);
   if (!clean) return;
+  const tell = (engine, detail) => { if (report) try { report(engine, detail); } catch (e) {} };
+
+  stopSpeaking();
+
+  if (VOICE.engine !== "gemini" || !window.POPPY_VOICE){
+    speakBrowser(clean);
+    tell("browser", window.POPPY_VOICE ? "" : "the Gemini voice file didn't load");
+    return;
+  }
+
+  VOICE.speaking = true;
+  refreshVoiceButton();
+
+  /* Settings are read here, synchronously — the Test button relies on
+     that when it swaps them in and straight back out. */
+  const voiceName = VOICE.gvoice || window.POPPY_VOICE.defaults.voice;
+  window.POPPY_VOICE.say(clean, {
+    voice: voiceName,
+    model: VOICE.gmodel || undefined,
+    style: VOICE.gstyle || undefined,
+    key:   VOICE.gkey,
+    rate:  VOICE.rate
+  }).then(() => {
+    VOICE.speaking = false;
+    refreshVoiceButton();
+    tell("gemini", voiceName);
+  }).catch(err => {
+    /* Cut off on purpose — stopSpeaking() already tidied up. */
+    if (err && err.name === "AbortError") return;
+    const why = (err && err.message) || "The natural voice failed.";
+
+    /* Always in the console; the toast only once per session, unless
+       this is a Test — then the panel says it every time. */
+    console.warn("[Poppy voice] fell back to the browser voice —", why);
+    if (!report && !VOICE_WARNED[why]){
+      VOICE_WARNED[why] = true;
+      flashToast(why + " Using the browser voice.");
+    }
+    VOICE.speaking = false;
+    /* remaining: what's still unsaid. "" means part was heard and the
+       rest can't be pinned to words — better silent than a repeat. */
+    const rest = (err && typeof err.remaining === "string") ? err.remaining : clean;
+    if (rest) speakBrowser(rest); else refreshVoiceButton();
+    tell("browser", why);
+  });
+}
+
+/* The browser's own voices. Unchanged from before the Gemini voice — it
+   is the fallback, so it has to keep working exactly as it did. */
+function speakBrowser(clean){
+  if (!voiceSupported()){ refreshVoiceButton(); return; }
 
   stopSpeaking();
   const voice = pickVoice();
@@ -1634,7 +1723,7 @@ function refreshVoiceButton(){
 }
 
 function toggleVoice(){
-  if (!voiceSupported()){ flashToast("No speech synthesis here."); return; }
+  if (!voiceSupported() && !geminiVoiceReady()){ flashToast("No speech synthesis here."); return; }
   if (VOICE.speaking){ stopSpeaking(); return; }
   VOICE.on = !VOICE.on;
   refreshVoiceButton();
@@ -1686,49 +1775,166 @@ function buildVoiceList(){
   sel.value = current;
 }
 
+/* The Gemini lists come from the voice file, so they're built on first
+   open rather than hard-coded here. */
+function buildGeminiLists(){
+  const PV = window.POPPY_VOICE;
+  const vsel = $("cfg-gvoice"), msel = $("cfg-gmodel");
+  if (!PV || vsel.options.length) return;
+
+  const group = (label, list) => {
+    const g = document.createElement("optgroup");
+    g.label = label;
+    list.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.name;
+      opt.textContent = v.name + " — " + v.feel;
+      g.appendChild(opt);
+    });
+    vsel.appendChild(g);
+  };
+  group("Suggested for Poppy", PV.voices.filter(v => v.suggested));
+  group("More voices", PV.voices.filter(v => !v.suggested));
+
+  PV.models.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = m.label;
+    msel.appendChild(opt);
+  });
+}
+
+/* Show only the settings that apply to the chosen engine. Pitch has no
+   meaning for Gemini — how she sounds is the direction line instead. */
+function showVoiceEngine(engine){
+  const gemini = engine === "gemini";
+  $("voice-gemini").hidden = !gemini;
+  $("voice-browser").hidden = gemini;
+
+  const note = $("voice-note");
+  note.className = "ov-note";
+  if (gemini && !window.POPPY_VOICE){
+    note.textContent = "The Gemini voice file didn't load — she'll use the browser voice.";
+  } else if (gemini){
+    note.textContent = "Natural voices from Gemini. If Gemini can't answer (no key, out of " +
+      "quota, offline), she falls back to the browser voice for that reply. " +
+      "Fastest with 3.1 Flash at speed 1.00: she streams, starting in about a " +
+      "second, one request per reply. Other models or speeds wait for each " +
+      "clip, up to three requests.";
+  } else {
+    note.textContent = "✦ marks natural voices. If none appear, open this in Edge or " +
+      "Lively — they expose neural voices that Chrome doesn't.";
+  }
+}
+
+/* The panel's current settings, as VOICE fields. Test and Save both
+   read through this so they can't disagree. */
+function voicePanelValues(){
+  return {
+    engine: $("cfg-voice-engine").value,
+    uri:    $("cfg-voice").value,
+    rate:   parseFloat($("cfg-rate").value) || 1,
+    pitch:  parseFloat($("cfg-pitch").value) || 1,
+    gvoice: $("cfg-gvoice").value,
+    gmodel: $("cfg-gmodel").value,
+    gstyle: $("cfg-gstyle").value.trim()
+  };
+}
+
+/* The voice has no key box of its own any more — it uses the Gemini key
+   in Engine configuration. This says whether there is one. */
+function refreshVoiceKeyNote(){
+  const note = $("voice-key-note");
+  if (!note) return;
+  const has = !!(window.POPPY_VOICE && window.POPPY_VOICE.hasKey(""));
+  note.className = "ov-note" + (has ? "" : " bad");
+  note.textContent = has
+    ? "Set — the voice uses the same key as the chat, kept in Engine configuration."
+    : "Not set yet. The voice and the chat share one Gemini key — add it in Engine configuration.";
+}
+
+/* Before 2026-09-21 the voice had its own key box. Whatever was typed
+   there moves to Engine configuration once, so nothing needs re-entering
+   and there's only ever one place to change it. */
+function migrateVoiceKey(){
+  if (!VOICE.gkey || !window.POPPY) return;
+  const cfg = POPPY.getConfig();
+  if (!(cfg.keys && cfg.keys.gemini)) POPPY.setConfig({ keys: { gemini: VOICE.gkey } });
+  VOICE.gkey = "";
+  saveState();
+}
+
 function openVoicePanel(){
   loadVoices();
+  buildGeminiLists();
+  const PV = window.POPPY_VOICE;
+  const d = PV ? PV.defaults : {};
+
+  $("cfg-voice-engine").value = VOICE.engine === "browser" ? "browser" : "gemini";
+  $("cfg-gvoice").value = VOICE.gvoice || d.voice || "";
+  $("cfg-gmodel").value = VOICE.gmodel || d.model || "";
+  $("cfg-gstyle").value = VOICE.gstyle || d.style || "";
+  refreshVoiceKeyNote();
+
   $("cfg-voice").value = VOICE.uri;
   $("cfg-rate").value = VOICE.rate;
   $("cfg-pitch").value = VOICE.pitch;
   $("rate-out").textContent = Number(VOICE.rate).toFixed(2) + "×";
   $("pitch-out").textContent = Number(VOICE.pitch).toFixed(2);
   $("voice-auto").checked = VOICE.on;
+  showVoiceEngine($("cfg-voice-engine").value);
   $("voice-panel").classList.add("is-open");
 }
 
 /* ---------------- engine configuration ---------------- */
 
+/* Gemini ids — used by both the Gemini and the Server connection. Flash
+   models first: they're the ones with a free tier that lasts the day. */
 const MODEL_CHIPS = [
-  "gemini-2.5-pro",
-  "gemini-3.1-pro-preview",
+  "gemini-3.5-flash",
   "gemini-3.6-flash",
-  "gemini-3.5-flash"
+  "gemini-3.5-flash-lite",
+  "gemini-3.8-flash"
 ];
 
 const CONNECTIONS = [
   { id: "server",     label: "Server",     note: "Uses your Express server. Required for Vertex." },
-  { id: "gemini",     label: "Gemini",     note: "Straight to Google. Needs an API key, no server." },
-  { id: "openrouter", label: "OpenRouter", note: "Straight to OpenRouter. Use the full provider/model id." }
+  { id: "gemini",     label: "Gemini",     note: "Straight to Google with your Gemini key. No server needed — works on the TV too." },
+  { id: "openrouter", label: "OpenRouter", note: "Straight to OpenRouter. Pick a free model from the list, or type any id." }
 ];
+
+/* While the panel is open, each connection's model is kept here, so
+   switching Gemini → OpenRouter → Gemini brings the Gemini model back
+   instead of leaving an OpenRouter id in the box. Saved on Save. */
+let ENGINE_DRAFT = { models: {} };
 
 function currentConnection(){
   const active = $("cfg-conn").querySelector(".is-active");
   return active ? active.dataset.conn : "server";
 }
 
-/* The server route can borrow the server's own key, the direct routes
-   can't — so the form has to say which it is. */
+function showFld(id, on){ const el = $(id); if (el) el.style.display = on ? "" : "none"; }
+
+/* Only the fields that apply to the chosen connection. The Gemini key
+   always shows: the voice uses it whichever connection the chat is on. */
 function refreshConnFields(){
   const conn = currentConnection();
   const meta = CONNECTIONS.find(c => c.id === conn) || CONNECTIONS[0];
+  const or = conn === "openrouter";
 
-  $("fld-url").style.display = conn === "server" ? "" : "none";
-  $("key-label").textContent = conn === "server" ? "Custom API key" : "API key (required)";
+  showFld("fld-url", conn === "server");
+  showFld("fld-key-openrouter", or);
+  showFld("fld-or-models", or);
+  showFld("cfg-chips", !or);
+  const think = $("cfg-thinking") && $("cfg-thinking").closest(".fld");
+  if (think) think.style.display = or ? "none" : "";   // Google-only setting
+
   $("cfg-key").placeholder = conn === "server"
-    ? "Leave empty to use the server default"
-    : "Required for this connection";
+    ? "Optional for Vertex models — the voice still needs it"
+    : "From aistudio.google.com/apikey";
+  $("cfg-model").placeholder = or ? "e.g. google/gemma-4-31b-it:free" : "gemini-3.5-flash";
 
+  if (or) loadOpenRouterFree();
   if (!$("engine-note").classList.contains("bad")) setEngineNote(meta.note);
 }
 
@@ -1742,9 +1948,14 @@ function buildConnChips(){
     chip.dataset.conn = c.id;
     chip.textContent = c.label;
     chip.addEventListener("click", () => {
+      /* Park the model typed for the connection being left, then bring
+         back the one remembered for the connection being opened. */
+      ENGINE_DRAFT.models[currentConnection()] = $("cfg-model").value.trim();
       [...box.children].forEach(x => x.classList.remove("is-active"));
       chip.classList.add("is-active");
+      $("cfg-model").value = ENGINE_DRAFT.models[c.id] || "";
       setEngineNote("");
+      refreshChips();
       refreshConnFields();
     });
     box.appendChild(chip);
@@ -1752,16 +1963,24 @@ function buildConnChips(){
 }
 
 function fillEngineForm(cfg){
+  const conn = cfg.connection || "server";
+  ENGINE_DRAFT = { models: Object.assign({}, cfg.models || {}) };
+  if (!ENGINE_DRAFT.models[conn]) ENGINE_DRAFT.models[conn] = cfg.model || "";
+
   [...$("cfg-conn").children].forEach(chip => {
-    chip.classList.toggle("is-active", chip.dataset.conn === (cfg.connection || "server"));
+    chip.classList.toggle("is-active", chip.dataset.conn === conn);
   });
+  const keys = cfg.keys || {};
   $("cfg-url").value    = cfg.serverUrl || "";
-  $("cfg-key").value    = cfg.apiKey || "";
-  $("cfg-model").value  = cfg.model || "";
+  $("cfg-key").value    = keys.gemini || "";
+  $("cfg-key-or").value = keys.openrouter || "";
+  $("cfg-model").value  = ENGINE_DRAFT.models[conn] || "";
   $("cfg-budget").value = cfg.tokenLimit;
   $("cfg-max").value    = cfg.maxTokens;
+  $("cfg-thinking").value = cfg.thinking || "quick";
   refreshChips();
   refreshConnFields();
+  renderKeyrings();
 }
 
 function refreshChips(){
@@ -1769,6 +1988,9 @@ function refreshChips(){
   [...$("cfg-chips").children].forEach(chip => {
     chip.classList.toggle("is-active", chip.dataset.model === current);
   });
+  const sel = $("cfg-or-models");
+  if (sel && [...sel.options].some(o => o.value === current)) sel.value = current;
+  else if (sel) sel.value = "";
 }
 
 function buildChips(){
@@ -1788,6 +2010,185 @@ function buildChips(){
   });
 }
 
+/* ── OpenRouter's free models, live ──────────────────────────────
+   Their free list changes month to month — 21 models on 2026-09-21 —
+   so it's read from openrouter.ai when the panel needs it rather than
+   written down here to go stale. Public, no key, allowed from a page.
+
+   Google's own (Gemma) are grouped first; the rest newest first.
+   Classifiers ("content-safety", "guard") are left out — they rate
+   text, they don't chat. */
+let OR_FREE = null;
+let OR_LOADING = null;
+
+function loadOpenRouterFree(){
+  if (OR_FREE) return Promise.resolve(fillOpenRouterSelect());
+  if (OR_LOADING) return OR_LOADING;
+  OR_LOADING = fetch("https://openrouter.ai/api/v1/models")
+    .then(res => res.ok ? res.json() : Promise.reject(new Error("HTTP " + res.status)))
+    .then(data => {
+      OR_FREE = ((data && data.data) || [])
+        .filter(m => /:free$/.test(m.id) && !/safety|guard/i.test(m.id))
+        .sort((a, b) => (b.created || 0) - (a.created || 0));
+      fillOpenRouterSelect();
+    })
+    .catch(() => {
+      $("cfg-or-models").innerHTML =
+        '<option value="">Couldn’t reach OpenRouter — type a model id below</option>';
+    })
+    .finally(() => { OR_LOADING = null; });
+  return OR_LOADING;
+}
+
+function fillOpenRouterSelect(){
+  const sel = $("cfg-or-models");
+  sel.innerHTML = "";
+  const pick = document.createElement("option");
+  pick.value = "";
+  pick.textContent = OR_FREE.length ? "Pick a free model…" : "No free models listed right now";
+  sel.appendChild(pick);
+
+  const size = n => n >= 1e6 ? Math.round(n / 1e6) + "M" : Math.round(n / 1e3) + "k";
+  const group = (label, list) => {
+    if (!list.length) return;
+    const g = document.createElement("optgroup");
+    g.label = label;
+    list.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      const until = m.expiration_date ? " · free until " + String(m.expiration_date).slice(0, 10) : "";
+      opt.textContent = (m.name || m.id).replace(/\s*\(free\)\s*$/i, "") +
+                        " · " + size(m.context_length || 0) + " context" + until;
+      g.appendChild(opt);
+    });
+    sel.appendChild(g);
+  };
+  group("From Google", OR_FREE.filter(m => /^google\//.test(m.id)));
+  group("Everyone else — newest first", OR_FREE.filter(m => !/^google\//.test(m.id)));
+  refreshChips();
+}
+
+/* ── The key drawer ──────────────────────────────────────────────
+   Keys saved under a name, one drawer per provider, sitting under its
+   key box. Picking one puts it to work immediately — no Save needed,
+   since the moment you want this is the moment a 429 just landed.
+
+   Only the last four characters are ever shown. The drawer lives in
+   the same browser storage the key box always used, so it's no more
+   (and no less) exposed than the single key was.
+
+   Keys from the SAME Google project share one quota — switching between
+   those gains nothing. Only keys from different projects are separate. */
+const KEY_SHAPE = { gemini: /^AIza/, openrouter: /^sk-or-/i };
+const maskKey = k => "••••" + String(k || "").slice(-4);
+
+function keyringOf(provider){
+  return ((POPPY.getConfig().keyring || {})[provider] || []).slice();
+}
+function storeKeyring(provider, list){
+  POPPY.setConfig({ keyring: { [provider]: list } });
+}
+
+function renderKeyring(box){
+  const provider = box.dataset.provider;
+  const input = $(box.dataset.input);
+  const current = input.value.trim();
+  let list = keyringOf(provider);
+
+  /* The key already in use goes in the drawer on first sight, so it's
+     there to come back to after trying another. */
+  if (!list.length && current && KEY_SHAPE[provider].test(current)){
+    list = [{ name: "Key 1", key: current }];
+    storeKeyring(provider, list);
+  }
+
+  const sel = box.querySelector(".kr-list");
+  sel.innerHTML = "";
+  const head = document.createElement("option");
+  head.value = "";
+  head.textContent = list.length
+    ? "Saved keys (" + list.length + ") — pick one to switch to it"
+    : "Drawer is empty — paste a key above, then Save to drawer";
+  sel.appendChild(head);
+
+  let inUse = "";
+  list.forEach((k, i) => {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    const on = k.key === current;
+    if (on) inUse = String(i);
+    opt.textContent = (on ? "✓ " : "") + k.name + " · " + maskKey(k.key) + (on ? " · in use" : "");
+    sel.appendChild(opt);
+  });
+  sel.value = inUse;
+  box.querySelector(".kr-del").disabled = !list.length;
+}
+
+function renderKeyrings(){
+  document.querySelectorAll("#engine-panel .keyring").forEach(renderKeyring);
+}
+
+function wireKeyring(box){
+  const provider = box.dataset.provider;
+  const input = $(box.dataset.input);
+  const sel = box.querySelector(".kr-list");
+  const nameBox = box.querySelector(".kr-name");
+  const label = provider === "gemini" ? "Gemini" : "OpenRouter";
+
+  sel.addEventListener("change", () => {
+    const k = keyringOf(provider)[parseInt(sel.value, 10)];
+    if (!k) return;
+    input.value = k.key;
+    POPPY.setConfig({ keys: { [provider]: k.key } });
+    refreshVoiceKeyNote();
+    setEngineNote("Now using “" + k.name + "” for " + label +
+      (provider === "gemini" ? " — chat and voice." : "."), "ok");
+    renderKeyring(box);
+  });
+
+  box.querySelector(".kr-add").addEventListener("click", () => {
+    const key = input.value.trim();
+    if (!key){ setEngineNote("Paste a " + label + " key in the box first.", "bad"); return; }
+    if (!KEY_SHAPE[provider].test(key)){
+      setEngineNote("That doesn't look like a " + label + " key" +
+        (provider === "gemini" ? " (they start with AIza)." : " (they start with sk-or-)."), "bad");
+      return;
+    }
+    const list = keyringOf(provider);
+    const typed = nameBox.value.trim();
+    const dupe = list.find(k => k.key === key);
+    if (dupe){
+      if (!typed){ setEngineNote("Already in the drawer as “" + dupe.name + "”.", "bad"); return; }
+      dupe.name = typed;
+      setEngineNote("Renamed to “" + typed + "”.", "ok");
+    } else {
+      list.push({ name: typed || "Key " + (list.length + 1), key });
+      setEngineNote("Saved to the drawer as “" + list[list.length - 1].name + "”.", "ok");
+    }
+    storeKeyring(provider, list);
+    /* Saving it also switches to it — same as picking it — so the ✓ in
+       the list is never ahead of what's actually in use. */
+    POPPY.setConfig({ keys: { [provider]: key } });
+    refreshVoiceKeyNote();
+    nameBox.value = "";
+    renderKeyring(box);
+  });
+
+  box.querySelector(".kr-del").addEventListener("click", () => {
+    const list = keyringOf(provider);
+    /* The one picked in the list, or else the one in use. */
+    let i = sel.value !== "" ? parseInt(sel.value, 10) : list.findIndex(k => k.key === input.value.trim());
+    if (i < 0 || !list[i]){ setEngineNote("Pick a key in the list to remove.", "bad"); return; }
+    const gone = list.splice(i, 1)[0];
+    storeKeyring(provider, list);
+    setEngineNote("Removed “" + gone.name + "” from the drawer. The key box is unchanged.", "ok");
+    renderKeyring(box);
+  });
+
+  /* Typing or pasting in the key box moves the ✓ to match. */
+  input.addEventListener("input", () => renderKeyring(box));
+}
+
 function openEngine(){
   fillEngineForm(POPPY.getConfig());
   setEngineNote("");
@@ -1803,14 +2204,28 @@ function setEngineNote(text, kind){
 function saveEngine(){
   const conn = currentConnection();
   const url = $("cfg-url").value.trim();
-  const key = $("cfg-key").value.trim();
+  const gkey = $("cfg-key").value.trim();
+  const okey = $("cfg-key-or").value.trim();
 
   if (conn === "server" && !/^https?:\/\//i.test(url)){
     setEngineNote("Server URL needs to start with http:// or https://", "bad");
     return;
   }
-  if (conn !== "server" && !key){
-    setEngineNote("This connection talks to the provider directly, so it needs a key.", "bad");
+  if (conn === "gemini" && !gkey){
+    setEngineNote("The Gemini connection needs your Gemini key.", "bad");
+    return;
+  }
+  if (conn === "openrouter" && !okey){
+    setEngineNote("The OpenRouter connection needs your OpenRouter key.", "bad");
+    return;
+  }
+  /* The most common mix-up, caught before it becomes a 401. */
+  if (gkey && /^sk-or-/i.test(gkey)){
+    setEngineNote("That's an OpenRouter key in the Gemini box.", "bad");
+    return;
+  }
+  if (okey && /^AIza/.test(okey)){
+    setEngineNote("That's a Google key in the OpenRouter box.", "bad");
     return;
   }
   const model = $("cfg-model").value.trim();
@@ -1818,14 +2233,17 @@ function saveEngine(){
     setEngineNote("Pick a model, or type one in.", "bad");
     return;
   }
+  ENGINE_DRAFT.models[conn] = model;
 
   POPPY.setConfig({
     connection: conn,
     serverUrl: url,
-    apiKey: key,
+    keys: { gemini: gkey, openrouter: okey },
     model,
+    models: ENGINE_DRAFT.models,
     tokenLimit: Math.max(1000, parseInt($("cfg-budget").value, 10) || 30000),
-    maxTokens: Math.max(256, parseInt($("cfg-max").value, 10) || 8000)
+    maxTokens: Math.max(256, parseInt($("cfg-max").value, 10) || 8000),
+    thinking: $("cfg-thinking").value || "quick"
   });
 
   setEngineNote("Saved.", "ok");
@@ -1896,6 +2314,21 @@ function startChat(){
     setEngineNote("Defaults restored — press Save to keep them.");
   });
   $("cfg-model").addEventListener("input", refreshChips);
+  document.querySelectorAll("#engine-panel .keyring").forEach(wireKeyring);
+
+  /* The Voice panel's way to its key: close Voice, open Engine, put the
+     cursor in the Gemini key box. */
+  $("voice-key-btn").addEventListener("click", () => {
+    $("voice-panel").classList.remove("is-open");
+    openEngine();
+    setTimeout(() => { try { $("cfg-key").focus(); } catch (e) {} }, 60);
+  });
+
+  /* Picking from OpenRouter's free list fills the model box — no typing. */
+  $("cfg-or-models").addEventListener("change", (e) => {
+    if (e.target.value) $("cfg-model").value = e.target.value;
+    refreshChips();
+  });
 
   $("mode-btn").addEventListener("click", () => {
     const menu = $("mode-menu");
@@ -1919,10 +2352,11 @@ function startChat(){
   $("mic-btn").addEventListener("click", toggleDictation);
 
   /* voice */
+  migrateVoiceKey();
   if (voiceSupported()){
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
-  } else {
+  } else if (!window.POPPY_VOICE){
     $("voice-btn").classList.add("is-off");
     $("voice-btn").title = "No speech synthesis here.";
   }
@@ -1948,20 +2382,32 @@ function startChat(){
     $("pitch-out").textContent = Number(e.target.value).toFixed(2);
   });
 
+  $("cfg-voice-engine").addEventListener("change", (e) => showVoiceEngine(e.target.value));
+
   $("voice-test").addEventListener("click", () => {
-    /* preview with the settings on screen, not the saved ones */
-    const before = { uri: VOICE.uri, rate: VOICE.rate, pitch: VOICE.pitch };
-    VOICE.uri = $("cfg-voice").value;
-    VOICE.rate = parseFloat($("cfg-rate").value);
-    VOICE.pitch = parseFloat($("cfg-pitch").value);
-    speak("Hi Jen — this is how I sound.");
+    /* preview with the settings on screen, not the saved ones. speak()
+       reads them synchronously, so swapping straight back is safe. */
+    const next = voicePanelValues();
+    const before = {};
+    Object.keys(next).forEach(k => { before[k] = VOICE[k]; });
+    Object.assign(VOICE, next);
+    const note = $("voice-note");
+    note.className = "ov-note";
+    note.textContent = next.engine === "gemini" ? "Asking Gemini for " + (next.gvoice || "the default voice") + "…" : "";
+    speak("Hi Jen! This is how I sound now. Better, right?", (engine, detail) => {
+      if (engine === "gemini"){
+        note.className = "ov-note ok";
+        note.textContent = "That was Gemini — " + detail + ".";
+      } else if (next.engine === "gemini"){
+        note.className = "ov-note bad";
+        note.textContent = "That was the BROWSER voice, not Gemini: " + (detail || "unknown reason");
+      }
+    });
     Object.assign(VOICE, before);
   });
 
   $("voice-save").addEventListener("click", () => {
-    VOICE.uri = $("cfg-voice").value;
-    VOICE.rate = parseFloat($("cfg-rate").value) || 1;
-    VOICE.pitch = parseFloat($("cfg-pitch").value) || 1;
+    Object.assign(VOICE, voicePanelValues());
     VOICE.on = $("voice-auto").checked;
     stopSpeaking();
     refreshVoiceButton();

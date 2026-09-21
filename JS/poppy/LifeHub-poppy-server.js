@@ -82,7 +82,7 @@ const PROVIDERS = {
   vertex: {
     label: "Vertex AI",
     needsKey: false,
-    async send({ model, system, turns, temperature, maxTokens }){
+    async send({ model, system, turns, temperature, maxTokens, thinkingConfig }){
       const ai = vertexClient();
       const result = await ai.models.generateContent({
         model,
@@ -90,13 +90,13 @@ const PROVIDERS = {
           role: m.role === "assistant" ? "model" : "user",
           parts: [{ text: m.content }]
         })),
-        config: {
+        config: Object.assign({
           systemInstruction: system,
           temperature,
           maxOutputTokens: maxTokens,
           topP: 0.9,
           topK: 40
-        }
+        }, thinkingConfig ? { thinkingConfig } : {})
       });
       const text = result && result.text;
       if (!text) throw new Error("Vertex returned an empty reply (blocked or truncated).");
@@ -109,7 +109,7 @@ const PROVIDERS = {
   gemini: {
     label: "Gemini (AI Studio)",
     envKey: "GEMINI_API_KEY",
-    async send({ model, system, turns, temperature, maxTokens, apiKey }){
+    async send({ model, system, turns, temperature, maxTokens, apiKey, thinkingConfig }){
       const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
                   encodeURIComponent(model) + ":generateContent";
       const data = await postJSON(url, {
@@ -121,12 +121,12 @@ const PROVIDERS = {
           role: m.role === "assistant" ? "model" : "user",
           parts: [{ text: m.content }]
         })),
-        generationConfig: {
+        generationConfig: Object.assign({
           temperature,
           maxOutputTokens: maxTokens,
           topP: 0.9,
           topK: 40
-        }
+        }, thinkingConfig ? { thinkingConfig } : {})
       });
 
       const cand  = data.candidates && data.candidates[0];
@@ -347,6 +347,12 @@ async function handleChat(req, res){
   const body = await readBody(req);
   const { messages, apiKey, model, tokenLimit, temperature, maxTokens } = body;
 
+  /* How long the model may think — worked out per model in the browser
+     (LifeHub-poppy.js, thinkingConfigFor) and passed through untouched.
+     Only Google's two routes understand it; the others never see it. */
+  const thinkingConfig = (body.thinkingConfig && typeof body.thinkingConfig === "object")
+    ? body.thinkingConfig : null;
+
   if (!Array.isArray(messages) || !messages.length){
     return json(res, 400, { error: { message: "No messages sent." } });
   }
@@ -389,7 +395,8 @@ async function handleChat(req, res){
 
   console.log("");
   console.log("→ " + spec.label + (explicit ? "" : " (guessed)") + "  ·  " + modelName);
-  console.log("  temp " + activeTemp + "  ·  max " + activeMax + "  ·  budget " + budget);
+  console.log("  temp " + activeTemp + "  ·  max " + activeMax + "  ·  budget " + budget +
+              "  ·  thinking " + (thinkingConfig ? JSON.stringify(thinkingConfig) : "model default"));
   console.log("  context " + turns.length + "/" + chatHistory.length +
               " message" + (chatHistory.length === 1 ? "" : "s") +
               " (~" + used + " tokens)" + (sliced ? "  ⚠ sliced" : ""));
@@ -401,7 +408,8 @@ async function handleChat(req, res){
     turns,
     temperature: activeTemp,
     maxTokens: activeMax,
-    apiKey: key
+    apiKey: key,
+    thinkingConfig: (provider === "vertex" || provider === "gemini") ? thinkingConfig : null
   });
 
   console.log("← " + text.length + " chars in " + ((Date.now() - started) / 1000).toFixed(1) + "s");

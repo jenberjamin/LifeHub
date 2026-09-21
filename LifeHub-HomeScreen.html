@@ -97,7 +97,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path class="stroked" d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
     </button>
 
-    <button class="ctl" id="ctl-play" type="button" aria-label="Slideshow running" title="Running â€” click to pause">
+    <button class="ctl" id="ctl-play" type="button" aria-label="Slideshow running" title="Running &#8212; click to pause">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
     </button>
 
@@ -239,16 +239,57 @@
           <input type="text" id="cfg-url" spellcheck="false" placeholder="http://localhost:3000/api/chat">
         </label>
 
-        <label class="fld">
-          <span id="key-label">Custom API key</span>
-          <input type="password" id="cfg-key" spellcheck="false" placeholder="Leave empty to use the server default">
+        <!-- Keys live here and only here. The Gemini key also powers
+             Poppy's voice, whichever connection the chat is on. -->
+        <!-- Each key box has a drawer of saved keys under it. Picking one
+             switches to it on the spot; the full key is never shown. -->
+        <div class="fld" id="fld-key-gemini">
+          <span id="key-label">Gemini key (AI Studio) &#183; also Poppy's voice</span>
+          <input type="password" id="cfg-key" spellcheck="false" autocomplete="off" placeholder="From aistudio.google.com/apikey">
+          <div class="keyring" data-provider="gemini" data-input="cfg-key">
+            <select class="kr-list" aria-label="Saved Gemini keys"></select>
+            <div class="kr-row">
+              <input type="text" class="kr-name" spellcheck="false" placeholder="Name it (optional)">
+              <button class="chip kr-add" type="button">Save to drawer</button>
+              <button class="chip kr-del" type="button">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="fld" id="fld-key-openrouter">
+          <span>OpenRouter key</span>
+          <input type="password" id="cfg-key-or" spellcheck="false" autocomplete="off" placeholder="From openrouter.ai/keys">
+          <div class="keyring" data-provider="openrouter" data-input="cfg-key-or">
+            <select class="kr-list" aria-label="Saved OpenRouter keys"></select>
+            <div class="kr-row">
+              <input type="text" class="kr-name" spellcheck="false" placeholder="Name it (optional)">
+              <button class="chip kr-add" type="button">Save to drawer</button>
+              <button class="chip kr-del" type="button">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- OpenRouter: the live list of free models, so nothing has to
+             be typed. Filled from openrouter.ai when this is shown. -->
+        <label class="fld" id="fld-or-models">
+          <span>Free models on OpenRouter</span>
+          <select id="cfg-or-models"><option value="">Loading the list&#8230;</option></select>
         </label>
 
         <label class="fld">
           <span>Model</span>
-          <input type="text" id="cfg-model" spellcheck="false" placeholder="gemini-2.5-pro">
+          <input type="text" id="cfg-model" spellcheck="false" placeholder="gemini-3.5-flash">
         </label>
         <div class="chips" id="cfg-chips"></div>
+
+        <label class="fld">
+          <span>Thinking</span>
+          <select id="cfg-thinking">
+            <option value="quick">Quick &#8212; answers fastest</option>
+            <option value="balanced">Balanced &#8212; a little thought</option>
+            <option value="default">Model default &#8212; slowest</option>
+          </select>
+        </label>
 
         <div class="fld-row">
           <label class="fld">
@@ -286,21 +327,58 @@
         </label>
 
         <label class="fld">
-          <span>Voice</span>
-          <select id="cfg-voice"></select>
+          <span>Engine</span>
+          <select id="cfg-voice-engine">
+            <option value="gemini">Gemini &#8212; natural (needs a Gemini key)</option>
+            <option value="browser">Browser voices</option>
+          </select>
         </label>
 
+        <!-- Gemini: JS/poppy/LifeHub-poppy-voice.js -->
+        <div id="voice-gemini">
+          <label class="fld">
+            <span>Voice</span>
+            <select id="cfg-gvoice"></select>
+          </label>
+
+          <label class="fld">
+            <span>How she should sound</span>
+            <input type="text" id="cfg-gstyle" spellcheck="false">
+          </label>
+
+          <label class="fld">
+            <span>Model</span>
+            <select id="cfg-gmodel"></select>
+          </label>
+
+          <!-- The key lives in Engine configuration, shared with the chat.
+               This button goes straight to it. -->
+          <div class="fld">
+            <span>Gemini key</span>
+            <p class="ov-note" id="voice-key-note"></p>
+            <button class="btn ghost" id="voice-key-btn" type="button">Open the key in Engine configuration</button>
+          </div>
+        </div>
+
+        <!-- Browser voices -->
+        <div id="voice-browser">
+          <label class="fld">
+            <span>Voice</span>
+            <select id="cfg-voice"></select>
+          </label>
+
+          <label class="fld">
+            <span>Pitch <b id="pitch-out">1.00</b></span>
+            <input type="range" id="cfg-pitch" min="0.5" max="1.8" step="0.05">
+          </label>
+        </div>
+
         <label class="fld">
-          <span>Speed <b id="rate-out">1.00Ã—</b></span>
+          <span>Speed <b id="rate-out">1.00&#215;</b></span>
           <input type="range" id="cfg-rate" min="0.5" max="2" step="0.05">
         </label>
 
-        <label class="fld">
-          <span>Pitch <b id="pitch-out">1.00</b></span>
-          <input type="range" id="cfg-pitch" min="0.5" max="1.8" step="0.05">
-        </label>
-
-        <p class="ov-note" id="voice-note">âœ¦ marks natural voices. If none appear, open this in Lively â€” Edge exposes neural voices that Chrome doesn't.</p>
+        <p class="ov-note" id="voice-note"></p>
       </div>
 
       <div class="ov-foot">
@@ -384,6 +462,9 @@
   <script src="JS/poppy/PoppyEngine-core.js"></script>
   <script src="JS/poppy/LifeHub-poppy-prompts.js"></script>
   <script src="JS/poppy/LifeHub-poppy.js"></script>
+  <!-- Poppy's natural voice (Gemini text-to-speech). Optional: without
+       it she uses the browser's voices, same as before. -->
+  <script src="JS/poppy/LifeHub-poppy-voice.js"></script>
 
   <script src="JS/homescreen/LifeHub-homescreen-search.js"></script>
 

@@ -625,9 +625,10 @@ body.is-locked .icon-btn{
 }
 .bubble.err{
   align-self: flex-start;
-  background: rgba(255,90,106,.14);
-  border: 1px solid rgba(255,90,106,.34);
-  color: #ffb3bb;
+  /* Set per theme in applyChatSkin() — light panels get dark red text. */
+  background: var(--chat-err-bg, rgba(255,90,106,.14));
+  border: 1px solid var(--chat-err-line, rgba(255,90,106,.34));
+  color: var(--chat-err-ink, #ffb3bb);
   border-bottom-left-radius: 4px;
 }
 
@@ -832,7 +833,7 @@ body.is-locked .chat{ display: none; }
 /* Errors are the one note you have to be able to read at a glance, so
    this runs lighter and heavier than the rest — 10.5px of thin mid-red
    on a dark panel was near invisible. */
-.ov-note.bad{ color: #ffa2ab; font-weight: 600; }
+.ov-note.bad{ color: var(--chat-err-ink, #ffa2ab); font-weight: 600; }
 
 .ov-foot{
   display: flex;
@@ -845,6 +846,11 @@ body.is-locked .chat{ display: none; }
 
 /* ---- fields ---- */
 .fld{ display: flex; flex-direction: column; gap: 6px; flex: 1; }
+
+/* Voice panel: the Gemini and browser settings swap in and out, and keep
+   the same spacing as the fields around them. */
+#voice-gemini, #voice-browser{ display: flex; flex-direction: column; gap: 11px; }
+#voice-gemini[hidden], #voice-browser[hidden]{ display: none; }
 .fld > span{
   font-size: 9px;
   letter-spacing: .15em;
@@ -866,6 +872,12 @@ body.is-locked .chat{ display: none; }
 .fld input::placeholder{ color: var(--chat-dim, #838a92); }
 .fld input:focus{ border-color: var(--chat-accent, rgba(0,229,255,.6)); }
 .fld-row{ display: flex; gap: 10px; }
+
+/* Key drawer under each key box (Engine configuration). */
+.keyring{ display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.kr-row{ display: flex; gap: 6px; align-items: center; }
+.kr-row .kr-name{ flex: 1; min-width: 0; }
+.kr-row .chip{ white-space: nowrap; }
 
 .chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: -5px; }
 .chip{

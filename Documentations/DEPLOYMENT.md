@@ -106,8 +106,15 @@ cancel it and make a new one.
 
 - The site's plain address (`https://<your-project>.vercel.app/`) opens the
   HomeScreen. `index.html` is the door that sends you there.
-- `JS\lifehub-tv-frame.js` makes pages lay out at 1920 wide on the TV.
-  Add `?tv=debug` to any address to see what the TV reports.
+- `JS\lifehub-tv-frame.js` makes every page look on the TV exactly as it
+  does on the 1920×1080 monitor. On the TV it shows the page inside a
+  1920×1080 "stage" and shrinks the stage to fit the screen, so the CSS
+  never needs TV-specific changes. Desktop, phone and tablet never see it.
+  - Add `?tv=debug` to any address to see what the TV reports. "Page sees"
+    should say 1920×1080.
+  - `?tv=1` / `?tv=0` force it on or off on that device; `?tv=auto` resets.
+  - A new page needs the same `<script>` line, directly under its viewport
+    `<meta>` and before any other script.
 - `sw.js` keeps the HomeScreen running when the Wi-Fi drops. It only runs on
   the live https site, never on localhost or in Lively.
   - **If the TV acts strangely after an update**, open the address with

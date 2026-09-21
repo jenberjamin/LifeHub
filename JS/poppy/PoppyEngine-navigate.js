@@ -19,6 +19,15 @@
    missing was permission and a map — so this file is a resolver, a
    one-line write, and a receipt.
 
+   ── ONE SCREEN, NOT EVERY SCREEN (2026-09-21) ────────────────────
+   Alexa's writes have no device on them, so every open LifeHub page
+   jumps — including the Home Screen Poppy runs on, which took her
+   with it. Poppy's writes now name a device, and only that screen
+   moves. Jen talks to her on the phone or PC; the TV changes.
+
+   The screens list comes from lifehub_screens, which
+   lifehub-navigation-core.js keeps up to date on every page it's on.
+
    ── WHY IT DOESN'T JUST TAKE A URL ───────────────────────────────
    The obvious spec is {"action":"navigate","url":"Trackers/..."} and it
    would be a mistake. A model that can write an arbitrary path into
@@ -79,6 +88,101 @@
   const fileOf = (url) => url.split("/").pop().split("?")[0].split("#")[0];
 
 
+  /* ── Which screens are on ─────────────────────────────────────
+     Added 2026-09-21. lifehub-navigation-core.js keeps one row per
+     device under lifehub_screens — name, page, online — and the
+     server flips it offline when the connection drops.
+
+     Held as a live subscription rather than read per message, because
+     describe() is synchronous: the list has to already be here when
+     the prompt is built. */
+  const SCREENS_NODE = "lifehub_screens";
+  let screens = {};
+  let screensReady = false;
+
+  try {
+    db().ref(SCREENS_NODE).on("value",
+      s => { screens = s.val() || {}; screensReady = true; },
+      e => console.warn("[Poppy navigate] can't see the screens:", e.message));
+  } catch (e) {
+    console.warn("[Poppy navigate] screens list off:", e.message);
+  }
+
+  /* This device. The navigation core on this page made the id. */
+  function myId() {
+    if (window.LIFEHUB_SCREEN) return window.LIFEHUB_SCREEN.id;
+    try { return localStorage.getItem("lifehub.deviceId"); } catch (e) { return null; }
+  }
+
+  /* A row that says online but hasn't been rewritten in half a day is a
+     connection the server never saw close. Rare, but a TV that's been
+     "on" since yesterday is worse than one Poppy admits she can't see. */
+  const STALE_MS = 12 * 60 * 60 * 1000;
+
+  function online() {
+    const now = Date.now();
+    return Object.keys(screens)
+      .map(id => Object.assign({ id: id }, screens[id]))
+      .filter(s => s && s.online && s.name && (!s.at || now - s.at < STALE_MS));
+  }
+
+  /* "Sleep tracker" rather than "LifeHub-tracker-sleep.html". */
+  function pageName(file) {
+    const d = destinations().list.find(x => fileOf(x.url) === file);
+    return d ? d.name : (file || "somewhere");
+  }
+
+  /* Where a jump goes when she didn't say. The TV if it's on — that's
+     the whole point of driving it from here — otherwise this screen. */
+  function defaultScreen() {
+    const me = myId();
+    const tv = online().find(s => s.tv && s.id !== me);
+    return tv || null;
+  }
+
+  const HERE_WORDS = ["here", "this", "this screen", "this one", "me", "my screen"];
+
+  /* Returns { id, name, page, here } or throws something sayable. */
+  function resolveScreen(said) {
+    const me = myId();
+    const q = String(said || "").trim().toLowerCase().replace(/^the\s+/, "");
+
+    if (!q) {
+      const tv = defaultScreen();
+      if (tv) return { id: tv.id, name: tv.name, page: tv.page, here: false };
+      return { id: me, name: "here", page: currentFile(), here: true };
+    }
+
+    if (HERE_WORDS.indexOf(q) !== -1) {
+      return { id: me, name: "here", page: currentFile(), here: true };
+    }
+
+    const want = (q === "television" || q === "telly") ? "tv" : q;
+    const all = online();
+    const hit = all.find(s => String(s.name).toLowerCase() === want) ||
+                all.find(s => want === "tv" && s.tv);
+
+    if (!hit) {
+      const names = all.filter(s => s.id !== me).map(s => s.name)
+        .filter((n, i, a) => a.indexOf(n) === i);
+      throw new Error("I can't see " + (want === "tv" ? "the TV" : "“" + said + "”") +
+        " — it's off, or on a page I can't steer yet (Scribble, See You Latte)." +
+        (names.length ? " Screens I can reach: " + names.join(", ") + "." : ""));
+    }
+    return { id: hit.id, name: hit.id === me ? "here" : hit.name, page: hit.page, here: hit.id === me };
+  }
+
+  /* For the prompt: which screens exist right now, one line. */
+  function screensLine() {
+    const me = myId();
+    if (!screensReady) return "Screens: not known yet — leave `on` out and it goes to this screen.";
+    const rows = online().map(s =>
+      s.name + (s.id === me ? " (this one, where she's typing)" : "") +
+      " — showing " + pageName(s.page));
+    return "Screens showing LifeHub right now: " + (rows.length ? rows.join("; ") : "only this one") + ".";
+  }
+
+
   /* ── The action ───────────────────────────────────────────────── */
 
   function navigate(cmd) {
@@ -102,16 +206,32 @@
       throw new Error("“" + said + "” isn't a screen I can open.");
     }
 
-    if (fileOf(dest.url) === currentFile()) {
+    const screen = resolveScreen(cmd && (cmd.on || cmd.screen || cmd.device));
+    const where = screen.here ? "" : " on the " + screen.name.replace(/^the\s+/i, "");
+
+    if (fileOf(dest.url) === screen.page) {
       /* Not an error — she asked for something reasonable. But the
          listener would wipe the node and do nothing, so the honest
-         receipt is that we're already here. */
-      return "Already on " + dest.name;
+         receipt is that we're already there. */
+      return "Already on " + dest.name + where;
     }
 
+    if (!screen.id) {
+      throw new Error("This screen has no device id — lifehub-navigation-core.js isn't loaded here.");
+    }
+
+    /* device: only that screen jumps; every other LifeHub page ignores it.
+       at: the server's clock, so a TV that was off can tell the command
+       is old when it comes back on, and drop it instead of obeying. */
     return db().ref(NAV_NODE)
-      .set({ action: "navigate", url: dest.url })
-      .then(() => "Opening " + dest.name)
+      .set({
+        action: "navigate",
+        url: dest.url,
+        device: screen.id,
+        at: firebase.database.ServerValue.TIMESTAMP,
+        by: "poppy"
+      })
+      .then(() => "Opening " + dest.name + where)
       .catch(() => { throw new Error("I couldn't reach the database to make the jump."); });
   }
 
@@ -124,6 +244,17 @@
         "You can move Jen between screens. Same fenced block:",
         "",
         '  {"action":"navigate","to":"SLEEP"} — opens the Sleep tracker',
+        '  {"action":"navigate","to":"SLEEP","on":"TV"} — opens it on the TV',
+        '  {"action":"navigate","to":"SLEEP","on":"here"} — opens it on this screen',
+        "",
+        screensLine(),
+        "",
+        "`on` is which screen changes. Use a name from the line above, or",
+        "\"here\" for the screen she's typing on. Leave it out and it goes to " +
+          (defaultScreen() ? "the " + defaultScreen().name : "this screen") + ".",
+        "Sending it \"here\" replaces the page you're running on, so this chat",
+        "closes — only do that when she clearly means this screen. “On the TV”,",
+        "“put it up”, “show it on the big screen” all mean the TV.",
         "",
         "`to` must be one of these ids, exactly as written:",
         "",
