@@ -27,6 +27,9 @@ Read these before deployment, image or TV work:
 - `LifeHub-remote.html` is the phone remote. It writes presses to
   `lifehub_remote/<screen id>`; section 4 of `JS/lifehub-navigation-core.js`
   acts on them, so only pages that load that file respond to it.
+  It installs as its own phone app: `remote-manifest.json`, `icons/remote-*`,
+  and `remote-sw.js` (scoped to that page only, separate from `sw.js`; bump
+  its `VERSION` to force phones to drop the remote's old caches).
 - Poppy's chat calls `http://localhost:3000`, so it doesn't work from the
   deployed site yet.
 - The user isn't a Git expert. Explain in plain words and verify before

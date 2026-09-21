@@ -18,8 +18,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Remote">
-<link rel="icon" type="image/png" href="icons/lifehub-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="icons/remote-192.png">
+<link rel="apple-touch-icon" href="icons/remote-apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
       crossorigin="anonymous" referrerpolicy="no-referrer">
 <style>
@@ -527,6 +528,27 @@
       .then(() => { $('status').textContent = 'Opening ' + d.name + '…'; })
       .catch(() => { $('status').textContent = "Couldn't reach the database."; });
   }
+})();
+
+/* Installable as its own app: remote-sw.js, scoped to this page only,
+   so it never mixes with sw.js (the HomeScreen's). https only, like
+   sw.js. ?sw=off removes it from this phone. */
+(function () {
+  if (!('serviceWorker' in navigator)) return;
+  const scope = new URL('LifeHub-remote.html', location.href).href;
+  if (/[?&]sw=off\b/.test(location.search)) {
+    navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => {
+      if (r.scope !== scope) return;
+      if (r.active) r.active.postMessage('lifehub-remote-sw-off');
+      r.unregister();
+    }));
+    return;
+  }
+  if (location.protocol !== 'https:') return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('remote-sw.js', { scope: './LifeHub-remote.html' })
+      .catch(e => console.warn('Remote offline support not available:', e));
+  });
 })();
 </script>
 </body>
