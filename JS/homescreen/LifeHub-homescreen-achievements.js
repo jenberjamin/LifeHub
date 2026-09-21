@@ -265,6 +265,10 @@
     const card = document.createElement('div');
     card.className = 'lh-a' + (a.kind === 'penalty' ? ' is-penalty' : '');
     card.setAttribute('data-ach-id', a.id);
+    /* A div, so the phone remote (lifehub-navigation-core.js) only sees it
+       as clickable with a button role and a tabindex. */
+    card.setAttribute('role', 'button');
+    card.tabIndex = 0;
     card.title = a.path ? 'Open ' + a.where : '';
 
     const mark = document.createElement('span');

@@ -233,7 +233,8 @@ if (typeof firebase !== 'undefined') {
 //   escape                     "Esc" — closes most panels and pop-ups
 //   home                       straight to the Home Screen
 //   lifehub                    straight to the LifeHub dashboard
-//   pageup / pagedown          scroll a screenful
+//   pageup / pagedown          scroll a screenful; nothing to scroll →
+//                              move the highlight up / down instead
 //   reload                     reload the page
 //   text (+ text)              type into the highlighted box
 //   enter                      Enter in that box (sends a search, a chat)
@@ -361,6 +362,12 @@ if (typeof firebase !== 'undefined') {
         return document.scrollingElement || document.documentElement;
     }
 
+    // Is there anything left to scroll that way?
+    function canScroll(dir) {
+        const el = scroller(true);
+        return dir === 'up' ? el.scrollTop > 1 : el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+    }
+
     function scroll(dir, amount) {
         const vertical = dir === 'up' || dir === 'down';
         const el = scroller(vertical);
@@ -422,7 +429,12 @@ if (typeof firebase !== 'undefined') {
         } else if (key === 'lifehub') {
             window.location.href = new URL('LifeHub.html', LIFEHUB_ROOT).href;
         } else if (key === 'pageup' || key === 'pagedown') {
-            scroll(key === 'pageup' ? 'up' : 'down', 0.85);
+            // A page that doesn't scroll (the Home Screen) or is already
+            // at the end: step the highlight instead, so the keys still
+            // reach the slate under the clock and the pace card.
+            const dir = key === 'pageup' ? 'up' : 'down';
+            if (canScroll(dir)) scroll(dir, 0.85);
+            else move(dir);
         } else if (key === 'reload') {
             window.location.reload();
         } else if (key === 'text') {

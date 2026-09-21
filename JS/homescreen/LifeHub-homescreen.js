@@ -2444,7 +2444,8 @@ function startControls(){
     }, 600);
   };
 
-  [zone, bar, $("gallery")].forEach(el => {
+  /* The logo sits above the zone, so it has to open the bar too. */
+  [zone, bar, $("gallery"), $("logo-link")].forEach(el => {
     if (!el) return;
     el.addEventListener("mouseenter", show);
     el.addEventListener("mouseleave", hide);

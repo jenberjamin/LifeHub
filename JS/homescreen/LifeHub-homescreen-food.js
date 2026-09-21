@@ -181,6 +181,10 @@
 
   const card = document.createElement('div');
   card.className = 'lh-f';
+  /* A div, so the phone remote (lifehub-navigation-core.js) only sees it
+     as clickable with a button role and a tabindex. */
+  card.setAttribute('role', 'button');
+  card.tabIndex = 0;
 
   const mark = document.createElement('span');
   mark.className = 'lh-f-mark';

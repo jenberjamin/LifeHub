@@ -185,6 +185,20 @@ html, body{
   filter: drop-shadow(0 3px 10px rgba(0,0,0, calc(.60 * var(--shadow-strength))));
 }
 
+/* The logo links to LifeHub.html. Its corner sits above #hotzone (40) so
+   the click reaches it, and below the controls bar (50). */
+.bottom-right{ z-index: 45; }
+#logo-link{
+  display: block;
+  color: inherit;
+  border-radius: 6px;
+  transition: transform .2s ease;
+}
+#logo-link:hover{ transform: translateY(-1px); }
+#logo-link:focus-visible{ outline: 2px solid rgba(255,255,255,.85); outline-offset: 6px; }
+#logo-link #logo{ display: block; }
+body.is-locked #logo-link{ pointer-events: none; }
+
 /* ---------- scaling ---------- */
 /* Sizes come from the clamp() values in :root, so there are no breakpoint
    overrides to keep in sync. */

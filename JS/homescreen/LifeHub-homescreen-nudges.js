@@ -1859,7 +1859,7 @@
   }
 
   /* ------------------------------------------------------------
-     THE MORNING VIDEO — 7am, every day but Sunday
+     THE MORNING VIDEO — 5am, every day but Sunday
 
      The one card that plays something instead of going somewhere.
      second_star.mp4 is a motivation video Jen made for herself and
@@ -1873,7 +1873,7 @@
      which is correct — this is the wallpaper's card.
      ------------------------------------------------------------ */
   const INSPO_SRC = 'Hubs/InspoHub/videos/jen/second_star.mp4';
-  const INSPO_HOUR = 7;                    // opens at 7am Manila
+  const INSPO_HOUR = 5;                    // opens at 5am Manila
   const INSPO_CLOSE_HOUR = 12;             // a "morning" video, so it stops at noon
   const INSPO_WATCHED_KEY = 'lifehub.inspo.watched';
 
@@ -1891,9 +1891,9 @@
     render();
   }
 
-  /* Milliseconds until the next 7:00:00 Manila. The panel's own tick
+  /* Milliseconds until the next 5:00:00 Manila. The panel's own tick
      is every 10 minutes, which would have the card turning up at some
-     point in the 7 o'clock hour rather than at 7 — fine for "you
+     point in the 5 o'clock hour rather than at 5 — fine for "you
      haven't done the dishes", not for a thing she asked to happen at
      a specific time. */
   function msUntilInspoHour() {
@@ -1931,7 +1931,7 @@
     inspoAttached = {
       /* The timer re-arms itself, so this only matters if one was
          ever lost — re-arming on every tick would keep clearing a
-         pending wake-up and could walk straight over 7am. */
+         pending wake-up and could walk straight over 5am. */
       repoint() { if (!inspoTimer) armInspoTimer(onChange); },
       resync() { onChange(); }
     };
@@ -2162,6 +2162,10 @@
     function addCard(spec, tone, sub, hoverTitle, promoted) {
       const card = document.createElement('div');
       card.className = 'lh-n';
+      /* A div, so the phone remote (lifehub-navigation-core.js) only sees it
+         as clickable with a button role and a tabindex. */
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
       card.style.setProperty('--n-tone', TONES[tone]);
       card.title = hoverTitle;
 
