@@ -369,7 +369,7 @@ window.LIFEHUB_ACTIONS = {
       m.done.forEach(t => { const s = document.createElement('span'); s.textContent = '✓ ' + t; d.appendChild(s); });
       el.appendChild(d);
     }
-    if (m.role !== 'user') el.addEventListener('click', () => speak(m.text));
+    if (m.role !== 'user') el.addEventListener('click', () => { unlockAudio(); speak(m.text); });
     return el;
   }
   function error(text) {
@@ -462,7 +462,7 @@ window.LIFEHUB_ACTIONS = {
     box.style.height = Math.min(box.scrollHeight, 120) + 'px';
     refresh();
   });
-  $('send').addEventListener('click', () => { const t = box.value; box.value = ''; box.style.height = ''; refresh(); send(t); });
+  $('send').addEventListener('click', () => { unlockAudio(); const t = box.value; box.value = ''; box.style.height = ''; refresh(); send(t); });
   box.addEventListener('keydown', e => {
     /* Enter sends on a keyboard; phones use the Send button (enterkeyhint). */
     if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) { e.preventDefault(); $('send').click(); }
@@ -496,6 +496,12 @@ window.LIFEHUB_ACTIONS = {
       window.speechSynthesis.speak(u);
     });
   }
+  const warned = {};
+  /* Call inside every tap that can end in her speaking — phones only
+     allow sound to start from a tap. See unlock() in the voice file. */
+  function unlockAudio() {
+    try { if (window.POPPY_VOICE && POPPY_VOICE.unlock) POPPY_VOICE.unlock(); } catch (e) {}
+  }
   /* report(engine, why) is for the Test button: it says which voice
      actually spoke, so a silent fallback can't pass for Gemini. */
   function speak(text, report) {
@@ -511,10 +517,14 @@ window.LIFEHUB_ACTIONS = {
         rate: state.v.rate
       }).then(() => tell('gemini')).catch(err => {
         if (err && err.name === 'AbortError') return;
-        console.warn('[Poppy voice] using the phone voice —', err && err.message);
+        const why = (err && err.message) || 'The natural voice failed.';
+        console.warn('[Poppy voice] using the phone voice —', why);
+        /* Said in the chat once per reason, like the Home Screen's toast —
+           a silent fallback just sounds like "her voice is wrong". */
+        if (!report && !warned[why]) { warned[why] = true; error(why + ' Using the phone\'s voice for now.'); }
         const rest = (err && typeof err.remaining === 'string') ? err.remaining : clean;
         if (rest) speakBrowser(rest);
-        tell('phone', err && err.message);
+        tell('phone', why);
       });
     } else {
       speakBrowser(clean);
@@ -531,6 +541,7 @@ window.LIFEHUB_ACTIONS = {
     $('voice').innerHTML = '<i class="fa-solid ' + (state.voice ? 'fa-volume-high' : 'fa-volume-xmark') + '"></i>';
   }
   $('voice').addEventListener('click', () => {
+    unlockAudio();
     state.voice = !state.voice; save(); showVoice();
     if (!state.voice) stopSpeaking();
   });
@@ -542,6 +553,7 @@ window.LIFEHUB_ACTIONS = {
   let rec = null;
   if (!Rec) $('mic').style.display = 'none';
   $('mic').addEventListener('click', () => {
+    unlockAudio();
     if (rec) { rec.stop(); return; }
     stopSpeaking();
     rec = new Rec();
@@ -659,6 +671,7 @@ window.LIFEHUB_ACTIONS = {
   $('s-rate').addEventListener('input', () => { state.v.rate = Number($('s-rate').value); showRate(); save(); });
 
   $('s-test').addEventListener('click', () => {
+    unlockAudio();
     $('s-test-note').textContent = 'Speaking…';
     speak("Hi Jen! This is how I sound on your phone.", (engine, why) => {
       $('s-test-note').textContent = engine === 'gemini'

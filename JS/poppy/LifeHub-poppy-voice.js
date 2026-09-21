@@ -252,6 +252,38 @@
     return audioCtx;
   }
 
+  /* ── Unlocking audio on a phone ─────────────────────────────────
+     Added 2026-09-22 for the phone chat. Phones only let a page start
+     sound during a tap, but her reply arrives seconds after the tap —
+     by then an AudioContext born suspended stays suspended, and on
+     iPhone a fresh <audio> refuses to play. So the page calls unlock()
+     INSIDE the tap (send, mic, test): the context is resumed and one
+     <audio> element is played silently, and say() reuses that element.
+     Harmless anywhere audio was already allowed. */
+  const SILENT_WAV = "data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQIAAAAAAA==";
+  let blessed = null;
+
+  function unlock() {
+    try {
+      const ac = ctxFor();
+      if (ac) {
+        if (ac.state !== "running") ac.resume().catch(() => {});
+        const src = ac.createBufferSource();
+        src.buffer = ac.createBuffer(1, 1, 22050);
+        src.connect(ac.destination);
+        src.start(0);
+      }
+    } catch (e) { /* no Web Audio — the <audio> route still gets its turn */ }
+    try {
+      if (!blessed) blessed = new Audio();
+      if (!current || current.audio !== blessed) {
+        blessed.src = SILENT_WAV;
+        const p = blessed.play();
+        if (p && p.catch) p.catch(() => {});
+      }
+    } catch (e) {}
+  }
+
   function canStream(opts) {
     return !!(window.TextDecoder && (window.AudioContext || window.webkitAudioContext)) &&
            /gemini-3/i.test(opts.model) && (+opts.rate || 1) === 1;
@@ -436,7 +468,7 @@
     const clean = String(text || "").trim();
     if (!clean) return;
 
-    const session = { audio: new Audio(), abort: new AbortController(), url: null,
+    const session = { audio: blessed || new Audio(), abort: new AbortController(), url: null,
                       reject: null, sources: [], timer: null };
     current = session;
 
@@ -511,6 +543,7 @@
   window.POPPY_VOICE = {
     voices: VOICES,
     warm,
+    unlock,
     models: MODELS.slice(),
     defaults: Object.assign({}, DEFAULTS),
     say,
