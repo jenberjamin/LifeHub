@@ -1219,6 +1219,7 @@ function closeAllChatPopovers(){
   $("emoji-tray").classList.remove("is-open");
   $("emoji-btn").setAttribute("aria-expanded", "false");
   $("engine-panel").classList.remove("is-open");
+  $("voice-panel").classList.remove("is-open");
   $("close-confirm").classList.remove("is-open");
 }
 
@@ -2252,6 +2253,21 @@ function startChat(){
   $("confirm-close").addEventListener("click", closeChat);
 
   $("engine-x").addEventListener("click", () => $("engine-panel").classList.remove("is-open"));
+
+  /* Engine and Voice are modals over the whole screen: a click on the
+     dimmed backdrop, or Esc (the phone remote's Close too), shuts them
+     without saving, like the ✕. */
+  const SETTINGS_MODALS = ["voice-panel", "engine-panel"];
+  SETTINGS_MODALS.forEach(id => {
+    $(id).addEventListener("click", e => { if (e.target === e.currentTarget) $(id).classList.remove("is-open"); });
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    const open = SETTINGS_MODALS.find(id => $(id).classList.contains("is-open"));
+    if (!open) return;
+    e.preventDefault();
+    $(open).classList.remove("is-open");
+  });
   $("engine-save").addEventListener("click", saveEngine);
   $("engine-reset").addEventListener("click", () => {
     fillEngineForm(POPPY.configDefaults());

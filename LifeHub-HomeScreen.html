@@ -221,11 +221,32 @@
     <div class="msg-menu" id="msg-menu" role="menu"></div>
     <span class="chat-toast" id="chat-toast" aria-live="polite"></span>
 
-    <!-- ENGINE CONFIGURATION -->
-    <div class="chat-overlay" id="engine-panel" role="dialog" aria-label="Engine configuration">
+    <!-- CLOSE CONFIRMATION -->
+    <div class="chat-overlay center" id="close-confirm" role="dialog" aria-label="Close chat">
+      <div class="confirm">
+        <p class="ov-title">Close chat?</p>
+        <p class="ov-note">This clears the conversation. Minimise instead to keep it.</p>
+        <div class="ov-foot">
+          <button class="btn ghost" id="confirm-cancel" type="button">Cancel</button>
+          <button class="btn primary" id="confirm-close" type="button">Close</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Poppy's settings. Modals over the whole screen, not overlays inside
+       the chat: both forms are long, and squeezed into the chat frame they
+       read as one confusing panel. The ids are unchanged, so the code in
+       LifeHub-homescreen.js opens and fills them exactly as before. -->
+  <!-- ENGINE CONFIGURATION -->
+  <div class="chat-modal" id="engine-panel" role="dialog" aria-modal="true" aria-labelledby="engine-title">
+    <div class="cm-card">
       <div class="ov-head">
-        <p class="ov-title">Engine configuration</p>
-        <button class="chat-x" id="engine-x" type="button" aria-label="Back">
+        <div>
+          <p class="cm-eyebrow">Poppy</p>
+          <h2 class="cm-title" id="engine-title">Engine configuration</h2>
+        </div>
+        <button class="chat-x" id="engine-x" type="button" aria-label="Close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
@@ -312,12 +333,17 @@
         <button class="btn primary" id="engine-save" type="button">Save</button>
       </div>
     </div>
+  </div>
 
-    <!-- VOICE -->
-    <div class="chat-overlay" id="voice-panel" role="dialog" aria-label="Voice">
+  <!-- VOICE -->
+  <div class="chat-modal" id="voice-panel" role="dialog" aria-modal="true" aria-labelledby="voice-title">
+    <div class="cm-card">
       <div class="ov-head">
-        <p class="ov-title">Voice</p>
-        <button class="chat-x" id="voice-x" type="button" aria-label="Back">
+        <div>
+          <p class="cm-eyebrow">Poppy</p>
+          <h2 class="cm-title" id="voice-title">Voice</h2>
+        </div>
+        <button class="chat-x" id="voice-x" type="button" aria-label="Close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
@@ -388,19 +414,7 @@
         <button class="btn primary" id="voice-save" type="button">Save</button>
       </div>
     </div>
-
-    <!-- CLOSE CONFIRMATION -->
-    <div class="chat-overlay center" id="close-confirm" role="dialog" aria-label="Close chat">
-      <div class="confirm">
-        <p class="ov-title">Close chat?</p>
-        <p class="ov-note">This clears the conversation. Minimise instead to keep it.</p>
-        <div class="ov-foot">
-          <button class="btn ghost" id="confirm-cancel" type="button">Cancel</button>
-          <button class="btn primary" id="confirm-close" type="button">Close</button>
-        </div>
-      </div>
-    </div>
-  </section>
+  </div>
 
   <script src="JS/homescreen/LifeHub-homescreen-slides.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
