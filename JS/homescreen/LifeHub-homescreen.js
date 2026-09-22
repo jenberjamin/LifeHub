@@ -464,21 +464,9 @@ function guardLogo(){
 
 const PAINT = {
   index: 0,
-  colors: [
-    { name: "White",        ink: "#ffffff" },
-    { name: "Cream",        ink: "#f4e9d2" },
-    { name: "Black",        ink: "#12100e" },
-    { name: "Light Brown",  ink: "#c99a6a" },
-    { name: "Dark Brown",   ink: "#6f4b2e" },
-    { name: "Cherry Red",   ink: "#e0384c" },
-    { name: "Crimson",      ink: "#9c1b31" },
-    { name: "Cyan",         ink: "#00e5ff" },
-    { name: "Green",        ink: "#35c46a" },
-    { name: "Gray",         ink: "#a7adb4" },
-    { name: "Pastel Green", ink: "#aedcbf" },
-    { name: "Evergreen",    ink: "#0d5c3d" },
-    { name: "Moss Green",   ink: "#7d9455" }
-  ]
+  /* JS/homescreen/LifeHub-homescreen-paints.js: shared with Poppy's
+     phone chat so both know the same colour names. */
+  colors: window.LIFEHUB_PAINTS || [{ name: "White", ink: "#ffffff" }]
 };
 
 /* Dark inks need a light shadow behind them or they vanish into a dark photo,
@@ -1420,6 +1408,28 @@ window.LIFEHUB_ACTIONS = {
     }
   }
 };
+
+/* Wallpaper changes sent from another device (Poppy on the phone, or on
+   the PC with "on the TV"). They arrive through the remote channel —
+   lifehub-navigation-core.js section 4, key "wallpaper" — and run here.
+   This is the wallpaper runner only, captured before the PoppyEngine
+   wrappers go round LIFEHUB_ACTIONS, so a remote command can change
+   the wallpaper and nothing else (no logging, no navigating). */
+window.LIFEHUB_WALLPAPER = { run: window.LIFEHUB_ACTIONS.run };
+
+/* The TV was on another page when the change came in: the navigation
+   core parked it here and brought the TV to the Home Screen. Only
+   honoured if fresh, so a stale one can't fire days later. */
+const PENDING_WALLPAPER_KEY = "lifehub.pendingWallpaper";
+function applyPendingWallpaper(){
+  let p = null;
+  try{
+    p = JSON.parse(localStorage.getItem(PENDING_WALLPAPER_KEY));
+    localStorage.removeItem(PENDING_WALLPAPER_KEY);
+  } catch (err){ return; }
+  if (!p || !p.cmd || Date.now() - (p.at || 0) > 60000) return;
+  window.LIFEHUB_WALLPAPER.run(p.cmd);
+}
 
 /* ---------------- Poppy's voice ---------------- */
 
@@ -2734,6 +2744,7 @@ document.addEventListener("DOMContentLoaded", () => {
   boot("clock", startClock);
   boot("slideshow", startSlideshow);
   boot("controls", startControls);
+  boot("wallpaper from another screen", applyPendingWallpaper);
   boot("chat", startChat);
   boot("weather", () => {
     paintFromCache();   // instant paint, before any network call

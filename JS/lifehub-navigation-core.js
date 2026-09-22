@@ -238,6 +238,11 @@ if (typeof firebase !== 'undefined') {
 //   reload                     reload the page
 //   text (+ text)              type into the highlighted box
 //   enter                      Enter in that box (sends a search, a chat)
+//   wallpaper (+ cmd)          a Home Screen wallpaper action from Poppy
+//                              (theme, paint, next…). Off the Home
+//                              Screen, it's parked and the screen goes
+//                              there first; see applyPendingWallpaper()
+//                              in LifeHub-homescreen.js
 //
 // Every press is offered to the page first as a pretend key press. If
 // the page has its own arrow keys and says "mine" (preventDefault), the
@@ -465,6 +470,16 @@ if (typeof firebase !== 'undefined') {
             window.location.reload();
         } else if (key === 'text') {
             typeText(String(cmd.text || ''));
+        } else if (key === 'wallpaper' && cmd.cmd && typeof cmd.cmd === 'object') {
+            if (window.LIFEHUB_WALLPAPER) {
+                window.LIFEHUB_WALLPAPER.run(cmd.cmd);
+            } else {
+                try {
+                    localStorage.setItem('lifehub.pendingWallpaper',
+                        JSON.stringify({ cmd: cmd.cmd, at: Date.now() }));
+                } catch (e) {}
+                window.location.href = new URL('LifeHub-HomeScreen.html', LIFEHUB_ROOT).href;
+            }
         }
     }
 

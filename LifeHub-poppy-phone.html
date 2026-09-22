@@ -14,8 +14,9 @@
      on the Home Screen does the same there). The key never leaves the
      phone except to Google.
 
-     What she can't do from here: the wallpaper actions (paint, theme,
-     lock, slideshow) — those belong to the Home Screen's own page.
+     The wallpaper actions (theme, paint, next, lock…) go to the TV's
+     Home Screen through the remote channel (PoppyEngine-navigate.js),
+     which is why the theme and paint lists are loaded here too.
      Scribble reads need the session Scribble leaves in the browser, so
      they only work after Scribble has been opened on this phone.
 
@@ -330,6 +331,10 @@
 <script src="JS/lifehub-pill-rules.js"></script>
 <script src="JS/lifehub-flo-vocab.js"></script>
 <script src="JS/poppy/LifeHub-poppy-actions.js"></script>
+<!-- The Home Screen's theme and paint names, so she can change the TV's
+     wallpaper by name. Lists only; nothing here runs a slideshow. -->
+<script src="JS/homescreen/LifeHub-homescreen-slides.js"></script>
+<script src="JS/homescreen/LifeHub-homescreen-paints.js"></script>
 
 <script>
 /* The bottom of the actions chain. On the Home Screen this is the
@@ -351,8 +356,8 @@ window.LIFEHUB_ACTIONS = {
       "- Put it last, after your reply. Say what you did in your own words above it, briefly.",
       "- Only include it when she actually asked for something.",
       "",
-      "She is talking to you from her phone. The wallpaper controls (paint, theme, lock,",
-      "slideshow) are not available from here — if she asks, tell her they only work on the Home Screen."
+      "She is talking to you from her phone. There's no wallpaper here; wallpaper",
+      "changes go to the TV (see THE TV'S WALLPAPER below)."
     ].join("\n");
   },
   run(){ return null; }

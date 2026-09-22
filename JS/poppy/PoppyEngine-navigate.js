@@ -183,6 +183,124 @@
   }
 
 
+  /* ── Wallpaper on another screen (2026-09-22) ─────────────────
+     The wallpaper actions (theme, paint, next…) used to only ever
+     touch the Home Screen Poppy was running on, so "change the TV's
+     wallpaper to Nexform" did nothing from the phone, and from the PC
+     it changed the PC. Now they take `on` like navigate does and go
+     down the remote's channel, lifehub_remote/<screen id>, as key
+     "wallpaper". The TV's navigation core hands them to the Home
+     Screen (see LIFEHUB_WALLPAPER in LifeHub-homescreen.js).
+
+     Names are checked here, before sending, against the same lists
+     the Home Screen uses (LifeHub-homescreen-slides.js, -paints.js),
+     so a wrong one is refused out loud rather than lost on the TV. */
+  const WALL = {
+    theme: "theme", paint: "paint", color: "paint", colour: "paint",
+    next: "next", prev: "prev", previous: "prev",
+    pause: "pause", play: "play", resume: "play", lock: "lock"
+  };
+
+  /* True on the Home Screen, where there's a wallpaper right here. */
+  const hasWallpaper = () => !!window.LIFEHUB_WALLPAPER;
+
+  function themeList() {
+    return Object.keys(window.LIFEHUB_SLIDES || {})
+      .filter(k => (window.LIFEHUB_SLIDES[k] || []).length);
+  }
+  function paintList() {
+    return (window.LIFEHUB_PAINTS || []).map(p => p.name);
+  }
+
+  /* Just the fields the Home Screen reads, with names in their real
+     casing. Throws something sayable on a name that doesn't exist. */
+  function cleanWallpaper(act, cmd) {
+    if (act === "theme") {
+      const want = String(cmd.theme || cmd.name || "").trim().toLowerCase();
+      if (want === "random") return { action: "theme", theme: "Random" };
+      const hit = themeList().find(t => t.toLowerCase() === want);
+      if (!hit) throw new Error("“" + (cmd.theme || cmd.name || "") + "” isn't one of the wallpaper themes." +
+        (themeList().length ? " There's " + themeList().join(", ") + " and Random." : ""));
+      return { action: "theme", theme: hit };
+    }
+    if (act === "paint") {
+      const want = String(cmd.color || cmd.colour || "").trim().toLowerCase();
+      const hit = paintList().find(c => c.toLowerCase() === want);
+      if (!hit) throw new Error("“" + (cmd.color || cmd.colour || "") + "” isn't one of the paint colours.");
+      return { action: "paint", color: hit };
+    }
+    return { action: act };
+  }
+
+  const RECEIPT = {
+    theme: c => "Theme · " + c.theme, paint: c => "Paint · " + c.color,
+    next: () => "Next background", prev: () => "Previous background",
+    pause: () => "Slideshow paused", play: () => "Slideshow playing", lock: () => "Locked"
+  };
+
+  function wallpaper(act, cmd) {
+    const said = cmd && (cmd.on || cmd.screen || cmd.device);
+
+    /* On the Home Screen with no `on`: this wallpaper, as it always was. */
+    if (hasWallpaper() && !String(said || "").trim()) return prior.run(cmd);
+
+    const screen = resolveScreen(said);
+    if (screen.here) {
+      if (hasWallpaper()) return prior.run(cmd);
+      throw new Error("I can't see the TV — it's off, or on a page I can't steer yet. " +
+        "Open LifeHub on it and ask me again.");
+    }
+
+    const clean = cleanWallpaper(act, cmd);
+    const away = screen.page && screen.page !== "LifeHub-HomeScreen.html";
+    return db().ref("lifehub_remote/" + screen.id)
+      .set({
+        key: "wallpaper",
+        cmd: clean,
+        n: Math.random().toString(36).slice(2),
+        at: firebase.database.ServerValue.TIMESTAMP,
+        by: "poppy"
+      })
+      .then(() => RECEIPT[act](clean) + " on the " + screen.name.replace(/^the\s+/i, "") +
+        (away ? " (opening the Home Screen)" : ""))
+      .catch(() => { throw new Error("I couldn't reach the database to change it."); });
+  }
+
+  /* For the prompt. On the Home Screen she already has the full list
+     from the wallpaper's own describe(); she only needs to learn `on`.
+     Anywhere else (the phone) she needs the whole list. */
+  function wallpaperDescribe() {
+    const tv = defaultScreen();
+    if (hasWallpaper()) {
+      return [
+        "## WALLPAPER ON ANOTHER SCREEN",
+        "Every wallpaper action above also takes `on`, like navigate. Add it when she",
+        "means a different screen's wallpaper, e.g. “change the TV's wallpaper to Nexform”:",
+        "",
+        '  {"action":"theme","theme":"Nexform","on":"TV"}',
+        "",
+        "Leave `on` out and it changes this screen's wallpaper, as before."
+      ].join("\n");
+    }
+    return [
+      "## THE TV'S WALLPAPER",
+      "You can change the Home Screen wallpaper on the TV from here. Same block;",
+      "it goes to " + (tv ? "the " + tv.name : "the TV (it isn't on right now, so it would be refused)") +
+        ", or add `on` with a screen name from the line above.",
+      "If the TV is on another page, it goes back to the Home Screen first.",
+      "",
+      '  {"action":"theme","theme":"NAME"} — one of: ' + themeList().concat(["Random"]).join(", "),
+      '  {"action":"paint","color":"NAME"} — clock and logo colour, one of: ' + paintList().join(", "),
+      '  {"action":"next"} / {"action":"prev"} — step the background',
+      '  {"action":"pause"} / {"action":"play"} — hold or resume the slideshow',
+      '  {"action":"lock"} — locks the TV. You cannot unlock; only Jen can, with her code.',
+      "",
+      "“Change the wallpaper to Nexform”, “put the space pictures on”, “make the clock",
+      "cream” all mean these. Only send one when she asked for a change."
+    ].join("\n");
+  }
+
+
   /* ── The action ───────────────────────────────────────────────── */
 
   function navigate(cmd) {
@@ -272,7 +390,7 @@
         "Navigating changes what is on her screen immediately, so only send it",
         "when she asked to go somewhere. A question ABOUT a tracker is not a",
         "request to open it — “how did I sleep” wants an answer, not a jump."
-      ].join("\n");
+      ].join("\n") + "\n\n" + wallpaperDescribe();
     },
 
     run(cmd) {
@@ -280,6 +398,11 @@
       if (name === "navigate" || name === "open" || name === "go" || name === "goto") {
         return Promise.resolve()
           .then(() => navigate(cmd))
+          .catch(err => { throw new Error(err.message || "That didn't work."); });
+      }
+      if (WALL[name]) {
+        return Promise.resolve()
+          .then(() => wallpaper(WALL[name], cmd))
           .catch(err => { throw new Error(err.message || "That didn't work."); });
       }
       return prior.run(cmd);

@@ -35,5 +35,9 @@ Read these before deployment, image or TV work:
   local server (`LifeHub-poppy-server.js`) is only needed for Vertex.
   `LifeHub-poppy-phone.html` is her phone chat: same engines, no wallpaper.
   Both chats read action blocks with `JS/poppy/LifeHub-poppy-actions.js`.
+  Her wallpaper actions (theme, paint, next…) take `on` like navigate and
+  reach another screen through the remote channel as key `wallpaper`
+  (`PoppyEngine-navigate.js` → navigation core → `LIFEHUB_WALLPAPER` in
+  `LifeHub-homescreen.js`). Paint names live in `LifeHub-homescreen-paints.js`.
 - The user isn't a Git expert. Explain in plain words and verify before
   claiming something works.
