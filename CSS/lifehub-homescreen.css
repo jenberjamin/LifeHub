@@ -877,8 +877,6 @@ body.is-locked .chat{ display: none; }
 .chat-modal .chip{ padding: 6px 12px; font-size: 11px; }
 .chat-modal .chips.seg{ margin-top: 0; gap: 8px; }
 .chat-modal .chips.seg .chip{ padding: 9px 18px; font-size: 12px; }
-.chat-modal .keyring{ gap: 8px; }
-.chat-modal .kr-row{ gap: 8px; }
 .chat-modal .ov-note{ font-size: 12.5px; }
 .chat-modal .switch{ font-size: 14px; gap: 12px; }
 .chat-modal .fld input[type="range"]{ padding: 0; }
@@ -967,11 +965,120 @@ body.is-locked .chat{ display: none; }
 .fld input:focus{ border-color: var(--chat-accent, rgba(0,229,255,.6)); }
 .fld-row{ display: flex; gap: 10px; }
 
-/* Key drawer under each key box (Engine configuration). */
-.keyring{ display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
-.kr-row{ display: flex; gap: 6px; align-items: center; }
-.kr-row .kr-name{ flex: 1; min-width: 0; }
-.kr-row .chip{ white-space: nowrap; }
+/* Key drawer (Engine configuration): the saved keys as a list to tap,
+   the one in use marked. Drawn by renderKeyring() in
+   LifeHub-homescreen.js. Only ever shown in the Engine modal, so sized
+   for it. */
+.keyring{ display: flex; flex-direction: column; gap: 10px; }
+.kr-list{ display: flex; flex-direction: column; gap: 8px; }
+.kr-row{ display: flex; gap: 8px; align-items: stretch; }
+
+.kr-pick{
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--chat-line, rgba(255,255,255,.14));
+  background: var(--chat-her, rgba(255,255,255,.06));
+  color: var(--chat-ink, #eceef0);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease;
+}
+button.kr-pick:hover{ border-color: var(--chat-accent, #00e5ff); }
+.kr-row.is-on .kr-pick{
+  background: var(--chat-me, rgba(0,229,255,.18));
+  border-color: var(--chat-accent, #00e5ff);
+  cursor: default;
+}
+.kr-row.is-loose .kr-pick{ border-style: dashed; }
+
+/* The radio dot: an empty ring, filled for the key in use. */
+.kr-dot{
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--chat-dim, #8b9199);
+}
+.kr-row.is-on .kr-dot{
+  border-color: var(--chat-accent, #00e5ff);
+  background: radial-gradient(circle, var(--chat-accent, #00e5ff) 0 4px, transparent 4.5px);
+}
+.kr-name{ font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kr-mask{
+  color: var(--chat-dim, #8b9199);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 12.5px;
+  letter-spacing: .06em;
+}
+.kr-tag{
+  margin-left: auto;
+  flex: none;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--chat-accent, #00e5ff);
+  color: var(--chat-accent, #00e5ff);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.kr-row.is-loose .kr-tag{ border-color: var(--chat-dim, #8b9199); color: var(--chat-dim, #8b9199); }
+
+/* Remove (a bin that asks "Remove?" first) and Save, beside each row. */
+.kr-bin, .kr-keep{
+  flex: none;
+  min-width: 46px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--chat-line, rgba(255,255,255,.14));
+  background: none;
+  color: var(--chat-dim, #8b9199);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color .16s ease, border-color .16s ease, background .16s ease;
+}
+.kr-bin svg{ width: 17px; height: 17px; display: block; margin: auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.kr-bin:hover{ color: var(--chat-err-ink, #ffa2ab); border-color: var(--chat-err-line, rgba(255,90,106,.4)); }
+.kr-bin.is-armed{
+  color: var(--chat-err-ink, #ffa2ab);
+  border-color: var(--chat-err-line, rgba(255,90,106,.4));
+  background: var(--chat-err-bg, rgba(255,90,106,.14));
+}
+.kr-keep:hover{ color: var(--chat-ink, #fff); border-color: var(--chat-accent, #00e5ff); }
+
+/* "+ Add a key", and the small form it opens. */
+.kr-open{
+  align-self: flex-start;
+  padding: 8px 4px;
+  border: 0;
+  background: none;
+  color: var(--chat-accent, #00e5ff);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.kr-open:hover{ text-decoration: underline; }
+.kr-form{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px dashed var(--chat-line, rgba(255,255,255,.2));
+}
+.kr-actions{ display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
 
 .chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: -5px; }
 .chip{

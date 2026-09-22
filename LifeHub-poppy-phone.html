@@ -95,6 +95,8 @@
   .msg.poppy.listen { cursor:pointer; }
   .msg .done { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
   .msg .done span { font-size:12px; color:var(--gold); border:1px solid rgba(210,180,140,.3); border-radius:999px; padding:2px 9px; }
+  /* How long she took — for tuning her speed. */
+  .msg .time { display:block; margin-top:6px; font-size:11px; color:var(--dim); opacity:.7; letter-spacing:.02em; }
   .msg.err { align-self:center; max-width:100%; background:rgba(243,167,155,.1); border:1px solid rgba(243,167,155,.3);
     color:var(--bad); font-size:14px; text-align:center; }
   .typing { align-self:flex-start; display:flex; gap:5px; padding:14px 16px; border-radius:20px; background:var(--glass); }
@@ -153,6 +155,51 @@
   .sheet .wide { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; }
   .sheet .note { margin:-4px 0 12px; color:var(--dim); font-size:13px; min-height:1em; }
   .sheet .note a { color:var(--gold); }
+  .sheet .note.bad { color:var(--bad); }
+  .sheet .note.ok { color:var(--gold); }
+  .sheet .eyebrow { display:block; margin-bottom:4px; color:var(--gold); font-size:11px; font-weight:600;
+    letter-spacing:.22em; text-transform:uppercase; }
+  .sheet .linkish { padding:0; border:0; background:none; color:var(--gold); font-size:inherit; text-decoration:underline; }
+
+  /* ── The gear's menu: Engine or Voice ── */
+  .menu { position:fixed; z-index:7; top:calc(66px + env(safe-area-inset-top));
+    right:max(12px, calc((100vw - 560px) / 2 + 12px)); width:min(270px, calc(100vw - 24px));
+    display:flex; flex-direction:column; gap:2px; padding:6px; border-radius:18px;
+    background:linear-gradient(180deg, #342c24, #231d18); border:1px solid rgba(210,180,140,.22);
+    box-shadow:0 18px 40px rgba(0,0,0,.5); }
+  .menu[hidden] { display:none; }
+  .menu button { display:flex; align-items:center; gap:14px; min-height:62px; padding:8px 14px; border:0;
+    border-radius:13px; background:none; text-align:left; }
+  .menu button:active { background:var(--glass-hi); }
+  .menu i { width:22px; flex:none; text-align:center; color:var(--gold); font-size:18px; }
+  .menu b { display:block; font-weight:600; }
+  .menu small { display:block; color:var(--dim); font-size:13px; }
+
+  /* ── Key drawer: saved keys, tap one to switch ── */
+  .drawer { display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+  .kr-row { display:flex; gap:8px; }
+  .kr-pick { flex:1; min-width:0; display:flex; align-items:center; gap:12px; min-height:60px; padding:10px 14px;
+    border-radius:16px; border:1px solid var(--edge); background:var(--glass); text-align:left; }
+  .kr-row.on .kr-pick { background:rgba(210,180,140,.16); border-color:var(--gold); }
+  .kr-row.loose .kr-pick { border-style:dashed; }
+  .kr-dot { flex:none; width:20px; height:20px; border-radius:50%; border:2px solid var(--dim); }
+  .kr-row.on .kr-dot { border-color:var(--gold); background:radial-gradient(circle, var(--gold) 0 5px, transparent 5.5px); }
+  .kr-text { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .kr-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .kr-mask { color:var(--dim); font-size:13px; font-family:ui-monospace, Menlo, Consolas, monospace; letter-spacing:.06em; }
+  .kr-tag { flex:none; padding:3px 10px; border-radius:999px; border:1px solid var(--gold); color:var(--gold);
+    font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+  .kr-row.loose .kr-tag { border-color:var(--dim); color:var(--dim); }
+  .kr-side { flex:none; min-width:56px; padding:0 12px; border-radius:16px; color:var(--dim);
+    font-size:13px; font-weight:700; }
+  .kr-side.armed { color:var(--bad); border-color:rgba(243,167,155,.45); background:rgba(243,167,155,.12); }
+  .kr-open { align-self:flex-start; min-height:44px; padding:0 4px; border:0; background:none; color:var(--gold); font-weight:600; }
+  .kr-form { display:flex; flex-direction:column; gap:10px; padding:14px; border-radius:18px;
+    border:1px dashed rgba(210,180,140,.35); }
+  .kr-form input { width:100%; min-height:48px; padding:12px 14px; border-radius:14px; border:1px solid var(--edge);
+    background:rgba(0,0,0,.25); font-size:16px; }
+  .kr-actions { display:flex; gap:10px; }
+  .kr-actions button { flex:1; min-height:48px; }
   @media (prefers-reduced-motion: reduce) { * { animation:none !important; } }
 </style>
 </head>
@@ -165,28 +212,34 @@
     <select id="mode" aria-label="How Poppy talks"></select>
   </div>
   <button class="icon" id="voice" aria-label="Speak Poppy's replies" aria-pressed="false"><i class="fa-solid fa-volume-xmark"></i></button>
-  <button class="icon" id="settings" aria-label="Settings"><i class="fa-solid fa-gear"></i></button>
+  <button class="icon" id="settings" aria-label="Settings" aria-haspopup="menu" aria-expanded="false"><i class="fa-solid fa-gear"></i></button>
   <button class="icon" id="clear" aria-label="New chat"><i class="fa-solid fa-rotate-left"></i></button>
 </header>
 
-<!-- Settings: the phone's Engine configuration and Voice panels. -->
+<!-- Settings: Engine and Voice, each in its own sheet. They used to share
+     one, which read as a single confusing form. The gear opens a small
+     menu to pick one. -->
+<div class="menu" id="menu" role="menu" hidden>
+  <button role="menuitem" id="menu-engine"><i class="fa-solid fa-microchip"></i>
+    <span><b>Engine</b><small>Keys, model, thinking</small></span></button>
+  <button role="menuitem" id="menu-voice"><i class="fa-solid fa-wave-square"></i>
+    <span><b>Voice</b><small>How she sounds</small></span></button>
+</div>
 <div class="veil" id="veil"></div>
-<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+
+<div class="sheet" id="engine-sheet" role="dialog" aria-modal="true" aria-labelledby="engine-title">
   <div class="grip"></div>
   <div class="sheet-head">
-    <h2 id="sheet-title">Settings</h2>
-    <button class="icon" id="sheet-shut" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+    <div><span class="eyebrow">Poppy</span><h2 id="engine-title">Engine</h2></div>
+    <button class="icon shut" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
   </div>
 
-  <h3>Engine</h3>
-  <label>Gemini key (AI Studio)
-    <input id="s-key" type="password" autocomplete="off" placeholder="AIza…">
-  </label>
+  <h3>Gemini keys</h3>
+  <p class="note">Tap a key to switch to it. Her voice uses it too.</p>
+  <div class="drawer" id="drawer"></div>
   <p class="note" id="s-key-note"></p>
-  <div class="pair">
-    <button id="s-key-save" class="main">Save key</button>
-    <button id="s-key-remove">Remove</button>
-  </div>
+
+  <h3>Model</h3>
   <label>Model
     <select id="s-model"></select>
   </label>
@@ -197,16 +250,24 @@
       <option value="default">Model default — slowest</option>
     </select>
   </label>
+</div>
 
-  <h3>Voice</h3>
+<div class="sheet" id="voice-sheet" role="dialog" aria-modal="true" aria-labelledby="voice-title">
+  <div class="grip"></div>
+  <div class="sheet-head">
+    <div><span class="eyebrow">Poppy</span><h2 id="voice-title">Voice</h2></div>
+    <button class="icon shut" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
   <label class="check"><input id="s-speak" type="checkbox"> Speak every reply</label>
   <label>Engine
     <select id="s-vengine">
-      <option value="gemini">Gemini — natural (uses the key above)</option>
+      <option value="gemini">Gemini — natural (uses your Gemini key)</option>
       <option value="phone">This phone's own voice</option>
     </select>
   </label>
   <div id="s-gemini-voice">
+    <p class="note" id="s-vkey-note"></p>
     <label>Voice
       <select id="s-voice"></select>
     </label>
@@ -339,6 +400,18 @@ window.LIFEHUB_ACTIONS = {
      Stored where the Home Screen stores it (POPPY's engine config, in
      this browser's localStorage), so her voice finds it too. */
   const hasKey = () => !!(POPPY.getConfig().keys || {}).gemini;
+  const inUse = () => (POPPY.getConfig().keys || {}).gemini || '';
+
+  /* The drawer: saved keys under a name, the same list the Home Screen's
+     Engine configuration keeps (POPPY's config.keyring.gemini). */
+  const ring = () => ((POPPY.getConfig().keyring || {}).gemini || []).slice();
+  const storeRing = list => POPPY.setConfig({ keyring: { gemini: list } });
+  /* Puts a key to work at once. The phone only talks to Gemini, so an
+     OpenRouter connection left over from the Home Screen moves over. */
+  function useKey(k) {
+    const conn = POPPY.getConfig().connection;
+    POPPY.setConfig({ connection: conn === 'openrouter' ? 'gemini' : conn, keys: { gemini: k } });
+  }
 
   function showSetup() {
     log.innerHTML =
@@ -353,7 +426,9 @@ window.LIFEHUB_ACTIONS = {
     $('key-save').addEventListener('click', () => {
       const k = $('key').value.trim();
       if (!k) return;
-      POPPY.setConfig({ connection: POPPY.getConfig().connection === 'openrouter' ? 'gemini' : POPPY.getConfig().connection, keys: { gemini: k } });
+      const list = ring();
+      if (!list.some(x => x.key === k)) { list.push({ name: 'Key ' + (list.length + 1), key: k }); storeRing(list); }
+      useKey(k);
       render();
     });
   }
@@ -416,6 +491,7 @@ window.LIFEHUB_ACTIONS = {
     save();
 
     state.busy = true; refresh();
+    const t0 = performance.now();
     const dots = document.createElement('div');
     dots.className = 'typing'; dots.innerHTML = '<i></i><i></i><i></i>';
     log.appendChild(dots); scroll();
@@ -438,9 +514,18 @@ window.LIFEHUB_ACTIONS = {
         if (done.length) hers.done = done;
         if (failed.length) hers.failed = failed;
         state.messages.push(hers);
-        log.appendChild(bubble(hers));
+        const el = bubble(hers);
+        const time = document.createElement('span');
+        time.className = 'time';
+        const secs = ms => (ms / 1000).toFixed(1) + ' s';
+        const replied = performance.now();
+        time.textContent = 'reply ' + secs(replied - t0);
+        el.appendChild(time);
+        log.appendChild(el);
         save();
-        if (state.voice || spoken) speak(answer);
+        if (state.voice || spoken) {
+          speak(answer, null, () => { time.textContent += ' · voice +' + secs(performance.now() - replied); });
+        }
       } else if (!actions.length) {
         error('Poppy returned an empty reply.');
       }
@@ -504,7 +589,7 @@ window.LIFEHUB_ACTIONS = {
   }
   /* report(engine, why) is for the Test button: it says which voice
      actually spoke, so a silent fallback can't pass for Gemini. */
-  function speak(text, report) {
+  function speak(text, report, onStart) {
     const clean = speakable(text);
     if (!clean) return;
     const tell = (engine, why) => { if (report) report(engine, why || ''); };
@@ -514,7 +599,8 @@ window.LIFEHUB_ACTIONS = {
         voice: state.v.name || POPPY_VOICE.defaults.voice,
         model: state.v.model || undefined,
         style: state.v.style || undefined,
-        rate: state.v.rate
+        rate: state.v.rate,
+        onStart: onStart
       }).then(() => tell('gemini')).catch(err => {
         if (err && err.name === 'AbortError') return;
         const why = (err && err.message) || 'The natural voice failed.';
@@ -598,21 +684,178 @@ window.LIFEHUB_ACTIONS = {
     });
   }
 
-  function keyNote() {
-    const k = (POPPY.getConfig().keys || {}).gemini || '';
-    $('s-key-note').innerHTML = k
-      ? 'Saved on this phone: …' + k.slice(-4).replace(/[<>&]/g, '')
-      : 'None yet. Get one at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> — not a Firebase key.';
+  /* ── The gear's menu, and the two sheets ── */
+  const SHEETS = ['engine-sheet', 'voice-sheet'];
+  function showMenu(open) {
+    $('menu').hidden = !open;
+    $('settings').setAttribute('aria-expanded', String(open));
+  }
+  function openSheet(id) {
+    showMenu(false);
+    SHEETS.forEach(s => $(s).classList.toggle('open', s === id));
+    $('veil').classList.add('open');
+    $(id).scrollTop = 0;
+  }
+  function closeSheets() {
+    SHEETS.forEach(s => $(s).classList.remove('open'));
+    $('veil').classList.remove('open');
+  }
+  $('settings').addEventListener('click', e => { e.stopPropagation(); showMenu($('menu').hidden); });
+  document.addEventListener('click', e => { if (!$('menu').hidden && !$('menu').contains(e.target)) showMenu(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { showMenu(false); closeSheets(); } });
+  $('veil').addEventListener('click', closeSheets);
+  document.querySelectorAll('.sheet .shut').forEach(b => b.addEventListener('click', closeSheets));
+  $('menu-engine').addEventListener('click', openEngine);
+  $('menu-voice').addEventListener('click', openVoice);
+
+  function note(text, kind) {
+    $('s-key-note').className = 'note' + (kind ? ' ' + kind : '');
+    $('s-key-note').textContent = text || '';
   }
 
-  function openSettings() {
+  /* ── The key drawer ──────────────────────────────────────────────
+     A list to tap: the key in use is marked, and tapping another puts it
+     to work at once. Only the last four characters are ever shown. */
+  const mask = k => '••••' + String(k || '').slice(-4);
+  let adding = false, prefill = '', arming = null, armTimer = null;
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function keyRow(name, key, opts) {
+    const row = el('div', 'kr-row' + (opts.on ? ' on' : '') + (opts.loose ? ' loose' : ''));
+    const pick = el(opts.loose ? 'div' : 'button', 'kr-pick');
+    if (!opts.loose) { pick.dataset.pick = opts.i; pick.setAttribute('aria-pressed', String(!!opts.on)); }
+    const text = el('span', 'kr-text');
+    text.append(el('span', 'kr-name', name), el('span', 'kr-mask', mask(key)));
+    pick.append(el('span', 'kr-dot'), text);
+    if (opts.tag) pick.append(el('span', 'kr-tag', opts.tag));
+    row.append(pick);
+    if (opts.loose) {
+      const keep = el('button', 'kr-side', 'Save');
+      keep.dataset.keep = '1';
+      row.append(keep);
+    }
+    const bin = el('button', 'kr-side' + (arming === opts.i ? ' armed' : ''));
+    bin.dataset.bin = opts.i;
+    bin.setAttribute('aria-label', 'Remove ' + name);
+    if (arming === opts.i) bin.textContent = 'Remove?';
+    else bin.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+    row.append(bin);
+    return row;
+  }
+
+  function renderDrawer() {
+    const d = $('drawer'), cur = inUse(), list = ring();
+    d.innerHTML = '';
+    list.forEach((k, i) => d.append(keyRow(k.name, k.key, { i: String(i), on: k.key === cur, tag: k.key === cur ? 'In use' : '' })));
+    /* In use but not in the drawer (saved before the drawer existed, or
+       its entry was removed): still shown, with a way to keep it. */
+    if (cur && !list.some(k => k.key === cur)) d.append(keyRow('Current key', cur, { i: 'loose', on: true, loose: true, tag: 'Not saved' }));
+    const empty = !d.children.length;
+    if (!adding && !empty) {
+      const open = el('button', 'kr-open', '+ Add a key');
+      open.dataset.open = '1';
+      d.append(open);
+      return;
+    }
+    const form = el('div', 'kr-form');
+    const name = el('input', 'kr-new-name');
+    name.type = 'text'; name.placeholder = 'Name it — e.g. Personal'; name.spellcheck = false;
+    const key = el('input', 'kr-new-key');
+    key.type = 'password'; key.placeholder = 'AIza… from aistudio.google.com/apikey'; key.autocomplete = 'off';
+    key.value = prefill;
+    const actions = el('div', 'kr-actions');
+    if (!empty) { const c = el('button', '', 'Cancel'); c.dataset.cancel = '1'; actions.append(c); }
+    const add = el('button', 'main', 'Add & use');
+    add.dataset.add = '1';
+    actions.append(add);
+    form.append(name, key, actions);
+    d.append(form);
+    if (empty) note('None yet. Get one at aistudio.google.com/apikey — an AI Studio key, not a Firebase one.');
+  }
+
+  function keyChanged() { renderDrawer(); render(); }
+
+  function addKey() {
+    const k = $('drawer').querySelector('.kr-new-key').value.trim();
+    const typed = $('drawer').querySelector('.kr-new-name').value.trim();
+    if (!k) return note('Paste the key first.', 'bad');
+    if (!/^AIza/.test(k)) return note("That doesn't look like a Gemini key (they start with AIza).", 'bad');
+    const list = ring();
+    const dupe = list.find(x => x.key === k);
+    let name;
+    if (dupe) { if (typed) dupe.name = typed; name = dupe.name; }
+    else { name = typed || 'Key ' + (list.length + 1); list.push({ name: name, key: k }); }
+    storeRing(list);
+    useKey(k);
+    adding = false; prefill = '';
+    note('Now using “' + name + '”.', 'ok');
+    keyChanged();
+  }
+
+  $('drawer').addEventListener('click', e => {
+    const t = e.target.closest('button');
+    if (!t) return;
+    const ds = t.dataset;
+    if (ds.pick != null) {
+      const k = ring()[+ds.pick];
+      if (!k || k.key === inUse()) return;
+      useKey(k.key);
+      note('Now using “' + k.name + '”.', 'ok');
+      keyChanged();
+    } else if (ds.bin != null) {
+      if (arming !== ds.bin) {                    // first tap: ask
+        arming = ds.bin;
+        clearTimeout(armTimer);
+        armTimer = setTimeout(() => { arming = null; renderDrawer(); }, 3500);
+        return renderDrawer();
+      }
+      clearTimeout(armTimer); arming = null;
+      if (ds.bin === 'loose') {                   // the unsaved key in use: off this phone
+        useKey('');
+        note('Removed from this phone. Poppy needs a key to answer — add one above.', 'ok');
+      } else {
+        const list = ring();
+        const gone = list.splice(+ds.bin, 1)[0];
+        storeRing(list);
+        note('Removed “' + gone.name + '”.' + (gone.key === inUse() ? " It's still in use until you pick another." : ''), 'ok');
+      }
+      keyChanged();
+    } else if (ds.keep) {
+      adding = true; prefill = inUse();
+      renderDrawer();
+      $('drawer').querySelector('.kr-new-name').focus();
+    } else if (ds.open) {
+      adding = true; prefill = '';
+      renderDrawer();
+      $('drawer').querySelector('.kr-new-name').focus();
+    } else if (ds.cancel) {
+      adding = false; prefill = '';
+      renderDrawer();
+    } else if (ds.add) {
+      addKey();
+    }
+  });
+  $('drawer').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.matches('.kr-new-name, .kr-new-key')) { e.preventDefault(); addKey(); }
+  });
+
+  function openEngine() {
     const cfg = POPPY.getConfig();
-    $('s-key').value = '';
-    keyNote();
+    adding = false; prefill = ''; arming = null;
+    note('');
+    renderDrawer();
     const models = MODELS.indexOf(cfg.model) === -1 && cfg.model ? MODELS.concat([cfg.model]) : MODELS;
     fillSelect($('s-model'), models.map(m => [m, m]), cfg.model);
     $('s-thinking').value = cfg.thinking || 'quick';
+    openSheet('engine-sheet');
+  }
 
+  function openVoice() {
     $('s-speak').checked = state.voice;
     $('s-vengine').value = state.v.engine;
     const V = window.POPPY_VOICE;
@@ -622,39 +865,20 @@ window.LIFEHUB_ACTIONS = {
       fillSelect($('s-vmodel'), V.models.map(m => [m.id, m.label]), state.v.model || V.defaults.model);
       $('s-style').value = state.v.style || V.defaults.style;
     }
+    /* Gemini's voice runs on the same key as the chat, kept in Engine. */
+    const vk = $('s-vkey-note');
+    vk.className = 'note' + (hasKey() ? '' : ' bad');
+    vk.innerHTML = hasKey() ? '' : 'Needs a Gemini key. <button type="button" class="linkish" id="to-engine">Add one in Engine</button>';
+    if ($('to-engine')) $('to-engine').addEventListener('click', openEngine);
     $('s-rate').value = state.v.rate;
     showRate();
     showVoiceFields();
     $('s-test-note').textContent = '';
-    $('veil').classList.add('open');
-    $('sheet').classList.add('open');
-  }
-  function closeSettings() {
-    $('veil').classList.remove('open');
-    $('sheet').classList.remove('open');
+    openSheet('voice-sheet');
   }
   function showRate() { $('s-rate-val').textContent = Number($('s-rate').value).toFixed(2) + '×'; }
   function showVoiceFields() { $('s-gemini-voice').style.display = $('s-vengine').value === 'gemini' ? '' : 'none'; }
 
-  $('settings').addEventListener('click', openSettings);
-  $('sheet-shut').addEventListener('click', closeSettings);
-  $('veil').addEventListener('click', closeSettings);
-
-  $('s-key-save').addEventListener('click', () => {
-    const k = $('s-key').value.trim();
-    if (!k) return;
-    const conn = POPPY.getConfig().connection;
-    POPPY.setConfig({ connection: conn === 'openrouter' ? 'gemini' : conn, keys: { gemini: k } });
-    $('s-key').value = '';
-    keyNote();
-    render();
-  });
-  $('s-key-remove').addEventListener('click', () => {
-    if (!confirm('Remove the key from this phone? Poppy will stop answering until you add one again.')) return;
-    POPPY.setConfig({ keys: { gemini: '' } });
-    keyNote();
-    render();
-  });
   $('s-model').addEventListener('change', e => {
     POPPY.setConfig({ model: e.target.value, models: { gemini: e.target.value, server: e.target.value } });
   });

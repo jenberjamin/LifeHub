@@ -2034,104 +2034,177 @@ function storeKeyring(provider, list){
   POPPY.setConfig({ keyring: { [provider]: list } });
 }
 
+/* One drawer: the saved keys as a list to tap, the key in use marked.
+   The hidden key box (data-input) holds the key in use — Save reads it,
+   so switching here and Save always agree. */
+const KR_LABEL = { gemini: "Gemini", openrouter: "OpenRouter" };
+const KR_BIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg>';
+
+function krEl(tag, cls, text){
+  const el = document.createElement(tag);
+  if (cls) el.className = cls;
+  if (text != null) el.textContent = text;
+  if (tag === "button") el.type = "button";
+  return el;
+}
+
 function renderKeyring(box){
   const provider = box.dataset.provider;
   const input = $(box.dataset.input);
   const current = input.value.trim();
-  let list = keyringOf(provider);
+  const list = keyringOf(provider);
+  box.innerHTML = "";
 
-  /* The key already in use goes in the drawer on first sight, so it's
-     there to come back to after trying another. */
-  if (!list.length && current && KEY_SHAPE[provider].test(current)){
-    list = [{ name: "Key 1", key: current }];
-    storeKeyring(provider, list);
-  }
+  const rows = krEl("div", "kr-list");
+  rows.setAttribute("role", "radiogroup");
+  rows.setAttribute("aria-label", "Saved " + KR_LABEL[provider] + " keys");
 
-  const sel = box.querySelector(".kr-list");
-  sel.innerHTML = "";
-  const head = document.createElement("option");
-  head.value = "";
-  head.textContent = list.length
-    ? "Saved keys (" + list.length + ") — pick one to switch to it"
-    : "Drawer is empty — paste a key above, then Save to drawer";
-  sel.appendChild(head);
-
-  let inUse = "";
   list.forEach((k, i) => {
-    const opt = document.createElement("option");
-    opt.value = String(i);
     const on = k.key === current;
-    if (on) inUse = String(i);
-    opt.textContent = (on ? "✓ " : "") + k.name + " · " + maskKey(k.key) + (on ? " · in use" : "");
-    sel.appendChild(opt);
+    const row = krEl("div", "kr-row" + (on ? " is-on" : ""));
+    const pick = krEl("button", "kr-pick");
+    pick.setAttribute("role", "radio");
+    pick.setAttribute("aria-checked", on ? "true" : "false");
+    pick.dataset.i = String(i);
+    pick.append(krEl("span", "kr-dot"), krEl("span", "kr-name", k.name),
+                krEl("span", "kr-mask", maskKey(k.key)));
+    if (on) pick.append(krEl("span", "kr-tag", "In use"));
+    const bin = krEl("button", "kr-bin");
+    bin.innerHTML = KR_BIN;
+    bin.dataset.i = String(i);
+    bin.setAttribute("aria-label", "Remove " + k.name);
+    bin.title = "Remove";
+    row.append(pick, bin);
+    rows.appendChild(row);
   });
-  sel.value = inUse;
-  box.querySelector(".kr-del").disabled = !list.length;
+
+  /* A key in use that isn't in the drawer (typed before the drawer
+     existed, or its entry was removed) stays visible, with a way in. */
+  if (current && !list.some(k => k.key === current)){
+    const row = krEl("div", "kr-row is-on is-loose");
+    const pick = krEl("div", "kr-pick");
+    pick.append(krEl("span", "kr-dot"), krEl("span", "kr-name", "Current key"),
+                krEl("span", "kr-mask", maskKey(current)), krEl("span", "kr-tag", "Not saved"));
+    row.append(pick, krEl("button", "kr-keep", "Save"));
+    rows.appendChild(row);
+  }
+  if (rows.children.length) box.appendChild(rows);
+
+  /* Adding: a small form, open straight away when the drawer is empty. */
+  const adding = box.dataset.adding === "1" || !rows.children.length;
+  if (!adding){
+    box.appendChild(krEl("button", "kr-open", "+ Add a key"));
+    return;
+  }
+  const form = krEl("div", "kr-form");
+  const name = krEl("input", "kr-new-name");
+  name.type = "text"; name.spellcheck = false; name.placeholder = "Name it — e.g. Personal";
+  const key = krEl("input", "kr-new-key");
+  key.type = "password"; key.spellcheck = false; key.autocomplete = "off";
+  key.placeholder = input.placeholder || "Paste the key";
+  if (box.dataset.prefill) key.value = box.dataset.prefill;
+  const actions = krEl("div", "kr-actions");
+  if (rows.children.length) actions.appendChild(krEl("button", "btn ghost kr-cancel", "Cancel"));
+  actions.appendChild(krEl("button", "btn primary kr-add", "Add & use"));
+  form.append(name, key, actions);
+  box.appendChild(form);
 }
 
 function renderKeyrings(){
   document.querySelectorAll("#engine-panel .keyring").forEach(renderKeyring);
 }
 
+/* Puts a key to work at once — no Save needed, since the moment you want
+   this is the moment a 429 just landed. */
+function useKey(box, key, name){
+  const provider = box.dataset.provider;
+  $(box.dataset.input).value = key;
+  POPPY.setConfig({ keys: { [provider]: key } });
+  refreshVoiceKeyNote();
+  setEngineNote("Now using “" + name + "” for " + KR_LABEL[provider] +
+    (provider === "gemini" ? " — chat and voice." : "."), "ok");
+}
+
 function wireKeyring(box){
   const provider = box.dataset.provider;
-  const input = $(box.dataset.input);
-  const sel = box.querySelector(".kr-list");
-  const nameBox = box.querySelector(".kr-name");
-  const label = provider === "gemini" ? "Gemini" : "OpenRouter";
+  const label = KR_LABEL[provider];
+  let arming = null, armTimer = null;       // the bin waiting for its second press
 
-  sel.addEventListener("change", () => {
-    const k = keyringOf(provider)[parseInt(sel.value, 10)];
-    if (!k) return;
-    input.value = k.key;
-    POPPY.setConfig({ keys: { [provider]: k.key } });
-    refreshVoiceKeyNote();
-    setEngineNote("Now using “" + k.name + "” for " + label +
-      (provider === "gemini" ? " — chat and voice." : "."), "ok");
-    renderKeyring(box);
-  });
+  const closeForm = () => { delete box.dataset.adding; delete box.dataset.prefill; };
 
-  box.querySelector(".kr-add").addEventListener("click", () => {
-    const key = input.value.trim();
-    if (!key){ setEngineNote("Paste a " + label + " key in the box first.", "bad"); return; }
+  function add(){
+    const key = box.querySelector(".kr-new-key").value.trim();
+    const typed = box.querySelector(".kr-new-name").value.trim();
+    if (!key){ setEngineNote("Paste a " + label + " key first.", "bad"); return; }
     if (!KEY_SHAPE[provider].test(key)){
       setEngineNote("That doesn't look like a " + label + " key" +
         (provider === "gemini" ? " (they start with AIza)." : " (they start with sk-or-)."), "bad");
       return;
     }
     const list = keyringOf(provider);
-    const typed = nameBox.value.trim();
     const dupe = list.find(k => k.key === key);
+    let name;
     if (dupe){
-      if (!typed){ setEngineNote("Already in the drawer as “" + dupe.name + "”.", "bad"); return; }
-      dupe.name = typed;
-      setEngineNote("Renamed to “" + typed + "”.", "ok");
+      if (typed) dupe.name = typed;         // same key, new name: a rename
+      name = dupe.name;
     } else {
-      list.push({ name: typed || "Key " + (list.length + 1), key });
-      setEngineNote("Saved to the drawer as “" + list[list.length - 1].name + "”.", "ok");
+      name = typed || "Key " + (list.length + 1);
+      list.push({ name, key });
     }
     storeKeyring(provider, list);
-    /* Saving it also switches to it — same as picking it — so the ✓ in
-       the list is never ahead of what's actually in use. */
-    POPPY.setConfig({ keys: { [provider]: key } });
-    refreshVoiceKeyNote();
-    nameBox.value = "";
+    closeForm();
+    useKey(box, key, name);
     renderKeyring(box);
+  }
+
+  /* One listener for the whole drawer: its rows are redrawn on every change. */
+  box.addEventListener("click", (e) => {
+    const t = e.target.closest("button");
+    if (!t || !box.contains(t)) return;
+
+    if (t.classList.contains("kr-pick")){
+      const k = keyringOf(provider)[parseInt(t.dataset.i, 10)];
+      if (!k || k.key === $(box.dataset.input).value.trim()) return;
+      useKey(box, k.key, k.name);
+      renderKeyring(box);
+    } else if (t.classList.contains("kr-bin")){
+      const i = parseInt(t.dataset.i, 10);
+      if (arming !== i){                     // first press: ask
+        arming = i;
+        clearTimeout(armTimer);
+        box.querySelectorAll(".kr-bin.is-armed").forEach(b => { b.classList.remove("is-armed"); b.innerHTML = KR_BIN; });
+        t.classList.add("is-armed");
+        t.textContent = "Remove?";
+        armTimer = setTimeout(() => { arming = null; renderKeyring(box); }, 3500);
+        return;
+      }
+      clearTimeout(armTimer); arming = null;
+      const list = keyringOf(provider);
+      const gone = list.splice(i, 1)[0];
+      storeKeyring(provider, list);
+      setEngineNote("Removed “" + gone.name + "” from the drawer." +
+        (gone.key === $(box.dataset.input).value.trim() ? " It's still in use until you pick another." : ""), "ok");
+      renderKeyring(box);
+    } else if (t.classList.contains("kr-keep")){
+      box.dataset.adding = "1";
+      box.dataset.prefill = $(box.dataset.input).value.trim();
+      renderKeyring(box);
+      box.querySelector(".kr-new-name").focus();
+    } else if (t.classList.contains("kr-open")){
+      box.dataset.adding = "1";
+      renderKeyring(box);
+      box.querySelector(".kr-new-name").focus();
+    } else if (t.classList.contains("kr-cancel")){
+      closeForm();
+      renderKeyring(box);
+    } else if (t.classList.contains("kr-add")){
+      add();
+    }
   });
 
-  box.querySelector(".kr-del").addEventListener("click", () => {
-    const list = keyringOf(provider);
-    /* The one picked in the list, or else the one in use. */
-    let i = sel.value !== "" ? parseInt(sel.value, 10) : list.findIndex(k => k.key === input.value.trim());
-    if (i < 0 || !list[i]){ setEngineNote("Pick a key in the list to remove.", "bad"); return; }
-    const gone = list.splice(i, 1)[0];
-    storeKeyring(provider, list);
-    setEngineNote("Removed “" + gone.name + "” from the drawer. The key box is unchanged.", "ok");
-    renderKeyring(box);
+  box.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.matches(".kr-new-name, .kr-new-key")){ e.preventDefault(); add(); }
   });
-
-  /* Typing or pasting in the key box moves the ✓ to match. */
-  input.addEventListener("input", () => renderKeyring(box));
 }
 
 function openEngine(){
@@ -2276,12 +2349,20 @@ function startChat(){
   $("cfg-model").addEventListener("input", refreshChips);
   document.querySelectorAll("#engine-panel .keyring").forEach(wireKeyring);
 
-  /* The Voice panel's way to its key: close Voice, open Engine, put the
-     cursor in the Gemini key box. */
+  /* The Voice panel's way to its key: close Voice, open Engine at the
+     Gemini key drawer. */
   $("voice-key-btn").addEventListener("click", () => {
     $("voice-panel").classList.remove("is-open");
     openEngine();
-    setTimeout(() => { try { $("cfg-key").focus(); } catch (e) {} }, 60);
+    /* The Gemini drawer: its add form when there's no key yet (it opens
+       on its own then), otherwise just the drawer, in view. */
+    setTimeout(() => {
+      const box = document.querySelector('#engine-panel .keyring[data-provider="gemini"]');
+      if (!box) return;
+      const name = box.querySelector(".kr-new-name");
+      if (name) name.focus();
+      else box.scrollIntoView({ block: "nearest" });
+    }, 60);
   });
 
   /* Picking from OpenRouter's free list fills the model box — no typing. */

@@ -1866,28 +1866,39 @@
      watches to start the day, so the card opens it over the
      wallpaper: no navigation, no InspoHub, no second press of play.
 
-     "Watched" lives in localStorage rather than the database. The
-     other cards read state a tracker owns; nothing owns this one,
-     and a whole RTDB node to remember "yes, this morning too" would
-     be more machinery than the fact deserves. It is per-device,
-     which is correct — this is the wallpaper's card.
+     "Watched" lives in the database, at morning_video/watched (the
+     Manila date it was last seen through). It used to be localStorage
+     only, which meant watching it on the TV left the card up on the
+     laptop and phone all morning. localStorage is still written too,
+     so the device that played it hides the card at once even if the
+     write is slow or offline.
      ------------------------------------------------------------ */
   const INSPO_SRC = 'Hubs/InspoHub/videos/jen/second_star.mp4';
   const INSPO_HOUR = 5;                    // opens at 5am Manila
   const INSPO_CLOSE_HOUR = 12;             // a "morning" video, so it stops at noon
   const INSPO_WATCHED_KEY = 'lifehub.inspo.watched';
+  const INSPO_NODE = 'morning_video/watched';
+
+  let inspoRef = null;                     // set by inspoAttach()
+  let inspoSharedDay = null;               // what the database says
 
   function inspoWatchedToday() {
+    const today = phToday();
+    if (inspoSharedDay === today) return true;
     try {
       const raw = JSON.parse(localStorage.getItem(INSPO_WATCHED_KEY)) || {};
-      return raw.day === phToday();
+      return raw.day === today;
     } catch (e) { return false; }
   }
 
   function markInspoWatched() {
+    const today = phToday();
     try {
-      localStorage.setItem(INSPO_WATCHED_KEY, JSON.stringify({ day: phToday() }));
+      localStorage.setItem(INSPO_WATCHED_KEY, JSON.stringify({ day: today }));
     } catch (e) { /* private mode — it just won't persist */ }
+    inspoSharedDay = today;
+    if (inspoRef) inspoRef.set(today).catch((e) =>
+      console.warn('[nudges] morning video: could not save "watched":', e.message));
     render();
   }
 
@@ -1923,17 +1934,24 @@
   function inspoAttach(db, onChange) {
     if (inspoAttached) return inspoAttached;
 
-    /* No database read at all — but render() skips any spec whose
-       state is still falsy, so it needs something to stand on. */
+    /* render() skips any spec whose state is still falsy, so it needs
+       something to stand on before the first read lands. */
     state.inspo = { kind: 'morning-video' };
     armInspoTimer(onChange);
+
+    /* One tiny value, listened to live: watching it on any screen
+       takes the card off all the others. */
+    const warn = (e) => console.warn('[nudges] morning video read failed:', e.message);
+    const apply = (s) => { inspoSharedDay = s.val(); onChange(); };
+    inspoRef = db.ref(INSPO_NODE);
+    inspoRef.on('value', apply, warn);
 
     inspoAttached = {
       /* The timer re-arms itself, so this only matters if one was
          ever lost — re-arming on every tick would keep clearing a
          pending wake-up and could walk straight over 5am. */
       repoint() { if (!inspoTimer) armInspoTimer(onChange); },
-      resync() { onChange(); }
+      resync() { inspoRef.once('value').then(apply).catch(warn); }
     };
     return inspoAttached;
   }
@@ -2053,11 +2071,25 @@
 
     /* Watching it through is what marks the day done. Closing early
        deliberately does not — the card is still true, and the × on
-       it is already the way to say "not today". */
-    video.addEventListener('ended', () => {
+       it is already the way to say "not today".
+
+       'ended' alone was not enough on the TV: BrowseHere can take the
+       video into its own player and stop on the last frame without
+       ever firing it. So a pause (or a last timeupdate) within half a
+       second of the end counts as the end too. */
+    function finished() {
+      if (vid.done) return;
+      vid.done = true;
       markInspoWatched();
       closePlayer();
-    });
+    }
+    const atEnd = () => {
+      const d = video.duration;
+      return isFinite(d) && d > 0 && video.currentTime >= d - 0.5;
+    };
+    video.addEventListener('ended', finished);
+    video.addEventListener('pause', () => { if (atEnd()) finished(); });
+    video.addEventListener('timeupdate', () => { if (atEnd() && video.paused) finished(); });
 
     /* The file is 34MB and lives outside this folder, so a missing or
        moved clip has to say so rather than showing a black rectangle
@@ -2084,13 +2116,31 @@
 
   function closePlayer() {
     if (!vid) return;
-    vid.video.pause();
+    const v = vid.video;
+    v.pause();
+
+    /* Leave any fullscreen the browser put the video into. */
+    try {
+      const fs = document.fullscreenElement || document.webkitFullscreenElement;
+      if (fs) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      if (v.webkitDisplayingFullscreen && v.webkitExitFullscreen) v.webkitExitFullscreen();
+    } catch (e) {}
+
+    /* Hiding the overlay is not enough on the TV: BrowseHere pins its
+       own fullscreen and × buttons to a video for as long as that
+       video holds a source. Dropping the source releases it, and those
+       buttons with it. openMorningVideo() puts it back. */
+    v.removeAttribute('src');
+    try { v.load(); } catch (e) {}
+
     vid.root.classList.remove('is-open');
     document.removeEventListener('keydown', onPlayerKey);
   }
 
   function openMorningVideo() {
     if (!vid) buildPlayer();
+    vid.done = false;
+    if (!vid.video.getAttribute('src')) vid.video.src = INSPO_SRC;
     vid.root.classList.add('is-open');
     document.addEventListener('keydown', onPlayerKey);
 

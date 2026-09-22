@@ -358,7 +358,7 @@
       src.connect(ac.destination);
 
       const now = ac.currentTime;
-      if (!started) { started = true; nextAt = now + LEAD; }
+      if (!started) { started = true; nextAt = now + LEAD; heard(session); }
       if (nextAt < now + 0.01) nextAt = now + 0.01;   // fell behind: carry on, never overlap
       src.start(nextAt);
       nextAt += buf.duration;
@@ -437,6 +437,15 @@
     if (c.reject) c.reject(Object.assign(new Error("stopped"), { name: "AbortError" }));
   }
 
+  /* opts.onStart, if given, is told once, the moment she makes a sound —
+     the phone uses it to show how long the voice took. */
+  function heard(session) {
+    const f = session.onStart;
+    if (!f) return;
+    session.onStart = null;
+    try { f(); } catch (e) {}
+  }
+
   function play(blob, rate, session) {
     return new Promise((resolve, reject) => {
       if (current !== session) return reject(Object.assign(new Error("stopped"), { name: "AbortError" }));
@@ -448,7 +457,7 @@
       a.playbackRate = rate || 1;
       a.onended = () => { session.reject = null; resolve(); };
       a.onerror = () => { session.reject = null; reject(new Error("The voice audio couldn't be played.")); };
-      a.play().catch(err => {
+      a.play().then(() => heard(session)).catch(err => {
         session.reject = null;
         /* Autoplay refused — the page hasn't been clicked yet. */
         reject(new Error(err && err.name === "NotAllowedError"
@@ -477,7 +486,8 @@
     const clean = String(text || "").trim();
     if (!clean) return;
 
-    const session = { audio: blessed || new Audio(), abort: new AbortController(), url: null,
+    const session = { onStart: typeof opts.onStart === "function" ? opts.onStart : null,
+                      audio: blessed || new Audio(), abort: new AbortController(), url: null,
                       reject: null, sources: [], timer: null };
     current = session;
 
