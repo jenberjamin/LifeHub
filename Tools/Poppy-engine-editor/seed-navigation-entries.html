@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seed — Navigation entry</title>
+<title>Seed — Navigation entries</title>
 <style>
     body {
         background: #f2e8e2; font-family: 'Century Gothic', sans-serif;
@@ -52,22 +52,31 @@
     </p>
 
     <div class="warn">
-        Just the one entry, on purpose. The list of 48 destinations is
+        The list of 48 destinations is
         <strong>not</strong> in here — it's built at runtime from
         <code>JS/lifehub-destinations.js</code> and shipped with the action
         spec, so adding a screen there needs no re-seed and no re-export.
     </div>
 
     <p>
-        Matched <strong>by name</strong>, so a second run updates it rather
-        than creating a duplicate. Your other entries are never read or
+        Added 2026-09-22: a second entry, <strong>Navigation: Refresh a
+        screen</strong>, so "refresh the TV" unlocks her <code>refresh</code>
+        action (the remote's Reload button, sent by Poppy).
+    </p>
+
+    <p>
+        Matched <strong>by name</strong>. An entry that's already in the
+        editor is <strong>left alone</strong>, even if it differs from this
+        page, so edits you made in the editor are never undone. Only
+        missing entries are added. Your other entries are never read or
         changed.
     </p>
 
-    <p><strong>After it finishes:</strong> open the editor, read it through, then
-        <strong>Export PoppyEngine.js</strong> over <code>JS/poppy/PoppyEngine-core.js</code>.</p>
+    <p><strong>After it finishes:</strong> open the editor and read it through, then
+        double-click <strong>Pull Engine.bat</strong> (next to this page) to rebuild
+        <code>JS/poppy/PoppyEngine-core.js</code>.</p>
 
-    <button id="go">Write the navigation entry</button>
+    <button id="go">Write the navigation entries</button>
     <div id="log"></div>
 </div>
 
@@ -162,6 +171,43 @@ picked wrong.
 Check the Active surface line first. If she's asking for the screen
 she's already on, say so instead of sending the block.` + "\n" + RULE
 
+},
+
+/* ── REFRESH A SCREEN (2026-09-22) ─────────────────────────────────
+   The remote's Reload button, for when the remote isn't to hand. The
+   action is in PoppyEngine-navigate.js; this entry only unlocks it.
+
+   Two gates, because either alone fires on ordinary talk: the verb
+   (requireAny) and a screen (keywords, at least one must hit). "I need
+   to refresh my memory" has no screen; "the TV is on" has no verb.
+   Its own intent, so it isn't crowded out by NAVIGATE when she says
+   both in one breath ("refresh the TV and open Sleep"). */
+{
+    name: "Navigation: Refresh a screen",
+    intent: "REFRESH",
+    blockType: "instruction",
+    priority: 4,
+    window: 1,
+    keywords: ["tv", "telly", "television", "screen", "page", "homescreen",
+               "home screen", "pc", "display", "monitor"],
+    requireAny: ["refresh", "reload", "restart", "frozen", "stuck", "unfreeze", "hard refresh"],
+    writeFields: ["action"],
+    guidelines:
+HEAD("Jen wants a screen refreshed", "refresh") +
+`She's asking you to reload what's showing on a screen, usually the TV,
+like pressing Reload on the remote. The block shape is in the REFRESHING
+A SCREEN section.
+
+  "refresh the TV"               → {"action":"refresh"}
+  "the TV's frozen"              → {"action":"refresh"}
+  "reload the PC"                → {"action":"refresh","on":"PC"}
+
+It reloads the page that's already there; it doesn't change which page
+it is. If she wants a different page, that's navigate, not this.
+
+Not a request: "I need to refresh my memory", "how do I refresh
+Scribble's cache" — answer those, no block.` + "\n" + RULE
+
 }
 
 ];
@@ -192,7 +238,7 @@ document.getElementById('go').onclick = async () => {
         const intentPatch = {};
         ENTRIES.forEach(e => { intentPatch[e.intent] = true; });
         await update(ref(db, 'poppyEngine/intents/' + CATEGORY), intentPatch);
-        say('- ' + ENTRIES.length + ' intent registered', 'ok');
+        say('- ' + ENTRIES.length + ' intents registered', 'ok');
 
         const entSnap = await get(ref(db, 'poppyEngine/entries'));
         const existing = entSnap.val() || {};
@@ -207,13 +253,22 @@ document.getElementById('go').onclick = async () => {
             const id = byName[src.name];
             const was = id ? existing[id] : null;
 
+            /* Already there: leave it exactly as it is. It may have been
+               tuned in the editor since it was seeded (Take me there's
+               keywords were), and rewriting it from this file would
+               silently undo that. Only missing entries are written. */
+            if (id) {
+                say('- kept     ' + src.name + ' (already in the editor; not overwritten)', 'ok');
+                continue;
+            }
+
             const entry = {
                 name:         src.name,
                 category:     CATEGORY,
                 intent:       src.intent,
                 keywords:     src.keywords || [],
                 priority:     src.priority || 4,
-                order:        was && was.order != null ? was.order : n++,
+                order:        n++,
                 hidden:       false,
                 window:       src.window != null ? src.window : null,
                 cooldown:     src.cooldown || 0,
@@ -229,15 +284,9 @@ document.getElementById('go').onclick = async () => {
                 updatedAt:    Date.now()
             };
 
-            if (id) {
-                entry.createdAt = was.createdAt || Date.now();
-                await set(ref(db, 'poppyEngine/entries/' + id), entry);
-                say('~ updated  ' + src.name, 'ok');
-            } else {
-                entry.createdAt = Date.now();
-                await push(ref(db, 'poppyEngine/entries'), entry);
-                say('+ created  ' + src.name, 'new');
-            }
+            entry.createdAt = Date.now();
+            await push(ref(db, 'poppyEngine/entries'), entry);
+            say('+ created  ' + src.name, 'new');
         }
 
         say('');

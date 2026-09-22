@@ -1048,6 +1048,22 @@ button.kr-pick:hover{ border-color: var(--chat-accent, #00e5ff); }
   cursor: pointer;
   transition: color .16s ease, border-color .16s ease, background .16s ease;
 }
+/* Renaming in place: the name box takes the row's place. */
+.kr-rename{
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--chat-accent, #00e5ff);
+  background: var(--chat-her, rgba(255,255,255,.06));
+  color: var(--chat-ink, #eceef0);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+}
+/* The pencil and the rename ✕ borrow the bin's shape, not its red. */
+.kr-bin.kr-edit:hover, .kr-bin.kr-rename-no:hover{ color: var(--chat-ink, #fff); border-color: var(--chat-accent, #00e5ff); }
 .kr-bin svg{ width: 17px; height: 17px; display: block; margin: auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .kr-bin:hover{ color: var(--chat-err-ink, #ffa2ab); border-color: var(--chat-err-line, rgba(255,90,106,.4)); }
 .kr-bin.is-armed{

@@ -382,33 +382,72 @@
 
   /* ── Which screen ─────────────────────────────────────────────────
      lifehub_screens is written by every page that loads the navigation
-     core. Online ones first, the TV at the top. A screen that's been
-     offline for more than a day is just an old browser — hidden. */
+     core. A screen shows as offline for a moment whenever it changes page
+     or its Wi-Fi blips, so the remote never switches away on its own
+     just because the chosen screen went quiet — that's what made it
+     bounce between the TV and the computer when both were open.
+
+     It only picks for you when you haven't: on first open, or when the
+     chosen screen no longer exists. The TV comes first, and if it picked
+     something else only because the TV was off, it moves to the TV when
+     the TV comes on. A screen you picked yourself is never overridden. */
+  let manual = !!chosen;               // a saved pick is one you made
+  let cleaned = false;
+  const WEEK = 7 * 86400000;
+
   db.ref('lifehub_screens').on('value', snap => {
     screens = snap.val() || {};
-    const DAY = 86400000;
-    const ids = Object.keys(screens)
-      .filter(id => screens[id].online || Date.now() - (screens[id].at || 0) < DAY)
-      .sort((a, b) => {
-        const A = screens[a], B = screens[b];
-        return (B.online - A.online) || (B.tv - A.tv) || ((B.at || 0) - (A.at || 0));
-      });
 
-    if (!chosen || !screens[chosen] || (!screens[chosen].online && ids.some(id => screens[id].online))) {
-      const tv = ids.find(id => screens[id].online && screens[id].tv) || ids.find(id => screens[id].online) || ids[0];
-      chosen = tv || '';
+    /* Every browser (and every address it opened LifeHub from) is its own
+       screen, so old ones pile up. A week offline: removed. A real screen
+       writes itself back the next time it's opened. Once per visit. */
+    if (!cleaned && Object.keys(screens).length) {
+      cleaned = true;
+      Object.keys(screens).forEach(id => {
+        const s = screens[id];
+        if (!s.online && Date.now() - (s.at || 0) > WEEK && id !== chosen) {
+          db.ref('lifehub_screens/' + id).remove().catch(() => {});
+        }
+      });
     }
+
+    const online = id => !!(screens[id] && screens[id].online);
+    const onlineTV = Object.keys(screens).find(id => online(id) && screens[id].tv);
+    /* A screen you picked stays yours even if one update arrives without
+       it (an empty first read, say) — it's only stood in for until it's
+       back. A pick made for you is simply made again. */
+    const saved = get(PICK_KEY);
+    if (manual && saved && screens[saved]) {
+      chosen = saved;
+    } else if (!chosen || !screens[chosen]) {
+      chosen = onlineTV || Object.keys(screens).find(online) || '';
+    } else if (!manual && onlineTV && !screens[chosen].tv) {
+      chosen = onlineTV;               // picked for you while the TV was off
+    }
+
+    /* Only screens that are on, plus the chosen one even while it's asleep. */
+    const ids = Object.keys(screens)
+      .filter(id => online(id) || id === chosen)
+      .sort((x, y) => {
+        const A = screens[x], B = screens[y];
+        return (B.tv - A.tv) || (B.online - A.online) || String(A.name).localeCompare(String(B.name));
+      });
+    /* Two "computer"s: say which page each is on. */
+    const count = {};
+    ids.forEach(id => { const n = screens[id].name; count[n] = (count[n] || 0) + 1; });
 
     const sel = $('screen');
     sel.innerHTML = '';
     if (!ids.length) {
-      sel.innerHTML = '<option value="">No screens found. Open LifeHub on the TV.</option>';
+      sel.innerHTML = '<option value="">No screens on. Open LifeHub on the TV.</option>';
     }
     ids.forEach(id => {
       const s = screens[id];
       const o = document.createElement('option');
       o.value = id;
-      o.textContent = s.name + (s.online ? '' : ' (off)');
+      o.textContent = s.name +
+        (count[s.name] > 1 ? ' · ' + (s.title || s.page || id.slice(-4)) : '') +
+        (s.online ? '' : ' (asleep)');
       if (id === chosen) o.selected = true;
       sel.appendChild(o);
     });
@@ -417,6 +456,7 @@
 
   $('screen').addEventListener('change', e => {
     chosen = e.target.value;
+    manual = true;
     put(PICK_KEY, chosen);
     showStatus();
   });
@@ -424,8 +464,13 @@
   function showStatus() {
     const s = screens[chosen];
     $('dot').classList.toggle('on', !!(s && s.online));
+    /* Just went quiet: most likely changing page, back in a moment. */
+    const blip = s && !s.online && Date.now() - (s.at || 0) < 20000;
     $('status').textContent = !s ? '' :
-      s.online ? 'Showing: ' + (s.title || s.page || '…') : 'This screen is off or asleep.';
+      s.online ? 'Showing: ' + (s.title || s.page || '…') :
+      blip ? 'Reconnecting…' : 'This screen is off or asleep. Pick another above.';
+    clearTimeout(showStatus.t);
+    if (blip) showStatus.t = setTimeout(showStatus, 20000);
   }
 
   /* ── Pressing ────────────────────────────────────────────────────

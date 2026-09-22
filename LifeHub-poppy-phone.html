@@ -192,6 +192,9 @@
     font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
   .kr-side { flex:none; min-width:56px; padding:0 12px; border-radius:16px; color:var(--dim);
     font-size:13px; font-weight:700; }
+  .kr-side { min-width:48px; }
+  .kr-rename { flex:1; min-width:0; min-height:60px; padding:10px 14px; border-radius:16px;
+    border:1px solid var(--gold); background:rgba(0,0,0,.25); font-size:16px; font-weight:600; }
   .kr-side.armed { color:var(--bad); border-color:rgba(243,167,155,.45); background:rgba(243,167,155,.12); }
   /* Folded: only the key in use; "Show all" and "+ Add a key" underneath. */
   #drawer.is-folded .kr-row:not(.on) { display:none; }
@@ -758,6 +761,7 @@ window.LIFEHUB_ACTIONS = {
   const mask = k => '••••' + String(k || '').slice(-4);
   let adding = false, prefill = '', arming = null, armTimer = null;
   let unfolded = false;       // the drawer shows every key, not just the one in use
+  let editing = null;         // the row being renamed
 
   function el(tag, cls, text) {
     const e = document.createElement(tag);
@@ -767,6 +771,21 @@ window.LIFEHUB_ACTIONS = {
   }
   function keyRow(name, key, opts) {
     const row = el('div', 'kr-row' + (opts.on ? ' on' : '') + (opts.loose ? ' loose' : ''));
+    /* Renaming: the name becomes a box, in place. */
+    if (!opts.loose && editing === opts.i) {
+      const field = el('input', 'kr-rename');
+      field.type = 'text'; field.value = name; field.spellcheck = false; field.autocomplete = 'off';
+      field.dataset.i = opts.i;
+      field.setAttribute('aria-label', 'New name for ' + name);
+      const ok = el('button', 'kr-side', 'Save');
+      ok.dataset.renameOk = opts.i;
+      const no = el('button', 'kr-side');
+      no.dataset.renameNo = '1';
+      no.setAttribute('aria-label', 'Cancel renaming');
+      no.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+      row.append(field, ok, no);
+      return row;
+    }
     const pick = el(opts.loose ? 'div' : 'button', 'kr-pick');
     if (!opts.loose) { pick.dataset.pick = opts.i; pick.setAttribute('aria-pressed', String(!!opts.on)); }
     const text = el('span', 'kr-text');
@@ -779,6 +798,13 @@ window.LIFEHUB_ACTIONS = {
       const keep = el('button', 'kr-side', 'Save');
       keep.dataset.keep = '1';
       row.append(keep);
+    }
+    if (!opts.loose) {
+      const pen = el('button', 'kr-side');
+      pen.dataset.edit = opts.i;
+      pen.setAttribute('aria-label', 'Rename ' + name);
+      pen.innerHTML = '<i class="fa-solid fa-pen"></i>';
+      row.append(pen);
     }
     const bin = el('button', 'kr-side' + (arming === opts.i ? ' armed' : ''));
     bin.dataset.bin = opts.i;
@@ -874,6 +900,16 @@ window.LIFEHUB_ACTIONS = {
       unfolded = false;                         // chosen: fold back to the one in use
       note('Now using “' + k.name + '”.', 'ok');
       keyChanged();
+    } else if (ds.edit != null) {
+      editing = ds.edit;
+      renderDrawer();
+      const f = $('drawer').querySelector('.kr-rename');
+      if (f) { f.focus(); f.select(); }
+    } else if (ds.renameOk != null) {
+      rename(+ds.renameOk);
+    } else if (ds.renameNo) {
+      editing = null;
+      renderDrawer();
     } else if (ds.more) {
       unfolded = !unfolded;
       renderDrawer();
@@ -912,13 +948,31 @@ window.LIFEHUB_ACTIONS = {
       addKey();
     }
   });
+  function rename(i) {
+    const field = $('drawer').querySelector('.kr-rename');
+    const name = field ? field.value.trim() : '';
+    const list = ring();
+    editing = null;
+    if (list[i] && name && name !== list[i].name) {
+      list[i].name = name;
+      storeRing(list);
+      note('Renamed to “' + name + '”.', 'ok');
+    }
+    renderDrawer();
+  }
+
   $('drawer').addEventListener('keydown', e => {
     if (e.key === 'Enter' && e.target.matches('.kr-new-name, .kr-new-key')) { e.preventDefault(); addKey(); }
+    if (e.target.matches('.kr-rename')) {
+      if (e.key === 'Enter') { e.preventDefault(); rename(+e.target.dataset.i); }
+      /* Esc cancels the rename only — it mustn't also close the sheet. */
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); editing = null; renderDrawer(); }
+    }
   });
 
   function openEngine() {
     const cfg = POPPY.getConfig();
-    adding = false; prefill = ''; arming = null; unfolded = false;
+    adding = false; prefill = ''; arming = null; unfolded = false; editing = null;
     note('');
     renderDrawer();
     const models = MODELS.indexOf(cfg.model) === -1 && cfg.model ? MODELS.concat([cfg.model]) : MODELS;

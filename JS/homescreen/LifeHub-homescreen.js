@@ -2059,6 +2059,7 @@ function storeKeyring(provider, list){
    The hidden key box (data-input) holds the key in use — Save reads it,
    so switching here and Save always agree. */
 const KR_LABEL = { gemini: "Gemini", openrouter: "OpenRouter" };
+const KR_PEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16zM14 7l3 3"/></svg>';
 const KR_BIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg>';
 
 function krEl(tag, cls, text){
@@ -2083,6 +2084,24 @@ function renderKeyring(box){
   list.forEach((k, i) => {
     const on = k.key === current;
     const row = krEl("div", "kr-row" + (on ? " is-on" : ""));
+
+    /* Renaming: the name becomes a box, in place. */
+    if (box.dataset.editing === String(i)){
+      row.classList.add("is-editing");
+      const field = krEl("input", "kr-rename");
+      field.type = "text"; field.value = k.name; field.spellcheck = false; field.autocomplete = "off";
+      field.dataset.i = String(i);
+      field.setAttribute("aria-label", "New name for " + k.name);
+      const ok = krEl("button", "kr-keep kr-rename-ok", "Save");
+      ok.dataset.i = String(i);
+      const no = krEl("button", "kr-bin kr-rename-no");
+      no.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      no.setAttribute("aria-label", "Cancel renaming");
+      row.append(field, ok, no);
+      rows.appendChild(row);
+      return;
+    }
+
     const pick = krEl("button", "kr-pick");
     pick.setAttribute("role", "radio");
     pick.setAttribute("aria-checked", on ? "true" : "false");
@@ -2095,7 +2114,12 @@ function renderKeyring(box){
     bin.dataset.i = String(i);
     bin.setAttribute("aria-label", "Remove " + k.name);
     bin.title = "Remove";
-    row.append(pick, bin);
+    const pen = krEl("button", "kr-bin kr-edit");
+    pen.innerHTML = KR_PEN;
+    pen.dataset.i = String(i);
+    pen.setAttribute("aria-label", "Rename " + k.name);
+    pen.title = "Rename";
+    row.append(pick, pen, bin);
     rows.appendChild(row);
   });
 
@@ -2229,6 +2253,16 @@ function wireKeyring(box){
       useKey(box, k.key, k.name);
       delete box.dataset.open;              // chosen: fold back to the one in use
       renderKeyring(box);
+    } else if (t.classList.contains("kr-edit")){
+      box.dataset.editing = t.dataset.i;
+      renderKeyring(box);
+      const f = box.querySelector(".kr-rename");
+      if (f){ f.focus(); f.select(); }
+    } else if (t.classList.contains("kr-rename-ok")){
+      rename(parseInt(t.dataset.i, 10));
+    } else if (t.classList.contains("kr-rename-no")){
+      delete box.dataset.editing;
+      renderKeyring(box);
     } else if (t.classList.contains("kr-more")){
       if (box.dataset.open) delete box.dataset.open;
       else box.dataset.open = "1";
@@ -2269,15 +2303,33 @@ function wireKeyring(box){
     }
   });
 
+  function rename(i){
+    const field = box.querySelector(".kr-rename");
+    const list = keyringOf(provider);
+    const name = field ? field.value.trim() : "";
+    delete box.dataset.editing;
+    if (list[i] && name && name !== list[i].name){
+      list[i].name = name;
+      storeKeyring(provider, list);
+      setEngineNote("Renamed to “" + name + "”.", "ok");
+    }
+    renderKeyring(box);
+  }
+
   box.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && e.target.matches(".kr-new-name, .kr-new-key")){ e.preventDefault(); add(); }
+    if (e.target.matches(".kr-rename")){
+      if (e.key === "Enter"){ e.preventDefault(); rename(parseInt(e.target.dataset.i, 10)); }
+      /* Esc cancels the rename only — it mustn't also close the window. */
+      if (e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); delete box.dataset.editing; renderKeyring(box); }
+    }
   });
 }
 
 function openEngine(){
   /* Each visit starts tidy: drawers folded, no half-filled add form. */
   document.querySelectorAll("#engine-panel .keyring").forEach(b => {
-    delete b.dataset.open; delete b.dataset.adding; delete b.dataset.prefill;
+    delete b.dataset.open; delete b.dataset.adding; delete b.dataset.prefill; delete b.dataset.editing;
   });
   fillEngineForm(POPPY.getConfig());
   setEngineNote("");

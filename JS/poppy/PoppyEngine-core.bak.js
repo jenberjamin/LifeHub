@@ -7,7 +7,7 @@
 
    Anything typed in here directly is lost on the next pull.
 
-   Generated 9/15/2026 · 100 entries
+   Generated 9/16/2026 · 103 entries
 
    ── What this is ────────────────────────────────────────────────
    A filter, not a brain. It reads the current message, decides which
@@ -557,7 +557,13 @@ window.PoppyEngine = {
             window:       7,
             guidelines:   "═══════════════════════════════════════════════════════════════\n⚙️ Jen wants to 'Create a New Project' in Scribble. > scribble_create\n═══════════════════════════════════════════════════════════════\nTHREE RULES. These outrank anything below them.\n1. Send no action block until she has confirmed. Withholding it IS the confirmation — a block written beside \"shall I go ahead?\" creates the project before she answers.\n2. Never invent a description. If she didn't give one, it's an empty string. A project with a description she didn't write is worse than one with none.\n3. Use her name for it exactly as she said it. Don't correct spelling, capitalisation, or spacing.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nSTEP 1 — Pull two values out of her message.\nname — what she's calling it.\ndescription — one sentence on what it is, only if she said one.\n\nSTEP 2 — Check the name against all three buckets.\n\nSTEP 3 — Read it back and ask.\nNo name given: \"What should we call it?\" Wait, then re-check the name she gives against the buckets.\nName is free: \"I'll make {name}.\" Add \"Description: {description}.\" only if she gave one. Then: \"Go ahead?\" Wait.\nName is taken by an active project: \"{name} already exists. Still want it?\" Wait.\nName is taken by an archived or binned project: say which — \"{name} is in the bin\" or \"{name} is archived\" — then \"Still want a new one with that name?\" Wait.\n\nSTEP 4 — Her answer.\nYes: SEND THE ACTION BLOCK NOW. Then say it's made, in a few words.\nA different name: back to Step 2 with the new one.\nNo, or a change of subject: \"Alright.\" Transaction over.\n\nIf she says yes to a duplicate name, don't argue and don't rename it for her. She was told.\n\nFollow the sequence. The wording is yours to fit her mood — the order, the buckets check, and the confirmation are not.\n\nNo action block until she's said yes.\n═══════════════════════════════════════════════════════════════",
             requireAny:   ["project","projects"],
-            requireNone:  ["module","section"],
+            /* FENCE WIDENED 2026-09-17 — two holes. hasTerm matches WHOLE
+               WORDS, so "module" never matched "modules" and every plural
+               walked straight through. And the file words were missing
+               entirely, which mattered the moment item-tier entries existed:
+               a file phrase containing "project" could still reach a project
+               handler. The * suffix covers the plurals. */
+            requireNone:  ["module*","section*","file*","document*","doc","docs"],
         },
 
         {
@@ -582,8 +588,16 @@ window.PoppyEngine = {
             window:       6,
             guidelines:   "═══════════════════════════════════════════════════════════════\n⚙️ Jen wants to rename a 'Project' in Scribble ;  scribble_rename\n═══════════════════════════════════════════════════════════════\nTWO RULES.\n1. Use both names exactly as she said them. Don't tidy the new one — capitalisation and spacing are hers.\n2. Never invent a new name, and never offer one. If she didn't say it, ask.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nPull two values out of her message.\nproject — what it's called now.\nname — what it becomes.\n\nBoth given, project is on the line: send the action. No confirmation. Say what you did in a few words.\n\nNot on the line: \"No project by that title exists right now.\" Stop. No follow-up, no near-matches.\n\nOn the line but no new name: \"What should it be instead?\" Wait. Send the action when she answers — don't ask again to confirm.\n\nOnly one name given and it's ambiguous which is which: ask which one is the new one. Don't assume the second is.\n\nIn the bin: say so. It can't be renamed from there.\n═══════════════════════════════════════════════════════════════",
             requireAny:   ["rename","name","title"],
-            requireAll:   ["project"],
-            requireNone:  ["module","section"],
+            /* project* — 2026-09-17. Whole-word matching meant "bin one of
+               my projects" did not satisfy this gate. */
+            requireAll:   ["project*"],
+            /* FENCE WIDENED 2026-09-17 — two holes. hasTerm matches WHOLE
+               WORDS, so "module" never matched "modules" and every plural
+               walked straight through. And the file words were missing
+               entirely, which mattered the moment item-tier entries existed:
+               a file phrase containing "project" could still reach a project
+               handler. The * suffix covers the plurals. */
+            requireNone:  ["module*","section*","file*","document*","doc","docs"],
         },
 
         {
@@ -609,7 +623,9 @@ window.PoppyEngine = {
             window:       3,
             guidelines:   "═══════════════════════════════════════════════════════════════\n🕹️ Jen wants to view a Project's content in Scribble ; scribble_view_contents\n═══════════════════════════════════════════════════════════════\nTWO RULES.\n1. This opens a panel. It doesn't read anything back to you. Don't describe what's inside, don't summarise it, don't guess at counts — opening it is the whole job.\n2. The Scribble page has to be open. If it isn't, the action comes back saying so. Don't claim you opened something you didn't.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nFind her project in the active bucket, then send the action. Say you opened it, in a few words.\n\nNot on the line at all: \"I couldn't find that project — check the name?\" Stop.\nA shortening of exactly one active project — she said \"SYL\", the line says \"See You Latte\": \"Did you mean See You Latte?\" Wait for her yes, then send it with the full name.\nFits more than one: name them and ask which.\nIn the bin or archived: say which. It isn't on the page to open a panel for.\n═══════════════════════════════════════════════════════════════",
             requireAny:   ["content","contents","description","descriptions"],
-            requireAll:   ["project"],
+            /* project* — 2026-09-17. Whole-word matching meant "bin one of
+               my projects" did not satisfy this gate. */
+            requireAll:   ["project*"],
         },
 
         {
@@ -623,7 +639,13 @@ window.PoppyEngine = {
             cooldown:     1,
             guidelines:   "═══════════════════════════════════════════════════════════════\n🕹️ Jen wants to duplicate a 'Project' in Scribble. scribble_duplicate\n═══════════════════════════════════════════════════════════════\nTWO RULES.\n1. You don't choose the name. The copy is always \"{name} (copy)\" — the action decides that. Don't offer her a name, don't ask for one.\n2. No confirmation. This only adds. If it's wrong she bins the copy.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nFind her project in the active bucket, send the action, say what you made.\n\nNot on the line: \"I couldn't find that project — check the name?\" Stop.\nA shortening of exactly one active project: \"Did you mean {full name}?\" Wait for her yes, then send it.\nIn the bin: say so. It has to come out first.\n\nIf she asks for it under a specific name, make the copy anyway and tell her what it's called. Renaming it after is a separate thing she can ask for.\n═══════════════════════════════════════════════════════════════",
             requireAny:   ["project"],
-            requireNone:  ["module","section"],
+            /* FENCE WIDENED 2026-09-17 — two holes. hasTerm matches WHOLE
+               WORDS, so "module" never matched "modules" and every plural
+               walked straight through. And the file words were missing
+               entirely, which mattered the moment item-tier entries existed:
+               a file phrase containing "project" could still reach a project
+               handler. The * suffix covers the plurals. */
+            requireNone:  ["module*","section*","file*","document*","doc","docs"],
         },
 
         {
@@ -636,8 +658,16 @@ window.PoppyEngine = {
             window:       3,
             guidelines:   "═══════════════════════════════════════════════════════════════\n🕹️ Jen wants to view a Project's log in Scribble ; scribble_show_logs\n═══════════════════════════════════════════════════════════════\nTWO RULES.\n1. This opens a panel. It doesn't read anything back to you. Don't describe what's inside, don't summarize it, don't guess at counts — opening it is the whole job.\n2. The Scribble page has to be open. If it isn't, the action comes back saying so. Don't claim you opened something you didn't.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nFind her project in the active bucket, then send the action. Say you opened it, in a few words.\n\nNot on the line at all: \"I couldn't find that project — check the name?\" Stop.\nA shortening of exactly one active project — she said \"SYL\", the line says \"See You Latte\": \"Did you mean See You Latte?\" Wait for her yes, then send it with the full name.\nFits more than one: name them and ask which.\nIn the bin or archived: say which. It isn't on the page to open a panel for.\n═══════════════════════════════════════════════════════════════",
             requireAny:   ["logs","log","timeline","history"],
-            requireAll:   ["project"],
-            requireNone:  ["module","section"],
+            /* project* — 2026-09-17. Whole-word matching meant "bin one of
+               my projects" did not satisfy this gate. */
+            requireAll:   ["project*"],
+            /* FENCE WIDENED 2026-09-17 — two holes. hasTerm matches WHOLE
+               WORDS, so "module" never matched "modules" and every plural
+               walked straight through. And the file words were missing
+               entirely, which mattered the moment item-tier entries existed:
+               a file phrase containing "project" could still reach a project
+               handler. The * suffix covers the plurals. */
+            requireNone:  ["module*","section*","file*","document*","doc","docs"],
         },
 
         {
@@ -650,7 +680,9 @@ window.PoppyEngine = {
             window:       3,
             guidelines:   "═══════════════════════════════════════════════════════════════\n🕹️ Jen wants to view a Project's record in Scribble ; scribble_show_records\n═══════════════════════════════════════════════════════════════\nTWO RULES.\n1. This opens a panel. It doesn't read anything back to you. Don't describe what's inside, don't summarize it, don't guess at counts — opening it is the whole job.\n2. The Scribble page has to be open. If it isn't, the action comes back saying so. Don't claim you opened something you didn't.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nFind her project in the active bucket, then send the action. Say you opened it, in a few words.\n\nNot on the line at all: \"I couldn't find that project — check the name?\" Stop.\nA shortening of exactly one active project — she said \"SYL\", the line says \"See You Latte\": \"Did you mean See You Latte?\" Wait for her yes, then send it with the full name.\nFits more than one: name them and ask which.\nIn the bin or archived: say which. It isn't on the page to open a panel for.\n═══════════════════════════════════════════════════════════════",
             requireAny:   ["record","records","path","onedrive link","one drive link","hard drive path","harddrive path"],
-            requireAll:   ["project"],
+            /* project* — 2026-09-17. Whole-word matching meant "bin one of
+               my projects" did not satisfy this gate. */
+            requireAll:   ["project*"],
             requireNone:  ["module","section","general record"],
         },
 
@@ -664,8 +696,16 @@ window.PoppyEngine = {
             window:       3,
             guidelines:   "═══════════════════════════════════════════════════════════════\n🕹️ Jen wants to view a Project's general record in Scribble ; scribble_show_general_records\n═══════════════════════════════════════════════════════════════\nTWO RULES.\n1. This opens a panel. It doesn't read anything back to you. Don't describe what's inside, don't summarize it, don't guess at counts — opening it is the whole job.\n2. The Scribble page has to be open. If it isn't, the action comes back saying so. Don't claim you opened something you didn't.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nFind her project in the active bucket, then send the action. Say you opened it, in a few words.\n\nNot on the line at all: \"I couldn't find that project — check the name?\" Stop.\nA shortening of exactly one active project — she said \"SYL\", the line says \"See You Latte\": \"Did you mean See You Latte?\" Wait for her yes, then send it with the full name.\nFits more than one: name them and ask which.\nIn the bin or archived: say which. It isn't on the page to open a panel for.\n═══════════════════════════════════════════════════════════════",
             requireAny:   ["general record","general path","general links","general hard drive","general onedrive","overall record","general records","overall records","all the paths","all the links"],
-            requireAll:   ["project"],
-            requireNone:  ["module","section"],
+            /* project* — 2026-09-17. Whole-word matching meant "bin one of
+               my projects" did not satisfy this gate. */
+            requireAll:   ["project*"],
+            /* FENCE WIDENED 2026-09-17 — two holes. hasTerm matches WHOLE
+               WORDS, so "module" never matched "modules" and every plural
+               walked straight through. And the file words were missing
+               entirely, which mattered the moment item-tier entries existed:
+               a file phrase containing "project" could still reach a project
+               handler. The * suffix covers the plurals. */
+            requireNone:  ["module*","section*","file*","document*","doc","docs"],
         },
 
         {
@@ -678,8 +718,16 @@ window.PoppyEngine = {
             window:       7,
             guidelines:   "═══════════════════════════════════════════════════════════════\n⚙️ Jen wants to 'Remove an active Project' in Scribble. » scribble_bin \n═══════════════════════════════════════════════════════════════\n\nFOUR RULES. These outrank anything below them.\n1. Send no action block until she has given the correct code. Not while asking, not while warning. Withholding it IS the confirmation — a block written beside the question runs before she answers.\n2. Every number you say comes from ## LIVE DATA. Never estimate, never round, never fill a gap.\n3. Invent a fresh 4-digit code at Step 4, different each transaction. There is no code written in these instructions to copy.\n4. Two attempts, total. Any reply that is not the correct code spends one.\n\nLIVE DATA gives you two lines. Buckets: which projects are active, archived, or in the bin. Contents: modules, sections, files, and how many links from other projects point in.\n\nSTEP 1 — She names a project.\n\nSTEP 2 — Find it in buckets.\nNot there: \"No project by that title exists right now.\" Stop. No follow-up, no suggestions, no near-matches.\nAlready in the bin: say so. Stop.\nFound: read it back from the contents line.\n\"I have {project} on hold — {n} modules and {n} files.\"\nIf links point into it, add: \"{n} links in other projects point into it. Binning it leaves them pointing at nothing, and restoring won't reconnect them.\"\nIf nothing points in, say nothing about links.\nThen: \"Are you sure you want to remove this project?\" Wait.\n\nSTEP 3 — Her answer.\nNo, or a change of subject: \"Gotcha. Anything else?\" Transaction over.\nYes: go to Step 4.\n\nSTEP 4 — Issue the code.\n\"Last step — to make sure this isn't an accident, send this code back to me: [ # # # # ]\"\nReplace the hashes with the four digits you just invented. Wait.\n\nSTEP 5 — Read her reply. The digits may be anywhere in a sentence.\nCorrect code: SEND THE ACTION BLOCK NOW. Then: \"Code verified. {project} is in the recycle bin. You have 30 days to pull it back out.\"\nAnything else, first time: that was attempt one. \"That's not it — one attempt left. Send the code back to me: [ same four digits ]\" If she asked a question, answer it in one line first, then repeat the code. Wait.\nAnything else, second time: \"That's twice. I'm suspending this one.\" Transaction over. Send no action.\n\nA suspended or cancelled transaction stays dead. If she asks again later, that is a new request and starts at Step 1 with a new code.\n\nFollow the sequence. The wording is yours to fit her mood — the order, the counts, and the two-attempt limit are not.\n\nNo action block until the code is right.\n═══════════════════════════════════════════════════════════════",
             requireAny:   ["bin","recycle bin","trashcan","delete","remove"],
-            requireAll:   ["project"],
-            requireNone:  ["module","section"],
+            /* project* — 2026-09-17. Whole-word matching meant "bin one of
+               my projects" did not satisfy this gate. */
+            requireAll:   ["project*"],
+            /* FENCE WIDENED 2026-09-17 — two holes. hasTerm matches WHOLE
+               WORDS, so "module" never matched "modules" and every plural
+               walked straight through. And the file words were missing
+               entirely, which mattered the moment item-tier entries existed:
+               a file phrase containing "project" could still reach a project
+               handler. The * suffix covers the plurals. */
+            requireNone:  ["module*","section*","file*","document*","doc","docs"],
         },
 
         {
@@ -692,8 +740,16 @@ window.PoppyEngine = {
             window:       7,
             guidelines:   "═══════════════════════════════════════════════════════════════\n⚙️ Jen wants to 'Move a Project to Archive' in Scribble ; scribble_archive\n═══════════════════════════════════════════════════════════════\nFOUR RULES. These outrank anything below them.\n1. Send no action block until she has given the correct code. Not while asking, not while warning. Withholding it IS the confirmation — a block written beside the question runs before she answers.\n2. Every number you say comes from ## LIVE DATA. Never estimate, never round, never fill a gap.\n3. Invent a fresh 4-digit code at Step 4, different each transaction. There is no code written in these instructions to copy.\n4. Two attempts, total. Any reply that is not the correct code spends one.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nSTEP 1 — She names a project.\n\nSTEP 2 — Find it in buckets.\nNot there: \"No project by that title exists right now.\" Stop. No follow-up, no near-matches.\nAlready archived: say so. Stop.\nIn the bin: say so. It has to come out of the bin first. Stop.\nFound: \"I have {project} on hold. Archiving takes it off your active workspace — it keeps everything inside it, and you can pull it back any time. Are you sure?\" Wait.\n\nSTEP 3 — Her answer.\nNo, or a change of subject: \"Gotcha. Anything else?\" Transaction over.\nYes: go to Step 4.\n\nSTEP 4 — Issue the code.\n\"Last step — to make sure this isn't an accident, send this code back to me: [ # # # # ]\"\nReplace the hashes with the four digits you just invented. Wait.\n\nSTEP 5 — Read her reply. The digits may be anywhere in a sentence.\nCorrect code: SEND THE ACTION BLOCK NOW. Then: \"Code verified. {project} is in the Archive — it's in the Archive section whenever you want it back.\"\nAnything else, first time: that was attempt one. \"That's not it — one attempt left. Send the code back to me: [ same four digits ]\" If she asked a question, answer it in one line first, then repeat the code. Wait.\nAnything else, second time: \"That's twice. I'm suspending this one.\" Transaction over. Send no action.\n\nA suspended or cancelled transaction stays dead. If she asks again later, that is a new request and starts at Step 1 with a new code.\n\nFollow the sequence. The wording is yours to fit her mood — the order and the two-attempt limit are not.\n\nNo action block until the code is right.\n═══════════════════════════════════════════════════════════════",
             requireAny:   ["archive","storage"],
-            requireAll:   ["project"],
-            requireNone:  ["module","section"],
+            /* project* — 2026-09-17. Whole-word matching meant "bin one of
+               my projects" did not satisfy this gate. */
+            requireAll:   ["project*"],
+            /* FENCE WIDENED 2026-09-17 — two holes. hasTerm matches WHOLE
+               WORDS, so "module" never matched "modules" and every plural
+               walked straight through. And the file words were missing
+               entirely, which mattered the moment item-tier entries existed:
+               a file phrase containing "project" could still reach a project
+               handler. The * suffix covers the plurals. */
+            requireNone:  ["module*","section*","file*","document*","doc","docs"],
         },
 
         {
@@ -705,9 +761,31 @@ window.PoppyEngine = {
             priority:     4,
             window:       7,
             guidelines:   "═══════════════════════════════════════════════════════════════\n⚙️ Jen wants to merge one Scribble project into another ;  scribble_merge\n═══════════════════════════════════════════════════════════════\nFIVE RULES. These outrank anything below them.\n\n1. Send no action block until she has given the correct code.\n2. The source project is destroyed. Not binned — deleted outright, no recovery, no 30 days. Say that in plain words before she confirms. It is the only thing about this action she needs to be certain of.\n3. Never guess which one is the source. If her wording doesn't make it obvious, ask.\n4. Invent a fresh 4-digit code at Step 4. There is no code written in these instructions to copy.\n5. Two attempts, total. Any reply that is not the correct code spends one.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nSTEP 1 — She names two projects. The one being absorbed is the source; the one that survives is the target.\n\n\"merge A into B\" — A is the source.\n\"merge A with B\" — not clear. Ask: \"Which one goes away — A or B?\"\nOnly one named: \"Which project should it merge into?\" Wait.\nNeither named: \"Which two? Say it as 'merge A into B'.\" Wait.\n\nSTEP 2 — Find both in buckets.\nEither not there: name the one you couldn't find, list the active projects, ask which she meant. Wait.\nEither archived or in the bin: say which one and where it is. It has to be active to merge. Stop there — don't offer to restore it.\nSame project twice: say so. Stop.\n\nSTEP 3 — Read it back and be blunt.\n\"{source} goes into {target}. Everything inside {source} moves across, and then {source} is deleted — not binned, deleted. It doesn't come back. Sure?\"\nIf any module in {source} shares a name with one in {target}, add: \"Matching module names get numbered, not combined.\"\nWait.\n\nNo, or a change of subject: \"Gotcha. Anything else?\" Transaction over.\nYes: go to Step 4.\n\nSTEP 4 — Ask about the name, then issue the code.\n\"Want {target} renamed after, or keep it as {target}?\"\nHer answer sets name — the new title, or empty to keep it. Then:\n\"Last step — send this code back to me: [ # # # # ]\"\nReplace the hashes with the four digits you just invented. Wait.\n\nSTEP 5 — Read her reply. The digits may be anywhere in a sentence.\nCorrect code: SEND THE ACTION BLOCK NOW. Then say {source} is gone and what {target} is called.\nAnything else, first time: \"That's not it — one attempt left. Send the code back: [ same four digits ]\" If she asked a question, answer it in one line first, then repeat the code. Wait.\nAnything else, second time: \"That's twice. I'm suspending this one.\" Transaction over. Send no action.\n\nA suspended or cancelled transaction stays dead. Asking again later starts at Step 1 with a new code.\n\nNo action block until the code is right.\n═══════════════════════════════════════════════════════════════",
-            requireAny:   ["archive","storage"],
-            requireAll:   ["project"],
-            requireNone:  ["module","section"],
+            /* ── THIS ENTRY COULD NEVER FIRE — fixed 2026-09-17 ──────
+               requireAny was ["archive","storage"], copied down from the
+               Move to Archive entry directly above. gatesPass is a hard
+               reject, so "merge Drafts into LifeHub" — which contains
+               neither word — was thrown out before the guidelines were
+               ever read. Merge has been unreachable by voice.
+
+               That is the wrong way for THIS action to fail: it is the one
+               that deletes the source project outright, no bin, no undo.
+               Your prompt below says so in plain words and nothing has
+               ever been able to reach it.
+
+               "merge" and "combine" are the words; the rest are how the
+               same request gets phrased out loud. */
+            requireAny:   ["merge","combine","absorb","fold into","roll into","merged"],
+            /* project* — 2026-09-17. Whole-word matching meant "bin one of
+               my projects" did not satisfy this gate. */
+            requireAll:   ["project*"],
+            /* FENCE WIDENED 2026-09-17 — two holes. hasTerm matches WHOLE
+               WORDS, so "module" never matched "modules" and every plural
+               walked straight through. And the file words were missing
+               entirely, which mattered the moment item-tier entries existed:
+               a file phrase containing "project" could still reach a project
+               handler. The * suffix covers the plurals. */
+            requireNone:  ["module*","section*","file*","document*","doc","docs"],
         },
 
         {
@@ -718,10 +796,31 @@ window.PoppyEngine = {
             writeFields:  ["action","project","description"],
             priority:     4,
             window:       3,
-            guidelines:   "═══════════════════════════════════════════════════════════════\n⚙️ Jen wants to view a Project's log in Scribble ; scribble_describe\n═══════════════════════════════════════════════════════════════\nTHREE RULES.\n1. Her words, exactly. Don't tidy the grammar, don't expand it into a sentence, don't make it sound like a product blurb. If she says \"the passcode thing,\" the description is \"the passcode thing.\"\n2. Never write one she didn't say. If she names a project but no text, ask what it should say.\n3. This replaces whatever is there. You can't see the current description — it isn't in LIVE DATA — so don't claim to know what it was.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nPull two values out of her message.\nproject — which one.\ndescription — the text, word for word.\n\nBoth given, project is on the line: send the action. Say you set it, in a few words.\n\nProject on the line, no text: \"What should it say?\" Wait, then send it.\nNot on the line: \"I couldn't find that project — check the name?\" Stop.\nShe asks to clear it: send the action with description as an empty string. That's deliberate, not a mistake.\nIn the bin: say so.\n\nDon't read the description back to her as a question before sending. She just said it.\n═══════════════════════════════════════════════════════════════",
-            requireAny:   ["logs","log","timeline","history"],
-            requireAll:   ["project"],
-            requireNone:  ["module","section"],
+            guidelines:   "═══════════════════════════════════════════════════════════════\n⚙️ Jen wants to set a Project's description in Scribble ; scribble_describe\n═══════════════════════════════════════════════════════════════\nTHREE RULES.\n1. Her words, exactly. Don't tidy the grammar, don't expand it into a sentence, don't make it sound like a product blurb. If she says \"the passcode thing,\" the description is \"the passcode thing.\"\n2. Never write one she didn't say. If she names a project but no text, ask what it should say.\n3. This replaces whatever is there. You can't see the current description — it isn't in LIVE DATA — so don't claim to know what it was.\n\nLIVE DATA gives you the buckets line: which projects are active, archived, or in the bin.\n\nPull two values out of her message.\nproject — which one.\ndescription — the text, word for word.\n\nBoth given, project is on the line: send the action. Say you set it, in a few words.\n\nProject on the line, no text: \"What should it say?\" Wait, then send it.\nNot on the line: \"I couldn't find that project — check the name?\" Stop.\nShe asks to clear it: send the action with description as an empty string. That's deliberate, not a mistake.\nIn the bin: say so.\n\nDon't read the description back to her as a question before sending. She just said it.\n═══════════════════════════════════════════════════════════════",
+            /* ── THIS ENTRY COULD NEVER FIRE — fixed 2026-09-17 ──────
+               requireAny was ["logs","log","timeline","history"], copied
+               from the Show Logs entry. So "set the description of project
+               PassHub" contained no gate word and was rejected outright —
+               scribble_describe has been unreachable by voice.
+
+               When it DID fire (she said "log") it collided with the real
+               Show Logs entry, which carries the identical gates. Two
+               entries, one trigger, different actions.
+
+               The guidelines header said "view a Project's log" too; also
+               corrected. These words are what she actually says when she
+               means the description. */
+            requireAny:   ["description","describe","summary","summarise","summarize","blurb","what it is","what it's for","about"],
+            /* project* — 2026-09-17. Whole-word matching meant "bin one of
+               my projects" did not satisfy this gate. */
+            requireAll:   ["project*"],
+            /* FENCE WIDENED 2026-09-17 — two holes. hasTerm matches WHOLE
+               WORDS, so "module" never matched "modules" and every plural
+               walked straight through. And the file words were missing
+               entirely, which mattered the moment item-tier entries existed:
+               a file phrase containing "project" could still reach a project
+               handler. The * suffix covers the plurals. */
+            requireNone:  ["module*","section*","file*","document*","doc","docs"],
         },
 
         {
@@ -1336,6 +1435,42 @@ window.PoppyEngine = {
             guidelines:   "═══════════════════════════════════════════════════════════════\n🏋️ Writing down a measurement ; fitness_measure\n═══════════════════════════════════════════════════════════════\nSend fitness_measure with values holding ONLY the parts she actually said.\n\n  \"log my weight, 52\"              → {\"Weight\":52}\n  \"waist 70 and hips 95\"           → {\"Waist\":70,\"Hips\":95}\n\n── NEVER FILL IN THE GAPS ──\nDo not carry a part forward from a previous entry, estimate one, or convert\nbetween units. Once written, a number you inferred is indistinguishable from\none she measured — the hub stores sparse records specifically so that a\nthree-week-old waist never masquerades as today's.\n\nWeight is kilograms, everything else centimetres. If she gives a number\nwithout a part, or a part without a number, ask.\n\nValid parts: Weight, Shoulders, Chest, Left Bicep, Right Bicep, Left Forearm,\nRight Forearm, Upper Abs, Waist, Lower Abs, Hips, Left Thigh, Right Thigh,\nLeft Calf, Right Calf.\n═══════════════════════════════════════════════════════════════",
             requireAll:   ["log"],
             requireNone:  ["how many","how much","when","whats","what","did i","have i"],
+        },
+
+        {
+            // PassHub: Which login is it
+            keywords:     ["password","passwords","passcode","login","logins","log-in","sign-in","signin","credential","credentials","username","user name","vault","passhub","account details","my account for","logged in as","email for","recovery"],
+            intent:       "VAULT_FIND",
+            fetchTargets: [],
+            writeFields:  ["action"],
+            priority:     4,
+            window:       1,
+            guidelines:   "═══════════════════════════════════════════════════════════════\n🔐 She's asking what she has, not what it says ; vault_find\n═══════════════════════════════════════════════════════════════\nListing is the harmless half: it puts platform names and categories on\nscreen and asks her for nothing. Reach for it whenever the question is\nabout WHICH account rather than what the password is.\n\n  \"what logins do I have for google\"   → vault_find, q: google\n  \"do I have a figma account\"          → vault_find, q: figma\n  \"what's in my vault\"                 → vault_find, no q\n  \"how many banking logins have I got\" → vault_find, q: finance\n\n── YOU CANNOT SEE ANY OF IT ──\nYou do not receive the password. You do not receive the username, the\nrecovery address, the phone number, the 2FA note or the free text. They\nare painted onto her screen and what comes back to you is the platform\nname and nothing else.\n\nSo never say a password. Never guess one. Never \"confirm\" one, and never\nrepeat one back to her from earlier in the conversation — if you think\nyou have one, you are wrong about where it came from. Say where it is:\n\"GCash is on screen, bottom right.\"\n\n── WHEN SHE WAS VAGUE, LIST FIRST ──\n\"what's my password\" with no platform is not answerable, and guessing\nwhich one she meant is the worst possible guess to get wrong. List, then\nask which. Opening the wrong entry puts a real password on her screen\nfor no reason.\n\n── DON'T ANNOUNCE THE COUNT AS THE ANSWER ──\n\"You have four\" is not what she wanted. Name them — that is what lets\nher say \"the second one\".\n═══════════════════════════════════════════════════════════════",
+            requireAny:   ["password","passwords","passcode","login","logins","log-in","sign-in","signin","credential","credentials","username","user name","vault","passhub","account details","my account for","logged in as","email for","recovery"],
+        },
+
+        {
+            // PassHub: Open one login
+            keywords:     ["password","passwords","passcode","login","logins","log-in","sign-in","signin","credential","credentials","username","user name","vault","passhub","account details","my account for","logged in as","email for","recovery","what is","what's","whats","tell me","give me","show me","read me","read out","open","unlock","get","need","copy","remind me","i forgot","forgot my","can't remember","cannot remember","look up","pull up","find my"],
+            intent:       "VAULT_REVEAL",
+            fetchTargets: [],
+            writeFields:  ["action"],
+            priority:     3,
+            window:       1,
+            guidelines:   "═══════════════════════════════════════════════════════════════\n🔐 She wants the actual login in front of her ; vault_reveal\n═══════════════════════════════════════════════════════════════\nShe named a platform and wants the thing itself. Send the block with the\nplatform as q.\n\n  \"what's my netflix password\"    → vault_reveal, q: netflix\n  \"I forgot my gcash login\"       → vault_reveal, q: gcash\n  \"open my figma\"                 → vault_reveal, q: figma\n  \"copy my work email password\"   → vault_reveal, q: <the platform>\n\n── YOU CANNOT SEE ANY OF IT ──\nYou do not receive the password. You do not receive the username, the\nrecovery address, the phone number, the 2FA note or the free text. They\nare painted onto her screen and what comes back to you is the platform\nname and nothing else.\n\nSo never say a password. Never guess one. Never \"confirm\" one, and never\nrepeat one back to her from earlier in the conversation — if you think\nyou have one, you are wrong about where it came from. Say where it is:\n\"GCash is on screen, bottom right.\"\n\n── SHE WILL BE ASKED FOR HER PASSCODE ──\nRevealing puts a lock on her screen first: her passcode, then one of her\ntwenty security questions, exactly as PassHub does it. You cannot answer\nthat for her, you cannot skip it, and you will not see what she types.\n\nDon't apologise for it and don't warn her about it in advance — she asked\nfor that lock. Just send the block; the prompt explains itself.\n\nIf she cancels, the receipt says the vault stayed locked. Take that at\nface value: she changed her mind. Don't ask again unless she brings it up.\n\nOnce she's answered it stays open a few minutes, so a second look at\nsomething else may not ask again. Don't promise either way.\n\n── ONE AT A TIME ──\nIf several match, the receipt tells you so and lists them. Pass that on\nand let her pick — the exact platform name is what opens one. Do not\nsend vault_reveal repeatedly to work out which is which; each one is a\npassword on a screen in a room.\n\n── A QUESTION ABOUT A LOGIN IS NOT A REQUEST TO OPEN IT ──\n  \"is my netflix the family one\"   → she's asking about the account. List.\n  \"did I ever set up a figma\"      → list.\n  \"what's my netflix password\"     → open it.\n\n── AFTERWARDS ──\nSay it's up and where, then stop. Don't narrate the fields, don't offer\nto read it out, don't ask whether it worked. There is a copy button next\nto each line; she does not need you to relay anything.\n═══════════════════════════════════════════════════════════════",
+            requireAny:   ["password","passwords","passcode","login","logins","log-in","sign-in","signin","credential","credentials","username","user name","vault","passhub","account details","my account for","logged in as","email for","recovery"],
+        },
+
+        {
+            // PassHub: Lock the vault
+            keywords:     ["lock the vault","lock vault","lock passhub","lock my passwords","close the vault","hide the password","hide that","put it away","lock it","forget it","never mind that","someone's coming"],
+            intent:       "VAULT_LOCK",
+            fetchTargets: [],
+            writeFields:  ["action"],
+            priority:     3,
+            window:       1,
+            guidelines:   "═══════════════════════════════════════════════════════════════\n🔐 Put it away, now ; vault_lock\n═══════════════════════════════════════════════════════════════\nClears whatever is on screen and ends the unlocked window early. Send it\nthe moment she asks, and answer in three words.\n\n  \"lock the vault\"        → vault_lock\n  \"hide that, someone's coming\" → vault_lock\n  \"put my passwords away\" → vault_lock\n\nThis one is urgent by nature. Don't ask if she's sure, don't ask which\none, don't finish the previous thought first. She can always ask again.\n\n── NOT THIS ──\n\"lock\" about anything else is not this. Her front door, a locked journal\nentry in PassHub notes, a locked workout — none of those are the vault.\nIf the sentence isn't about passwords being visible, leave it alone.\n\n── IT MAY ALREADY BE SHUT ──\nThe window closes itself after a few minutes. If the receipt says it was\nalready locked, just say so — that is a reassurance, not a failure.\n═══════════════════════════════════════════════════════════════",
+            requireAny:   ["lock","close the vault","hide","put it away","someone's coming"],
         }
 
     ],

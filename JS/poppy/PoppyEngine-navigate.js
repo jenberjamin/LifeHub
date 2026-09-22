@@ -301,6 +301,34 @@
   }
 
 
+  /* ── Refreshing a screen (2026-09-22) ─────────────────────────
+     The remote's Reload button, for when the remote isn't to hand:
+     the same { key: "reload" } press down lifehub_remote/<screen id>,
+     which the navigation core on that screen turns into a reload of
+     whatever page it's showing. */
+  function refresh(cmd) {
+    const screen = resolveScreen(cmd && (cmd.on || cmd.screen || cmd.device));
+    if (screen.here) {
+      if (!window.LIFEHUB_SCREEN) {
+        throw new Error("I can't see the TV — it's off, or on a page I can't steer yet (Scribble, See You Latte).");
+      }
+      /* This very screen. A moment's wait so the receipt shows first. */
+      setTimeout(() => window.location.reload(), 1500);
+      return "Refreshing this screen";
+    }
+    return db().ref("lifehub_remote/" + screen.id)
+      .set({
+        key: "reload",
+        n: Math.random().toString(36).slice(2),
+        at: firebase.database.ServerValue.TIMESTAMP,
+        by: "poppy"
+      })
+      .then(() => "Refreshing the " + screen.name.replace(/^the\s+/i, "") +
+        (screen.page ? " (" + pageName(screen.page) + ")" : ""))
+      .catch(() => { throw new Error("I couldn't reach the database to refresh it."); });
+  }
+
+
   /* ── The action ───────────────────────────────────────────────── */
 
   function navigate(cmd) {
@@ -390,7 +418,14 @@
         "Navigating changes what is on her screen immediately, so only send it",
         "when she asked to go somewhere. A question ABOUT a tracker is not a",
         "request to open it — “how did I sleep” wants an answer, not a jump."
-      ].join("\n") + "\n\n" + wallpaperDescribe();
+      ].join("\n") + "\n\n" + wallpaperDescribe() + "\n\n" + [
+        "## REFRESHING A SCREEN",
+        "  {\"action\":\"refresh\"} — reloads whatever page is showing on " +
+          (defaultScreen() ? "the " + defaultScreen().name : "the TV") + ", like the remote's Reload button",
+        "  {\"action\":\"refresh\",\"on\":\"NAME\"} — a different screen from the line above",
+        "“Refresh the TV”, “reload the TV”, “the TV's stuck, restart it” all mean this.",
+        "Only send it when she asked; it doesn't change which page is showing."
+      ].join("\n");
     },
 
     run(cmd) {
@@ -398,6 +433,11 @@
       if (name === "navigate" || name === "open" || name === "go" || name === "goto") {
         return Promise.resolve()
           .then(() => navigate(cmd))
+          .catch(err => { throw new Error(err.message || "That didn't work."); });
+      }
+      if (name === "refresh" || name === "reload") {
+        return Promise.resolve()
+          .then(() => refresh(cmd))
           .catch(err => { throw new Error(err.message || "That didn't work."); });
       }
       if (WALL[name]) {
