@@ -296,8 +296,8 @@
   }
 
   /* 2026-09-21: from one apiKey + one model to keys{} and models{}.
-     The old single key is sorted by its shape — Google's start "AIza",
-     OpenRouter's "sk-or-" — so it lands on the right provider whichever
+     The old single key is sorted by its shape — Google's start "AIza"
+     (newer ones "AQ."), OpenRouter's "sk-or-" — so it lands on the right provider whichever
      connection happened to be selected when it was typed. The old model
      becomes the model of whichever connection was active. */
   function migrateKeys(saved){
@@ -306,7 +306,7 @@
     const legacy = String(saved.apiKey || "").trim();
     if (legacy){
       if (/^sk-or-/i.test(legacy)) keys.openrouter = keys.openrouter || legacy;
-      else if (/^AIza/.test(legacy)) keys.gemini = keys.gemini || legacy;
+      else if (/^(AIza|AQ\.)/.test(legacy)) keys.gemini = keys.gemini || legacy;
       else if (saved.connection === "openrouter") keys.openrouter = keys.openrouter || legacy;
       else keys.gemini = keys.gemini || legacy;
     }

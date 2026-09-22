@@ -1058,6 +1058,37 @@ button.kr-pick:hover{ border-color: var(--chat-accent, #00e5ff); }
 .kr-keep:hover{ color: var(--chat-ink, #fff); border-color: var(--chat-accent, #00e5ff); }
 
 /* "+ Add a key", and the small form it opens. */
+/* Folded drawer: only the key in use. "Show all" and "+ Add a key"
+   share the line underneath. */
+.kr-list.is-folded .kr-row:not(.is-on){ display: none; }
+.kr-foot{ display: flex; align-items: center; gap: 12px; }
+.kr-foot .kr-open{ margin-left: auto; }
+.kr-more{
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 4px;
+  border: 0;
+  background: none;
+  color: var(--chat-dim, #8b9199);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.kr-more::after{
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-top: -4px;
+  border: solid currentColor;
+  border-width: 0 1.8px 1.8px 0;
+  transform: rotate(45deg);
+  transition: transform .2s ease, margin .2s ease;
+}
+.kr-more.is-open::after{ margin-top: 3px; transform: rotate(-135deg); }
+.kr-more:hover{ color: var(--chat-ink, #fff); }
+
 .kr-open{
   align-self: flex-start;
   padding: 8px 4px;
@@ -1079,6 +1110,11 @@ button.kr-pick:hover{ border-color: var(--chat-accent, #00e5ff); }
   border: 1px dashed var(--chat-line, rgba(255,255,255,.2));
 }
 .kr-actions{ display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
+/* A text box, so the browser's password manager leaves it alone — but
+   the key is still shown as dots. */
+.kr-new-key{ -webkit-text-security: disc; text-security: disc; }
+.kr-msg{ min-height: 0; }
+.kr-msg:empty{ display: none; }
 
 .chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: -5px; }
 .chip{

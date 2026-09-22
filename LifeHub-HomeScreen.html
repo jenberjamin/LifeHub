@@ -72,7 +72,9 @@
 
   <span id="paint-name" aria-live="polite"></span>
 
-  <nav class="controls" id="controls" aria-label="Wallpaper controls">
+  <!-- data-remote-reveal: the phone remote can reach this bar and opens
+       it the way hovering does (see lifehub-navigation-core.js). -->
+  <nav class="controls" id="controls" aria-label="Wallpaper controls" data-remote-reveal>
     <button class="ctl" id="ctl-lock" type="button" aria-label="Lock interface" title="Lock">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <rect class="lock-body" x="5" y="11" width="14" height="9" rx="1.6"/>
@@ -270,13 +272,13 @@
              the key in use, which Save reads. -->
         <div class="fld" id="fld-key-gemini">
           <span id="key-label">Gemini keys (AI Studio) &#183; also Poppy's voice</span>
-          <input type="password" hidden id="cfg-key" spellcheck="false" autocomplete="off" placeholder="From aistudio.google.com/apikey">
+          <input type="hidden" id="cfg-key" placeholder="From aistudio.google.com/apikey">
           <div class="keyring" data-provider="gemini" data-input="cfg-key"></div>
         </div>
 
         <div class="fld" id="fld-key-openrouter">
           <span>OpenRouter keys</span>
-          <input type="password" hidden id="cfg-key-or" spellcheck="false" autocomplete="off" placeholder="From openrouter.ai/keys">
+          <input type="hidden" id="cfg-key-or" placeholder="From openrouter.ai/keys">
           <div class="keyring" data-provider="openrouter" data-input="cfg-key-or"></div>
         </div>
 

@@ -242,6 +242,12 @@ if (typeof firebase !== 'undefined') {
 // Every press is offered to the page first as a pretend key press. If
 // the page has its own arrow keys and says "mine" (preventDefault), the
 // remote stays out of the way.
+//
+// A bar that only appears on mouse hover (the Home Screen's controls)
+// is invisible to the remote, since the TV has no mouse. Mark it with
+// data-remote-reveal and the highlight can go into it: arriving sends
+// it the page's own mouseenter (so it opens exactly as on hover), and
+// leaving sends mouseleave.
 (function () {
     if (typeof firebase === 'undefined' || !defaultApp) return;
 
@@ -270,7 +276,24 @@ if (typeof firebase !== 'undefined') {
         '[tabindex]:not([tabindex="-1"]),[onclick],[role=button],[role=link],[role=tab],' +
         '[role=menuitem],[role=option],[contenteditable=""],[contenteditable=true]';
 
+    function revealer(el) {
+        return el && el.closest ? el.closest('[data-remote-reveal]') : null;
+    }
+
+    // Inside a closed hover bar, judge each button as if the bar were
+    // open: switch the bar's pointer-events on just for the check. The
+    // style is put back before anything paints, so nothing flickers,
+    // and a button the page itself switched off (the Home Screen's
+    // lock) still counts as off.
     function usable(el) {
+        const bar = revealer(el);
+        if (!bar || getComputedStyle(bar).pointerEvents !== 'none') return usableNow(el);
+        const was = bar.style.pointerEvents;
+        bar.style.pointerEvents = 'auto';
+        try { return usableNow(el); } finally { bar.style.pointerEvents = was; }
+    }
+
+    function usableNow(el) {
         if (el.disabled || el.closest('[inert],[aria-hidden="true"]')) return false;
         const r = el.getBoundingClientRect();
         if (r.width < 4 || r.height < 4) return false;
@@ -294,6 +317,9 @@ if (typeof firebase !== 'undefined') {
 
     function highlight(el) {
         addRingStyle();
+        const fromBar = revealer(current), toBar = revealer(el);
+        if (fromBar && fromBar !== toBar) fromBar.dispatchEvent(new MouseEvent('mouseleave'));
+        if (toBar && toBar !== fromBar) toBar.dispatchEvent(new MouseEvent('mouseenter'));
         if (current) current.classList.remove(RING);
         current = el;
         el.classList.add(RING);

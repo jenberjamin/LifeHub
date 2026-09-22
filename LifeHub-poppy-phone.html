@@ -137,7 +137,7 @@
   .veil.open { opacity:1; visibility:visible; }
   .sheet.open { transform:none; visibility:visible; }
   .sheet .grip { width:40px; height:4px; margin:0 auto 14px; border-radius:2px; background:rgba(255,248,236,.25); }
-  .sheet-head { display:flex; align-items:center; justify-content:space-between; }
+  .sheet-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
   .sheet-head .icon { width:44px; height:44px; border-radius:50%; color:var(--dim); }
   .sheet h2 { margin:0; font:600 28px/1.1 var(--display); }
   .sheet h3 { margin:22px 0 10px; color:var(--gold); font-size:12px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; }
@@ -189,16 +189,29 @@
   .kr-mask { color:var(--dim); font-size:13px; font-family:ui-monospace, Menlo, Consolas, monospace; letter-spacing:.06em; }
   .kr-tag { flex:none; padding:3px 10px; border-radius:999px; border:1px solid var(--gold); color:var(--gold);
     font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
-  .kr-row.loose .kr-tag { border-color:var(--dim); color:var(--dim); }
   .kr-side { flex:none; min-width:56px; padding:0 12px; border-radius:16px; color:var(--dim);
     font-size:13px; font-weight:700; }
   .kr-side.armed { color:var(--bad); border-color:rgba(243,167,155,.45); background:rgba(243,167,155,.12); }
+  /* Folded: only the key in use; "Show all" and "+ Add a key" underneath. */
+  #drawer.is-folded .kr-row:not(.on) { display:none; }
+  .kr-foot { display:flex; align-items:center; gap:12px; }
+  .kr-foot .kr-open { margin-left:auto; }
+  .kr-more { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 4px; border:0;
+    background:none; color:var(--dim); font-weight:600; }
+  .kr-more i { font-size:12px; transition:transform .2s; }
+  .kr-more.is-open i { transform:rotate(180deg); }
   .kr-open { align-self:flex-start; min-height:44px; padding:0 4px; border:0; background:none; color:var(--gold); font-weight:600; }
   .kr-form { display:flex; flex-direction:column; gap:10px; padding:14px; border-radius:18px;
     border:1px dashed rgba(210,180,140,.35); }
   .kr-form input { width:100%; min-height:48px; padding:12px 14px; border-radius:14px; border:1px solid var(--edge);
     background:rgba(0,0,0,.25); font-size:16px; }
   .kr-actions { display:flex; gap:10px; }
+  /* Text boxes, not password fields — a password field makes the browser
+     treat the form as a login and fill in an email and a saved password.
+     The key still shows as dots. */
+  .kr-new-key, #key { -webkit-text-security:disc; text-security:disc; }
+  .kr-msg, .setup .kr-msg { margin:0; color:var(--bad); font-size:14px; }
+  .kr-msg:empty { display:none; }
   .kr-actions button { flex:1; min-height:48px; }
   @media (prefers-reduced-motion: reduce) { * { animation:none !important; } }
 </style>
@@ -406,9 +419,27 @@ window.LIFEHUB_ACTIONS = {
      Engine configuration keeps (POPPY's config.keyring.gemini). */
   const ring = () => ((POPPY.getConfig().keyring || {}).gemini || []).slice();
   const storeRing = list => POPPY.setConfig({ keyring: { gemini: list } });
-  /* Puts a key to work at once. The phone only talks to Gemini, so an
-     OpenRouter connection left over from the Home Screen moves over. */
+  /* Key formats change (AI Studio keys used to start "AIza", newer ones
+     "AQ."), so a key isn't judged by how it starts — only what's plainly
+     wrong is refused. Google says if a key doesn't work. */
+  function keyProblem(k) {
+    if (!/^\S{20,}$/.test(k)) return "That doesn't look like a key — keys are long, with no spaces.";
+    if (/^sk-or-/i.test(k)) return "That's an OpenRouter key — Poppy on the phone uses a Gemini key.";
+    return '';
+  }
+  /* Keys removed on purpose this session: switching away from them must
+     not save them straight back. */
+  const DROPPED = new Set();
+  /* Puts a key to work at once. The key being switched away from is saved
+     to the drawer first if it isn't there, so switching never loses one.
+     The phone only talks to Gemini, so an OpenRouter connection left over
+     from the Home Screen moves over. */
   function useKey(k) {
+    const was = inUse();
+    if (was && was !== k && !DROPPED.has(was) && !keyProblem(was)) {
+      const list = ring();
+      if (!list.some(x => x.key === was)) { list.push({ name: 'Earlier key', key: was }); storeRing(list); }
+    }
     const conn = POPPY.getConfig().connection;
     POPPY.setConfig({ connection: conn === 'openrouter' ? 'gemini' : conn, keys: { gemini: k } });
   }
@@ -420,12 +451,15 @@ window.LIFEHUB_ACTIONS = {
         '<p>Poppy talks to Gemini straight from this phone, so she needs your AI Studio key. ' +
         'Get it at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> ' +
         '(the one Poppy\'s voice uses — not a Firebase key), then paste it here. It stays on this phone.</p>' +
-        '<input id="key" type="password" autocomplete="off" placeholder="AIza…">' +
+        '<input id="key" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your key">' +
+        '<p class="kr-msg" id="key-msg" aria-live="polite"></p>' +
         '<button id="key-save">Save</button>' +
       '</div>';
     $('key-save').addEventListener('click', () => {
       const k = $('key').value.trim();
       if (!k) return;
+      const problem = keyProblem(k);
+      if (problem) { $('key-msg').textContent = problem; return; }
       const list = ring();
       if (!list.some(x => x.key === k)) { list.push({ name: 'Key ' + (list.length + 1), key: k }); storeRing(list); }
       useKey(k);
@@ -718,6 +752,7 @@ window.LIFEHUB_ACTIONS = {
      to work at once. Only the last four characters are ever shown. */
   const mask = k => '••••' + String(k || '').slice(-4);
   let adding = false, prefill = '', arming = null, armTimer = null;
+  let unfolded = false;       // the drawer shows every key, not just the one in use
 
   function el(tag, cls, text) {
     const e = document.createElement(tag);
@@ -730,7 +765,8 @@ window.LIFEHUB_ACTIONS = {
     const pick = el(opts.loose ? 'div' : 'button', 'kr-pick');
     if (!opts.loose) { pick.dataset.pick = opts.i; pick.setAttribute('aria-pressed', String(!!opts.on)); }
     const text = el('span', 'kr-text');
-    text.append(el('span', 'kr-name', name), el('span', 'kr-mask', mask(key)));
+    /* Narrow screen: for the unsaved key, "not saved" rides on the small line. */
+    text.append(el('span', 'kr-name', name), el('span', 'kr-mask', mask(key) + (opts.loose ? ' · not saved' : '')));
     pick.append(el('span', 'kr-dot'), text);
     if (opts.tag) pick.append(el('span', 'kr-tag', opts.tag));
     row.append(pick);
@@ -754,26 +790,48 @@ window.LIFEHUB_ACTIONS = {
     list.forEach((k, i) => d.append(keyRow(k.name, k.key, { i: String(i), on: k.key === cur, tag: k.key === cur ? 'In use' : '' })));
     /* In use but not in the drawer (saved before the drawer existed, or
        its entry was removed): still shown, with a way to keep it. */
-    if (cur && !list.some(k => k.key === cur)) d.append(keyRow('Current key', cur, { i: 'loose', on: true, loose: true, tag: 'Not saved' }));
-    const empty = !d.children.length;
-    if (!adding && !empty) {
-      const open = el('button', 'kr-open', '+ Add a key');
-      open.dataset.open = '1';
-      d.append(open);
-      return;
+    if (cur && !list.some(k => k.key === cur)) d.append(keyRow('Current key', cur, { i: 'loose', on: true, loose: true }));
+    /* Folded: only the key in use, with "Show all" for the rest. Worth it
+       only with two or more keys and one of them in use. It folds again
+       when a key is picked, added, or Engine is reopened. */
+    const total = d.querySelectorAll('.kr-row').length;
+    const foldable = total > 1 && !!d.querySelector('.kr-row.on');
+    d.classList.toggle('is-folded', foldable && !unfolded);
+    const empty = !total;
+    if (foldable || (!adding && !empty)) {
+      const foot = el('div', 'kr-foot');
+      if (foldable) {
+        const more = el('button', 'kr-more' + (unfolded ? ' is-open' : ''),
+          unfolded ? 'Show less' : 'Show all ' + total + ' keys');
+        more.dataset.more = '1';
+        more.setAttribute('aria-expanded', String(unfolded));
+        more.insertAdjacentHTML('beforeend', ' <i class="fa-solid fa-chevron-down"></i>');
+        foot.append(more);
+      }
+      if (!adding && !empty) {
+        const open = el('button', 'kr-open', '+ Add a key');
+        open.dataset.open = '1';
+        foot.append(open);
+      }
+      d.append(foot);
     }
+    if (!adding && !empty) return;
     const form = el('div', 'kr-form');
     const name = el('input', 'kr-new-name');
-    name.type = 'text'; name.placeholder = 'Name it — e.g. Personal'; name.spellcheck = false;
+    name.type = 'text'; name.placeholder = 'Name it — e.g. Personal'; name.spellcheck = false; name.autocomplete = 'off';
     const key = el('input', 'kr-new-key');
-    key.type = 'password'; key.placeholder = 'AIza… from aistudio.google.com/apikey'; key.autocomplete = 'off';
+    key.type = 'text'; key.placeholder = 'Paste the key from aistudio.google.com/apikey'; key.autocomplete = 'off';
+    key.spellcheck = false; key.setAttribute('autocapitalize', 'off');
     key.value = prefill;
     const actions = el('div', 'kr-actions');
     if (!empty) { const c = el('button', '', 'Cancel'); c.dataset.cancel = '1'; actions.append(c); }
     const add = el('button', 'main', 'Add & use');
     add.dataset.add = '1';
     actions.append(add);
-    form.append(name, key, actions);
+    /* Problems are said here, where you're looking. */
+    const msg = el('p', 'kr-msg');
+    msg.setAttribute('aria-live', 'polite');
+    form.append(name, key, msg, actions);
     d.append(form);
     if (empty) note('None yet. Get one at aistudio.google.com/apikey — an AI Studio key, not a Firebase one.');
   }
@@ -783,8 +841,11 @@ window.LIFEHUB_ACTIONS = {
   function addKey() {
     const k = $('drawer').querySelector('.kr-new-key').value.trim();
     const typed = $('drawer').querySelector('.kr-new-name').value.trim();
-    if (!k) return note('Paste the key first.', 'bad');
-    if (!/^AIza/.test(k)) return note("That doesn't look like a Gemini key (they start with AIza).", 'bad');
+    const say = t => { $('drawer').querySelector('.kr-msg').textContent = t; };
+    if (!k) return say('Paste the key first.');
+    const problem = keyProblem(k);
+    if (problem) return say(problem);
+    DROPPED.delete(k);
     const list = ring();
     const dupe = list.find(x => x.key === k);
     let name;
@@ -792,7 +853,7 @@ window.LIFEHUB_ACTIONS = {
     else { name = typed || 'Key ' + (list.length + 1); list.push({ name: name, key: k }); }
     storeRing(list);
     useKey(k);
-    adding = false; prefill = '';
+    adding = false; prefill = ''; unfolded = false;
     note('Now using “' + name + '”.', 'ok');
     keyChanged();
   }
@@ -805,8 +866,12 @@ window.LIFEHUB_ACTIONS = {
       const k = ring()[+ds.pick];
       if (!k || k.key === inUse()) return;
       useKey(k.key);
+      unfolded = false;                         // chosen: fold back to the one in use
       note('Now using “' + k.name + '”.', 'ok');
       keyChanged();
+    } else if (ds.more) {
+      unfolded = !unfolded;
+      renderDrawer();
     } else if (ds.bin != null) {
       if (arming !== ds.bin) {                    // first tap: ask
         arming = ds.bin;
@@ -816,11 +881,13 @@ window.LIFEHUB_ACTIONS = {
       }
       clearTimeout(armTimer); arming = null;
       if (ds.bin === 'loose') {                   // the unsaved key in use: off this phone
+        DROPPED.add(inUse());
         useKey('');
         note('Removed from this phone. Poppy needs a key to answer — add one above.', 'ok');
       } else {
         const list = ring();
         const gone = list.splice(+ds.bin, 1)[0];
+        DROPPED.add(gone.key);
         storeRing(list);
         note('Removed “' + gone.name + '”.' + (gone.key === inUse() ? " It's still in use until you pick another." : ''), 'ok');
       }
@@ -846,7 +913,7 @@ window.LIFEHUB_ACTIONS = {
 
   function openEngine() {
     const cfg = POPPY.getConfig();
-    adding = false; prefill = ''; arming = null;
+    adding = false; prefill = ''; arming = null; unfolded = false;
     note('');
     renderDrawer();
     const models = MODELS.indexOf(cfg.model) === -1 && cfg.model ? MODELS.concat([cfg.model]) : MODELS;

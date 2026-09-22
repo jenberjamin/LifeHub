@@ -2024,7 +2024,18 @@ function fillOpenRouterSelect(){
 
    Keys from the SAME Google project share one quota — switching between
    those gains nothing. Only keys from different projects are separate. */
-const KEY_SHAPE = { gemini: /^AIza/, openrouter: /^sk-or-/i };
+/* Key formats change — AI Studio keys used to start "AIza" and newer
+   ones start "AQ." — so a key isn't judged by how it starts. Only what's
+   plainly wrong is refused: spaces, too short to be a key, or the other
+   provider's key. Google or OpenRouter says if a key doesn't work. */
+const GOOGLE_KEY = /^(AIza|AQ\.)/;
+const OPENROUTER_KEY = /^sk-or-/i;
+function keyProblem(provider, key){
+  if (!/^\S{20,}$/.test(key)) return "That doesn't look like a key — keys are long, with no spaces.";
+  if (provider === "gemini" && OPENROUTER_KEY.test(key)) return "That's an OpenRouter key — it goes in the OpenRouter drawer.";
+  if (provider === "openrouter" && GOOGLE_KEY.test(key)) return "That's a Google key — it goes in the Gemini drawer.";
+  return "";
+}
 const maskKey = k => "••••" + String(k || "").slice(-4);
 
 function keyringOf(provider){
@@ -2090,23 +2101,50 @@ function renderKeyring(box){
   }
   if (rows.children.length) box.appendChild(rows);
 
+  /* Folded: only the key in use shows, with "Show all" for the rest.
+     Worth it only with two or more keys and one of them in use. It
+     folds again when a key is picked, added, or Engine is reopened. */
+  const total = rows.children.length;
+  const foldable = total > 1 && !!rows.querySelector(".kr-row.is-on");
+  const unfolded = box.dataset.open === "1";
+  rows.classList.toggle("is-folded", foldable && !unfolded);
+
   /* Adding: a small form, open straight away when the drawer is empty. */
   const adding = box.dataset.adding === "1" || !rows.children.length;
-  if (!adding){
-    box.appendChild(krEl("button", "kr-open", "+ Add a key"));
-    return;
+  if (foldable || !adding){
+    const foot = krEl("div", "kr-foot");
+    if (foldable){
+      const more = krEl("button", "kr-more" + (unfolded ? " is-open" : ""),
+        unfolded ? "Show less" : "Show all " + total + " keys");
+      more.setAttribute("aria-expanded", unfolded ? "true" : "false");
+      foot.appendChild(more);
+    }
+    if (!adding) foot.appendChild(krEl("button", "kr-open", "+ Add a key"));
+    box.appendChild(foot);
   }
+  if (!adding) return;
+  /* Not a password field: a text box next to a password box reads as a
+     login to the browser, which then fills in your email and a saved
+     password — and Add & use gets those instead of the key. The key is
+     still shown as dots (-webkit-text-security, in the CSS). */
   const form = krEl("div", "kr-form");
   const name = krEl("input", "kr-new-name");
-  name.type = "text"; name.spellcheck = false; name.placeholder = "Name it — e.g. Personal";
+  name.type = "text"; name.spellcheck = false; name.autocomplete = "off";
+  name.placeholder = "Name it — e.g. Personal";
   const key = krEl("input", "kr-new-key");
-  key.type = "password"; key.spellcheck = false; key.autocomplete = "off";
+  key.type = "text"; key.spellcheck = false; key.autocomplete = "off";
+  key.setAttribute("autocapitalize", "off");
+  key.setAttribute("data-1p-ignore", ""); key.setAttribute("data-lpignore", "true");
   key.placeholder = input.placeholder || "Paste the key";
   if (box.dataset.prefill) key.value = box.dataset.prefill;
   const actions = krEl("div", "kr-actions");
   if (rows.children.length) actions.appendChild(krEl("button", "btn ghost kr-cancel", "Cancel"));
   actions.appendChild(krEl("button", "btn primary kr-add", "Add & use"));
-  form.append(name, key, actions);
+  /* Problems are said here, where you're looking — the panel's own note
+     is at the bottom and can be scrolled out of sight. */
+  const msg = krEl("p", "ov-note bad kr-msg");
+  msg.setAttribute("aria-live", "polite");
+  form.append(name, key, msg, actions);
   box.appendChild(form);
 }
 
@@ -2116,8 +2154,22 @@ function renderKeyrings(){
 
 /* Puts a key to work at once — no Save needed, since the moment you want
    this is the moment a 429 just landed. */
+/* Keys removed from the drawer on purpose this session — they must not
+   come straight back when you switch away from them. */
+const KR_DROPPED = new Set();
+
 function useKey(box, key, name){
   const provider = box.dataset.provider;
+  /* The key being switched away from, if it isn't in the drawer yet:
+     saved first, so switching never loses a key. */
+  const was = $(box.dataset.input).value.trim();
+  if (was && was !== key && !KR_DROPPED.has(was) && !keyProblem(provider, was)){
+    const list = keyringOf(provider);
+    if (!list.some(k => k.key === was)){
+      list.push({ name: "Earlier key", key: was });
+      storeKeyring(provider, list);
+    }
+  }
   $(box.dataset.input).value = key;
   POPPY.setConfig({ keys: { [provider]: key } });
   refreshVoiceKeyNote();
@@ -2130,17 +2182,16 @@ function wireKeyring(box){
   const label = KR_LABEL[provider];
   let arming = null, armTimer = null;       // the bin waiting for its second press
 
-  const closeForm = () => { delete box.dataset.adding; delete box.dataset.prefill; };
+  const closeForm = () => { delete box.dataset.adding; delete box.dataset.prefill; delete box.dataset.open; };
 
   function add(){
     const key = box.querySelector(".kr-new-key").value.trim();
     const typed = box.querySelector(".kr-new-name").value.trim();
-    if (!key){ setEngineNote("Paste a " + label + " key first.", "bad"); return; }
-    if (!KEY_SHAPE[provider].test(key)){
-      setEngineNote("That doesn't look like a " + label + " key" +
-        (provider === "gemini" ? " (they start with AIza)." : " (they start with sk-or-)."), "bad");
-      return;
-    }
+    const say = text => { box.querySelector(".kr-msg").textContent = text; };
+    if (!key){ say("Paste a " + label + " key first."); return; }
+    const problem = keyProblem(provider, key);
+    if (problem){ say(problem); return; }
+    KR_DROPPED.delete(key);
     const list = keyringOf(provider);
     const dupe = list.find(k => k.key === key);
     let name;
@@ -2166,6 +2217,11 @@ function wireKeyring(box){
       const k = keyringOf(provider)[parseInt(t.dataset.i, 10)];
       if (!k || k.key === $(box.dataset.input).value.trim()) return;
       useKey(box, k.key, k.name);
+      delete box.dataset.open;              // chosen: fold back to the one in use
+      renderKeyring(box);
+    } else if (t.classList.contains("kr-more")){
+      if (box.dataset.open) delete box.dataset.open;
+      else box.dataset.open = "1";
       renderKeyring(box);
     } else if (t.classList.contains("kr-bin")){
       const i = parseInt(t.dataset.i, 10);
@@ -2181,6 +2237,7 @@ function wireKeyring(box){
       clearTimeout(armTimer); arming = null;
       const list = keyringOf(provider);
       const gone = list.splice(i, 1)[0];
+      KR_DROPPED.add(gone.key);
       storeKeyring(provider, list);
       setEngineNote("Removed “" + gone.name + "” from the drawer." +
         (gone.key === $(box.dataset.input).value.trim() ? " It's still in use until you pick another." : ""), "ok");
@@ -2208,6 +2265,10 @@ function wireKeyring(box){
 }
 
 function openEngine(){
+  /* Each visit starts tidy: drawers folded, no half-filled add form. */
+  document.querySelectorAll("#engine-panel .keyring").forEach(b => {
+    delete b.dataset.open; delete b.dataset.adding; delete b.dataset.prefill;
+  });
   fillEngineForm(POPPY.getConfig());
   setEngineNote("");
   $("engine-panel").classList.add("is-open");
@@ -2238,11 +2299,11 @@ function saveEngine(){
     return;
   }
   /* The most common mix-up, caught before it becomes a 401. */
-  if (gkey && /^sk-or-/i.test(gkey)){
+  if (gkey && OPENROUTER_KEY.test(gkey)){
     setEngineNote("That's an OpenRouter key in the Gemini box.", "bad");
     return;
   }
-  if (okey && /^AIza/.test(okey)){
+  if (okey && GOOGLE_KEY.test(okey)){
     setEngineNote("That's a Google key in the OpenRouter box.", "bad");
     return;
   }
